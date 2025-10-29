@@ -25,6 +25,7 @@ class PackageService
 
     public function save($data)
     {
+        $this->projectId = $data['projectId'];
         $package = $this->getByName($data['name']);
         if(!$package) {
             $package = new Package;

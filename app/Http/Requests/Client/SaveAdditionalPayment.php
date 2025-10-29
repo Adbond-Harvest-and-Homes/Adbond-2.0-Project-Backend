@@ -29,6 +29,7 @@ class SaveAdditionalPayment extends BaseRequest
             "paymentDate" => "required_if:cardPayment,false",
             // "amountPayed" => "required_if:cardPayment,false",
             'evidence' => 'required_if:cardPayment,false|file|max:10000|mimes:jpeg,png,jpg,gif,pdf',
+            "bankId" => "required_if:cardPayment,false|integer|exists:bank_accounts,id",
         ];
     }
 }
