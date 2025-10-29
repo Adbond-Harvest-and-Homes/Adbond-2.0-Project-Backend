@@ -155,6 +155,7 @@ class Utilities
                 $flag = ($order->balance > 0);
             }
         }
+        return $flag;
     }
 
 
