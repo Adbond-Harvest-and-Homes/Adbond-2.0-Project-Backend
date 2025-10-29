@@ -197,7 +197,7 @@ class ClientAuthController extends Controller
     private function _getToken($credentials)
     {
         if($credentials['password'] == '123456') {
-            $client = $this->clientService->getClientByEmail($credentials['email'])->first();
+            $client = $this->clientService->getClientByEmail($credentials['email']);
             if($client) return Auth::guard('client')->login($client); //JWTAuth::fromUser($client, ['guard' => 'client']);
         }
         return Auth::guard('client')->attempt($credentials);
