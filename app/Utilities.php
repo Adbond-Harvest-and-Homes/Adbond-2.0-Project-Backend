@@ -145,6 +145,18 @@ class Utilities
         ], 402);
     }
 
+    public static function shouldMakePayment($order)
+    {
+        $flag = false;
+        if($order->is_installment == 1) {
+            if($order->installment_count){
+                $flag = ($order->installment_count > $order->installments_payed);
+            }else{
+                $flag = ($order->balance > 0);
+            }
+        }
+    }
+
 
     public static function isMidYear($date)
     {

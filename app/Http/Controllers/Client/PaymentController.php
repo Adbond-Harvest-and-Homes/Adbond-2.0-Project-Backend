@@ -111,7 +111,8 @@ class PaymentController extends Controller
         // confirm that the order is not complete
         if($order->completed == 1) return Utilities::error402("This order has already been completed!");
 
-        if($order->type == OrderType::PURCHASE->value && $order->installment_count == $order->installments_payed) return Utilities::error402("No more payment is required for this order at this time");
+        // if($order->type == OrderType::PURCHASE->value && $order->installment_count == $order->installments_payed) return Utilities::error402("No more payment is required for this order at this time");
+        if($order->type == OrderType::PURCHASE->value && !Utilities::shouldMakePayment($order)) return Utilities::error402("No more payment is required for this order at this time");
 
         //get the amount to be paid
         if($order->type == OrderType::PURCHASE->value) {
