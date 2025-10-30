@@ -28,6 +28,7 @@ class OrderResource extends JsonResource
             "amountPayed" => $this->amount_payed,
             "amountPayable" => $this->amount_payable,
             "isInstallment" => $this->is_installment,
+            "amountPerInstallment" => $this->amount_per_installment,
             "balance" => $this->balance,
             "discounts" => OrderDiscountResource::collection($this->whenLoaded("discounts")),
             "paymentStatus" => new PaymentStatusResource($this->whenLoaded("paymentStatus")),

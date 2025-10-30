@@ -116,9 +116,9 @@ class PaymentController extends Controller
 
         //get the amount to be paid
         if($order->type == OrderType::PURCHASE->value) {
-            $amount = ($order->installment_count) ? $order->amount_payable/$order->installment_count : $order->balance;
+            $amount = ($order->amount_per_installment) ? $order->amount_per_installment : $order->balance;
         }else{
-            $amount = ($order->is_installment == 1) ? ( ($order->installment_count) ? $order->amount_payable/$order->installment_count : $order->balance) : $order->amount_payable;
+            $amount = ($order->is_installment == 1) ? ( ($order->amount_per_installment) ? $order->amount_per_installment : $order->balance) : $order->amount_payable;
         }
         $processingId = Utilities::getOrderProcessingId();
 
