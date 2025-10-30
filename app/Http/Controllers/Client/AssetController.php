@@ -6,21 +6,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
+use app\Http\Requests\Client\UpdateInstallment;
+
 use app\Http\Resources\ClientAssetSummaryResource;
 use app\Http\Resources\ClientAssetResource;
 use app\Http\Resources\AssetResource;
 
 use app\Services\ClientPackageService;
+use app\Services\OrderService;
+
+use app\Models\Order;
+
+use app\Enums\ClientPackageOrigin;
 
 use app\Utilities;
 
 class AssetController extends Controller
 {
     private $clientPackageService;
+    private $orderService;
 
     public function __construct()
     {
         $this->clientPackageService = new ClientPackageService;
+        $this->orderService = new OrderService;
     }
 
     public function summary()
@@ -60,5 +69,29 @@ class AssetController extends Controller
         if($asset->client_id != Auth::guard('client')->user()->id) return Utilities::error402("You are not permitted to view this asset");
 
         return Utilities::ok(new AssetResource($asset));
+    }
+
+    public function updateInstallment(UpdateInstallment $request)
+    {
+        try{
+            $data = $request->validated();
+            $asset = $this->clientPackageService->clientPackage($data['assetId']);
+            if(!$asset) return Utilities::error402("Asset not found");
+
+            if($asset->purchase_complete == 1) return Utilities::error402("This asset order cannot be modified because the purchase is complete");
+
+            if($asset->origin != ClientPackageOrigin::ORDER->value && $asset->origin != ClientPackageOrigin::INVESTMENT->value) return Utilities::error402("Asset is not an Order");
+
+            if($asset->purchase->is_installment == 0) return Utilities::error402("This purchase is not an installment purchase");
+
+            $order = ($asset->origin == ClientPackageOrigin::ORDER->value) ? $asset->purchase : $asset->purchase->order;
+
+            $order = $this->orderService->updateInstallmentCount($order, $data['count']);
+            $asset = $this->clientPackageService->clientPackage($asset->id);
+
+            return Utilities::ok(new AssetResource($asset));
+        }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to perform this operation, Please try again later or contact support');
+        }
     }
 }

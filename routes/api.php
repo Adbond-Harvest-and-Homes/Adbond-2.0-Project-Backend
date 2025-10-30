@@ -452,11 +452,13 @@ Route::group(['prefix' => '/v2',], function () {
         Route::group(['prefix' => '/assets'], function () {
             Route::get('/summary', [AssetController::class, 'summary']);
             Route::get('', [AssetController::class, 'assets']);
-            Route::get('/{assetId}', [AssetController::class, 'asset']);
+            Route::post('/update_installment', [AssetController::class, 'updateInstallment']);
 
             Route::get('/downgrade_packages/{assetId}', [AssetSwitchController::class, 'downgradePackages']);
             Route::get('/upgrade_packages/{assetId}', [AssetSwitchController::class, 'upgradePackages']);
             Route::post('/request_asset_switch', [AssetSwitchController::class, 'requestSwitch']);
+
+            Route::get('/{assetId}', [AssetController::class, 'asset']);
         });
 
         //Offer Routes

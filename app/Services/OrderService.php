@@ -92,7 +92,10 @@ class OrderService
         $order->unit_price = $data['unitPrice'];
         if(isset($data['promoCodeId'])) $order->promo_code_id = $data['promoCodeId'];
         $order->is_installment = $data['isInstallment'];
-        if($data['isInstallment']) $order->installment_count = $data['installmentCount'];
+        if($data['isInstallment']) {
+            $order->installment_count = $data['installmentCount'];
+            $order->amount_per_installment = round($data['amountPayable']/$data['installmentCount']);
+        }
         if(isset($data['isInstallment'])) $order->installments_payed = 1;
         $order->payment_status_id = $data['paymentStatusId'];
         $order->order_date = $data['orderDate'];
@@ -102,6 +105,14 @@ class OrderService
 
         $order->save();
 
+        return $order;
+    }
+
+    public function updateInstallmentCount($order, $count)
+    {
+        $order->installment_count = $count;
+        $order->amount_per_installment = round($order->balance/$count);
+        $order->update();
         return $order;
     }
 

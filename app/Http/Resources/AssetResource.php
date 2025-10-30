@@ -41,6 +41,7 @@ class AssetResource extends JsonResource
             "amountPaid" => $this->amountPaid(),
             "makePayment" => $this->makePaymentFlag(),
             "paymentPlan" => $this->paymentPlan(),
+            "amountPerInstallment" => $this->installmentAmount(),
             "installmentCount" => $this->installmentCount(),
             "requestedSwitch" => $this->requestedSwitch(),
             "valuation" => ($this->package) ? $this->package->amount * $this->units : null,
@@ -103,6 +104,15 @@ class AssetResource extends JsonResource
         if($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value) {
             $order = ($this->origin == ClientPackageOrigin::ORDER->value) ? $this?->purchase : $this->purchase->order;
             return ($order?->is_installment == 1) ? $order->installment_count : null;
+        }
+        return null;
+    }
+
+    private function installmentAmount()
+    {
+        if($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value) {
+            $order = ($this->origin == ClientPackageOrigin::ORDER->value) ? $this?->purchase : $this->purchase->order;
+            return ($order?->is_installment == 1) ? $order->amount_per_installment : null;
         }
         return null;
     }
