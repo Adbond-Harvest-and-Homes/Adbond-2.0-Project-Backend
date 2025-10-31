@@ -116,15 +116,36 @@ class OrderService
         return $order;
     }
 
-    public function update($data, $order)
+    public function update($data, $order, $payment=null)
     {
+        // dd($data);
         if(isset($data['installmentsPayed'])) $order->installments_payed = $data['installmentsPayed'];
         if(isset($data['paymentStatusId'])) $order->payment_status_id = $data['paymentStatusId'];
         if(isset($data['amountPayed'])) {
             $order->amount_payed += $data['amountPayed'];
             // $order->balance = $data['balance'];
         }
+        $amountPaid = (isset($data['amountPayed']) ? $data['amountPayed'] : $order->amount_payed);
+        // dd($amountPaid);
+        $balance = $order->balance - $amountPaid;
+        if($order->is_installment == 1) {
+            $installmentsRemaining = $order->installment_count - $order->installments_payed;
+
+            if($balance > 0 && $installmentsRemaining == 0) {
+                $order->installment_count = $order->installment_count + 1;
+                $installmentsRemaining = 1;
+            }
+        }
+        if(isset($data['updateInstallment']) && $balance > 0) {
+            // if($payment && $payment->amount < $order->amount_per_installment) {
+            //     // CLient made lower than expected payment
+            // }
+            $order->amount_per_installment = round($balance/$installmentsRemaining, 2);
+        }
+        // dd($order);
+        
         $order->update();
+
 
         return $order;
     }

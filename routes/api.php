@@ -8,7 +8,10 @@ use app\Http\Middleware\UserAuth;
 use app\Http\Middleware\HRAuth;
 use app\Http\Middleware\SuperAdminAuth;
 
+
+
 //User Controllers
+use app\Http\Controllers\Auth\UserAuthController;
 use app\Http\Controllers\User\ProjectTypeController as UserProjectTypeController;
 use app\Http\Controllers\User\ProjectController as UserProjectController;
 use app\Http\Controllers\User\PackageController as UserPackageController;
@@ -41,6 +44,8 @@ use app\Http\Controllers\User\NotificationController as UserNotificationControll
 
 
 // Client Controllers
+use app\Http\Controllers\Auth\ClientAuthController;
+use app\Http\Controllers\Auth\GoogleController;
 use app\Http\Controllers\Client\PromoController;
 use app\Http\Controllers\Client\OrderController;
 use app\Http\Controllers\Client\PaymentController;
@@ -89,18 +94,22 @@ Route::group(['prefix' => '/v2',], function () {
     //Auth URLS
     Route::group(['prefix' => '/auth', 'namespace' => 'Auth',], function () {
         Route::group(['prefix' => '/client'], function () {
-            Route::post('/send_verification_mail', 'ClientAuthController@sendVerificationMail');
-            Route::post('/verify_email_token', 'ClientAuthController@verifyEmailToken');
-            Route::post('/register', 'ClientAuthController@register');
-            Route::post('/login', 'ClientAuthController@login');
-            Route::get('/google/get_url', 'GoogleController@getAuthUrl');
-            Route::post('/google/login', 'GoogleController@postLogin');
+            Route::post('/send_verification_mail', [ClientAuthController::class, "sendVerificationMail"]);
+            Route::post('/verify_email_token', [ClientAuthController::class, "verifyEmailToken"]);
+            Route::post('/register', [ClientAuthController::class, "register"]);
+            Route::post('/login', [ClientAuthController::class, "login"]);
+            Route::get('/google/get_url', [GoogleController::class, "getAuthUrl"]);
+            Route::post('/google/login', [GoogleController::class, "postLogin"]);
+
+            Route::post('/send_password_reset_code', [ClientAuthController::class, "sendPasswordResetCode"]);
+            Route::post('/verify_password_reset_code', [ClientAuthController::class, "verifyPasswordResetToken"]);
+            Route::post('/reset_password', [ClientAuthController::class, "resetPassword"]);
         });
         Route::group(['prefix' => '/user'], function () {
             Route::post('/login', 'UserAuthController@login');
-            Route::post('/send_password_reset_code', 'UserAuthController@sendPasswordResetCode');
-            Route::post('/verify_password_reset_code', 'UserAuthController@verifyPasswordResetToken');
-            Route::post('/reset_password', 'UserAuthController@resetPassword');
+            Route::post('/send_password_reset_code', [UserAuthController::class, "sendPasswordResetCode"]);
+            Route::post('/verify_password_reset_code', [UserAuthController::class, "verifyPasswordResetToken"]);
+            Route::post('/reset_password', [UserAuthController::class, "resetPassword"]);
         });
     });
 
@@ -452,7 +461,7 @@ Route::group(['prefix' => '/v2',], function () {
         Route::group(['prefix' => '/assets'], function () {
             Route::get('/summary', [AssetController::class, 'summary']);
             Route::get('', [AssetController::class, 'assets']);
-            Route::post('/update_installment', [AssetController::class, 'updateInstallment']);
+            // Route::post('/update_installment', [AssetController::class, 'updateInstallment']);
 
             Route::get('/downgrade_packages/{assetId}', [AssetSwitchController::class, 'downgradePackages']);
             Route::get('/upgrade_packages/{assetId}', [AssetSwitchController::class, 'upgradePackages']);
