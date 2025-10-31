@@ -14,6 +14,7 @@ use app\Http\Resources\PaymentResource;
 
 use app\Models\PaymentStatus;
 use app\Models\Order;
+use app\Models\PaymentMode;
 
 use app\Services\PaymentService;
 use app\Services\OrderService;
@@ -23,6 +24,7 @@ use app\Services\ClientInvestmentService;
 
 use app\Enums\PackageType;
 use app\Enums\UserType;
+// use app\Enums\PaymentMode;
 
 use app\Utilities;
 
@@ -58,12 +60,17 @@ class PaymentController extends Controller
             $order = $payment->purchase;
             // dd($payment->purchase);
             // update order table to reflect amount_payed and balance;
-            $order = $this->orderService->saveAmountPaid($order, $payment->amount);
-            $data['paymentStatusId'] = ($order->balance <= 0) ? PaymentStatus::complete()->id : PaymentStatus::deposit()->id;
+            // $order = $this->orderService->saveAmountPaid($order, $payment->amount);
+            // $data['paymentStatusId'] = ($order->balance <= 0) ? PaymentStatus::complete()->id : PaymentStatus::deposit()->id;
             // $data['installmentsPayed'] = $order->installments_payed+1;
+            if($payment->payment_mode_id == PaymentMode::bankTransfer()->id) $data['amountPayed'] = $payment->amount;
+            if($order->is_installment == 1 && $order->amount_per_installment && $payment->amount != $order->amount_per_installment) {
+                $data['updateInstallment'] = true;
+            }
             $order = $this->orderService->update($data, $order);
 
             // update staff commission
+            $referrer = $payment->client->referer;
             if(($order->is_installment==0 || ($order->installments_payed < 2 || $order->payment_status_id==PaymentStatus::complete()->id)) && $payment->client->referer) {
                 // calculate the bonus/commission for the referer and save it
                 if($order->payment_status_id==PaymentStatus::complete()->id && $payment->client->referer_type == UserType::CLIENT->value) {

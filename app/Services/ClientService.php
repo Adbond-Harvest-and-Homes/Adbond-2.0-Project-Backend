@@ -180,6 +180,12 @@ class ClientService
         return $client;
     }
 
+    public function changePassword($password, $client)
+    {
+        $client->password =  bcrypt($password);
+        $client->update();
+    }
+
     public function saveGoogleUser($data)
     {
         $client = new Client;

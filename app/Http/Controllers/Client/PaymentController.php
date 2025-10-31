@@ -279,8 +279,6 @@ class PaymentController extends Controller
                         $data['amountPayed'] = $order->amount_payed + $processedData['amountPayable'];
                         $data['balance'] = $order->balance - $processedData['amountPayable'];
 
-                        //update order
-                        $order = $this->orderService->update($data, $order);
                     // }
 
                 }
@@ -293,7 +291,7 @@ class PaymentController extends Controller
             }else{ // if its a bank payment
 
                 //update order
-                $order = $this->orderService->update($data, $order);
+                // $order = $this->orderService->update($data, $order);
 
                 // Save Payment evidence
                 $purpose = FilePurpose::PAYMENT_EVIDENCE->value;
@@ -367,6 +365,11 @@ class PaymentController extends Controller
         if($data['cardPayment']) {
             if($gatewayRes['success']) {
                 $paymentData['success'] = true;
+                $amountPaid = (isset($gatewayRes['amount'])) ? $gatewayRes['amount'] : ((isset($data['amountPayed'])) ? $data['amountPayed'] : $processedData['amountPayable']);
+                $paymentData['amount'] = $amountPaid;
+                $data['paymentStatusId'] = (($order->type == OrderType::PURCHASE->value || $order->is_installment==1) && ($data['installmentsPayed'] < $order->installment_count)) ? PaymentStatus::deposit()->id : PaymentStatus::complete()->id;
+                $data['amountPayed'] = $amountPaid;
+                $data['balance'] = $order->balance - $amountPaid;
                 if(!$gatewayRes['paymentError']) {
                     $paymentData['confirmed'] = true;
                 }else{
@@ -376,17 +379,21 @@ class PaymentController extends Controller
             }else{
                 $paymentData['failureMessage'] = $gatewayRes['message'];
                 $paymentData['success'] = false;
+                if(isset($data['amountPayed'])) unset($data['amountPayed']);
             }
 
-            $paymentData['amount'] = ($gatewayRes && isset($gatewayRes['amount'])) ? $gatewayRes['amount'] : $processedData['amountPayable'];
+            if((!$gatewayRes || !isset($gatewayRes['amount'])) && isset($data['amountPayed'])) $data['updateInstallment'] = true;
         }else{
             // if($data['amountPayed'] != $order->amount_payed) {
             //     $paymentData['flag'] = true;
             //     $paymentData['flagMessage'] = "The amount that should be paid does not match the amount that is reported to have been paid";
             // }
-            $paymentData['amount'] = $processedData['amountPayable'];
+            $paymentData['amount'] = (isset($data['amountPayed'])) ? $data['amountPayed'] : $processedData['amountPayable'];
             $paymentData['evidenceFileId'] = $data['evidenceFileId'];
             $paymentData["bankAccountId"] = $data["bankId"];
+
+            //unset the amount paid so it wont be updated in the order because it has not been confirmed yet
+            if(isset($data['amountPayed'])) unset($data['amountPayed']);
         }
         
         $paymentData['purchaseId'] = $order->id;
@@ -396,6 +403,10 @@ class PaymentController extends Controller
         $paymentData['paymentDate'] = ($data['cardPayment']) ? now() : $data['paymentDate'];
         $paymentData['paymentGatewayId'] = ($data['cardPayment']) ? PaymentMode::cardPayment()->id : PaymentMode::bankTransfer()->id;
         $payment = $this->paymentService->save($paymentData);
+
+        //update order
+        // dd($data);
+        $order = $this->orderService->update($data, $order);
 
         if(!$data['cardPayment']) $this->notificationService->save($payment, NotificationType::ORDER_PAYMENT_CONFIRMATION_REQ->value,  Auth::guard("client")->user());
         // dd($gatewayRes['paymentError']);

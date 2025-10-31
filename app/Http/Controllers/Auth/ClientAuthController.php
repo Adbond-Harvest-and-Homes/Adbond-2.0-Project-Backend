@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 use app\Mail\EmailVerification;
+use app\Mail\SendPasswordResetCode as sendPasswordResetCodeMail;
 
 use app\Http\Resources\ClientBriefResource;
 use app\Http\Resources\ClientResource;
@@ -27,8 +28,10 @@ use app\Services\EmailService;
 use app\Services\UserService;
 use app\Services\WalletService;
 use app\Services\MetricService;
+use app\Services\PasswordService;
 
 use app\Enums\RefererCodePrefix;
+use app\Enums\PasswordTypes;
 
 use app\Helpers;
 use app\Utilities;
@@ -40,6 +43,7 @@ class ClientAuthController extends Controller
     private $userService;
     private $walletService;
     private $metricService;
+    private $passwordService;
 
     /**
      * Create a new AuthController instance.
@@ -53,6 +57,7 @@ class ClientAuthController extends Controller
         $this->userService = new UserService;
         $this->walletService = new WalletService;
         $this->metricService = new MetricService;
+        $this->passwordService = new PasswordService;
         // $this->emailService = new EmailService;
         // $this->authService = new AuthService;
     }
@@ -192,6 +197,55 @@ class ClientAuthController extends Controller
                 'client' => $user
             ]
         ], 200);
+    }
+
+    public function sendPasswordResetCode(SendPasswordResetCode $request)
+    {
+        try{
+            $email = $request->validated('email');
+            $user = $this->clientService->getClientByEmail($email);
+            if(!$user) return Utilities::error402("We cant find this email in our Database");
+
+            DB::beginTransaction();
+            $token = $this->passwordService->savePasswordResetToken($email, PasswordTypes::CLIENT->value);
+            Mail::to($email)->send(new SendPasswordResetCodeMail($token));
+            DB::commit();
+            return Utilities::okay(['message'=>'Reset Token Sent']);
+        }catch(\Exception $e){
+            DB::rollBack();
+            return Utilities::error($e, 'An error occurred while trying to send verification mail, Please try again later or contact support');
+        }
+    }
+
+    public function verifyPasswordResetToken(VerifyPasswordResetToken $request)
+    {
+        try{
+            $data = $request->validated();
+            $data['type'] = PasswordTypes::CLIENT->value;
+            $res = $this->passwordService->validateEmailToken($data);
+            if($res['success']) return Utilities::okay('password verified successfully');
+            return Utilities::error402($res['error']);
+        }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to send verification mail, Please try again later or contact support');
+        }
+    }
+
+    public function resetPassword(ResetPassword $request)
+    {
+        try{
+            $data = $request->validated();
+            $resetToken = $this->passwordService->emailExists($data['email'], PasswordTypes::CLIENT->value);
+            if(!$resetToken) return Utilities::error402("You have not been cleared to reset this password, go through the password reset process");
+            if(!$resetToken->verified) return Utilities::error402("Your password reset was not successful, click on the verify link sent to your mail");
+
+            $user = $this->clientService->getClientByEmail($data['email']);
+            if(!$user) return Utilities::error402("no user exists for this email");
+
+            $this->clientService->changePassword($data['password'], $user);
+            return Utilities::okay('password Reset Successful');
+        }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to send verification mail, Please try again later or contact support');
+        }
     }
 
     private function _getToken($credentials)
