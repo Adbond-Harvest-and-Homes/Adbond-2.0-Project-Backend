@@ -22,6 +22,9 @@ use app\Http\Requests\Client\Register;
 use app\Http\Requests\Client\VerifyEmail;
 use app\Http\Requests\Login;
 use app\Http\Requests\Client\ValidateEmailToken;
+use app\Http\Requests\SendPasswordResetCode;
+use app\Http\Requests\ResetPassword;
+use app\Http\Requests\User\VerifyPasswordResetToken;
 
 use app\Services\ClientService;
 use app\Services\EmailService;
