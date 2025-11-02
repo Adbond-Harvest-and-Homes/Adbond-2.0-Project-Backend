@@ -5,7 +5,7 @@ namespace app\Http\Controllers\Auth;
 use app\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use appServices\ClientService;
+use app\Services\ClientService;
 
 use app\Http\Resources\ClientBriefResource;
 
@@ -94,7 +94,7 @@ class GoogleController extends Controller
             Log::stack(['project'])->info('could not get google Login url '.$th->getMessage().' in '.$th->getFile().' at Line '.$th->getLine());
             return response()->json([
                 'statusCode' => 500,
-                'message' => 'An error occured.. could not get google Login url.. please contact the administrator'
+                'message' => 'An error occurred.. could not get google Login url.. please contact the administrator'
             ], 500);
         }
     } // getAuthUrl
