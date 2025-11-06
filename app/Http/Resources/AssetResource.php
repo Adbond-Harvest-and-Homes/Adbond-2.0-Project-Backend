@@ -160,7 +160,7 @@ class AssetResource extends JsonResource
                 if($payment->confirmed == null) $flag = false;
             }
         }
-        if($this->requestedSwitch()) $flag = false;
+        // if($this->requestedSwitch() && ) $flag = false;
         return $flag;
     }
 
