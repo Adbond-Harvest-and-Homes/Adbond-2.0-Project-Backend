@@ -127,7 +127,7 @@ class GoogleController extends Controller
              * Url decode if necessary
              */
             if(isset($post['auth_code'])) {
-                $authCode = urldecode($post['authCode']);
+                $authCode = urldecode($post['auth_code']);
 
                 /**
                  * Google client
