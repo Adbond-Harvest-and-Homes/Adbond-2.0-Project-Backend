@@ -79,6 +79,16 @@ class GoogleController extends Controller
              */
             $client = $this->getClient();
 
+            // Accept a `type` query param like ?type=login or ?type=register
+            $type = $request->query('type', 'login'); // default to login
+
+            // Set redirect URI based on type
+            if ($type === 'register') {
+                $client->setRedirectUri("https://client.adbondharvestandhomes.com/register");
+            } else {
+                $client->setRedirectUri("https://client.adbondharvestandhomes.com/login");
+            }
+
             /**
              * Generate the url at google we redirect to
              */
