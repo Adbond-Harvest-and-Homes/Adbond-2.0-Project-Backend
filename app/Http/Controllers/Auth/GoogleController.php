@@ -183,7 +183,7 @@ class GoogleController extends Controller
                 //$token = $client->createToken("Google")->accessToken;
                 //Attempt to login the client automatically
                 $token = Auth::guard('client')->login($client);
-                $user = new ClientResource($client);
+                $user = new ClientBriefResource($client);
                 return response()->json([
                     'statusCode' => 200,
                     'data' => [
