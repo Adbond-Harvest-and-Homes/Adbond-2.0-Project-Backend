@@ -21,6 +21,7 @@ class PostService
             $post = new Post;
             $post->topic = $data['topic'];
             $post->slug = Helpers::createSlug($data['topic']);
+            $post->preview = Helpers::getTextPreview($data['content'], 30);
             $post->post_type = $data['type'];
             $post->user_id = $data['userId'];
             $post->file_id = $data['fileId'];

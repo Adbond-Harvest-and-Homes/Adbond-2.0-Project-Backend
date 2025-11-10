@@ -4,8 +4,10 @@ namespace app\Http\Controllers\Auth;
 
 use app\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
-use appServices\ClientService;
+use app\Services\ClientService;
 
 use app\Http\Resources\ClientBriefResource;
 
@@ -77,6 +79,16 @@ class GoogleController extends Controller
              */
             $client = $this->getClient();
 
+            // Accept a `type` query param like ?type=login or ?type=register
+            $type = $request->query('type', 'login'); // default to login
+
+            // Set redirect URI based on type
+            if ($type === 'register') {
+                $client->setRedirectUri("https://client.adbondharvestandhomes.com/register");
+            } else {
+                $client->setRedirectUri("https://client.adbondharvestandhomes.com/login");
+            }
+
             /**
              * Generate the url at google we redirect to
              */
@@ -94,7 +106,7 @@ class GoogleController extends Controller
             Log::stack(['project'])->info('could not get google Login url '.$th->getMessage().' in '.$th->getFile().' at Line '.$th->getLine());
             return response()->json([
                 'statusCode' => 500,
-                'message' => 'An error occured.. could not get google Login url.. please contact the administrator'
+                'message' => 'An error occurred.. could not get google Login url.. please contact the administrator'
             ], 500);
         }
     } // getAuthUrl
@@ -115,7 +127,7 @@ class GoogleController extends Controller
              * Url decode if necessary
              */
             if(isset($post['auth_code'])) {
-                $authCode = urldecode($post['authCode']);
+                $authCode = urldecode($post['auth_code']);
 
                 /**
                  * Google client
@@ -171,7 +183,7 @@ class GoogleController extends Controller
                 //$token = $client->createToken("Google")->accessToken;
                 //Attempt to login the client automatically
                 $token = Auth::guard('client')->login($client);
-                $user = new ClientResource($client);
+                $user = new ClientBriefResource($client);
                 return response()->json([
                     'statusCode' => 200,
                     'data' => [
