@@ -864,6 +864,38 @@ Class Helpers
     {
 
     }
+
+    /**
+     * Get the first few words or paragraph from an HTML string (plain text only)
+     *
+     * @param string $html The HTML string
+     * @param int $wordLimit The number of words to extract (default: 20)
+     * @return string The truncated plain-text preview
+     */
+    public static function getTextPreview(string $html, int $wordLimit = 20): string
+    {
+        // 1. Remove all HTML tags
+        $text = strip_tags($html);
+
+        // 2. Decode HTML entities (&nbsp;, &amp;, etc.)
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // 3. Normalize whitespace
+        $text = trim(preg_replace('/\s+/', ' ', $text));
+
+        // 4. Split into words
+        $words = explode(' ', $text);
+
+        // 5. If the text has fewer than $wordLimit words, return it all
+        if (count($words) <= $wordLimit) {
+            return implode(' ', $words);
+        }
+
+        // 6. Otherwise, truncate and add ellipsis
+        $preview = implode(' ', array_slice($words, 0, $wordLimit)) . '...';
+
+        return $preview;
+    }
 }
 
 
