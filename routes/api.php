@@ -229,7 +229,7 @@ Route::group(['prefix' => '/v2',], function () {
             Route::group(['prefix' => '/schedules'], function () {
                 Route::post('', [UserSiteTourController::class, 'createSchedule']);
                 Route::patch('/{id}', [UserSiteTourController::class, 'updateSchedule']);
-                Route::delete('/{id', [UserSiteTourController::class, 'deleteSchedule']);
+                Route::delete('/{id}', [UserSiteTourController::class, 'deleteSchedule']);
                 Route::get('', [UserSiteTourController::class, 'schedules']);
                 Route::get('/booked', [UserSiteTourController::class, 'bookedSchedules']);
                 Route::get('/{id}', [UserSiteTourController::class, 'schedule']);
