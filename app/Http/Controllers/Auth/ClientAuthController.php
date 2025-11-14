@@ -224,6 +224,10 @@ class ClientAuthController extends Controller
     {
         try{
             $data = $request->validated();
+
+            $client = $this->clientService->getClientByEmail($data['email']);
+            if(!$client) return Utilities::error402("Client not found");
+
             $data['type'] = PasswordTypes::CLIENT->value;
             $res = $this->passwordService->validateEmailToken($data);
             if($res['success']) return Utilities::okay('password verified successfully');
