@@ -19,6 +19,8 @@ use app\Services\UserActivityLogService;
 
 use app\Utilities;
 
+use app\Models\Role;
+
 class StaffController extends Controller
 {
     private $userService;
@@ -90,6 +92,7 @@ class StaffController extends Controller
         if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId);
+        if(!$user) return Utilities::error402("User not found");
 
         return Utilities::ok(new UserResource($user));
     }
@@ -99,5 +102,19 @@ class StaffController extends Controller
         $userLogs = $this->userActivityLogService->getLogs();
 
         return Utilities::ok($userLogs);
+    }
+
+    public function delete($userId)
+    {
+        if(Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");
+
+        if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
+
+        $user = $this->userService->getUser($userId);
+        if(!$user) return Utilities::error402("User not found");
+
+        $this->userService->delete($user);
+
+        return Utilities::okay("Staff has been removed successfully");
     }
 }

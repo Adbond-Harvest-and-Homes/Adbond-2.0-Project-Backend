@@ -134,6 +134,8 @@ class PostController extends Controller
         $post = $this->postService->post($postId, ['comments']);
         if(!$post) return Utilities::error402("Post not found");
 
+        $post = $this->postService->increaseViews($post);
+
         return Utilities::ok(new PostResource($post));
     }
 

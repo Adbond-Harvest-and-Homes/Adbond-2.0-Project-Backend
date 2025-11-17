@@ -138,6 +138,7 @@ Route::group(['prefix' => '/v2',], function () {
         //Staff Routes
         Route::group(['middleware' => SuperAdminAuth::class, 'prefix' => '/staffs'], function () {
             Route::get('/reset/{userId}', [StaffController::class, "reset"]);
+            Route::post('/remove/{userId}', [StaffController::class, "delete"]);
         });
 
         Route::group(['prefix' => '/staffs'], function () {

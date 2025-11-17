@@ -48,6 +48,14 @@ class PostService
         return $post;
     }
 
+    public function increaseViews($post)
+    {
+        $post->views += 1;
+        $post->update();
+
+        return $post;
+    }
+
     public function activate($post)
     {
         $post->active = true;

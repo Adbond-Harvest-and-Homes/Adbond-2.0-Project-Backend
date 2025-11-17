@@ -32,7 +32,11 @@ class TransactionService
         }
 
         if($this->clientId) $query->where("client_id", $this->clientId);
-        if(isset($filter['text'])) $query->where("receipt_no", "LIKE", "%".$filter['text']."%")->orWhereHas('purchase', function($query2) use($filter) {
+        if(isset($filter['text'])) $query->where("receipt_no", "LIKE", "%".$filter['text']."%")->orWhere("amount", $filter['text'])
+            ->orWhereHas('client', function($q) use($filter) {
+                $q->where("firstname", "LIKE", "%".$filter['text']."%")->where("lastname", "LIKE", "%".$filter['text']."%");
+            })
+            ->orWhereHas('purchase', function($query2) use($filter) {
             $query2->whereHas('package', function($query3) use($filter) {
                 $query3->where("name", "LIKE", "%".$filter['text']."%")->orWhereHas('project', function($query4) use($filter) {
                     $query4->where("name", "LIKE", "%".$filter['text']."%");
