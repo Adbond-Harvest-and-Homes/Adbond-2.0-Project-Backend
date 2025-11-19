@@ -116,9 +116,11 @@ class PaymentController extends Controller
 
         //get the amount to be paid
         if($order->type == OrderType::PURCHASE->value) {
-            $amount = ($order->amount_per_installment) ? $order->amount_per_installment : $order->balance;
+            $amount = $request->validated('amount');
+            if($amount > $order->balance) return Utilities::error402("Sorry, you cannot pay more than the balance");
         }else{
-            $amount = ($order->is_installment == 1) ? ( ($order->amount_per_installment) ? $order->amount_per_installment : $order->balance) : $order->amount_payable;
+            $amount = ($order->is_installment == 1) ? $request->validated('amount') : $order->amount_payable;
+            if($amount > $order->balance) return Utilities::error402("Sorry, you cannot pay more than the balance");
         }
         $processingId = Utilities::getOrderProcessingId();
 
@@ -213,7 +215,8 @@ class PaymentController extends Controller
         // if the payment gateway marked the payment as a success, deduct the units
         if($order?->package && (!$data['cardPayment'] || ($data['cardPayment'] && !$gatewayRes['paymentError']))) {
             // deduct units only if it full payment or the first payment of an installment
-            if($order->is_installment == 0 || $order->installments_payed < 2) $this->packageService->deductUnits($order->units, $order?->package);
+            // if($order->is_installment == 0 || $order->installments_payed < 2) $this->packageService->deductUnits($order->units, $order?->package);
+            $this->packageService->deductUnits($order->units, $order?->package);
             if($order->package->type==PackageType::INVESTMENT->value) $clientInvestment = $this->clientInvestmentService->saveInvestment($order, $processedData);
 
             if($data['cardPayment']) {
@@ -240,7 +243,7 @@ class PaymentController extends Controller
                 $this->orderService->update(["amountPayed" => $payment->amount], $order);
 
 
-                if ($order->is_installment == 0 || $order->installments_payed == $order->installment_count) {
+                if ($order->is_installment == 0 || $order->balance <= 0) {
                     $clientPackage = $this->orderService->completeOrder($order, $payment, $clientInvestment);
                     $this->notificationService->save($clientPackage, NotificationType::ORDER_COMPLETION->value,  Auth::guard("client")->user());
 
@@ -335,7 +338,7 @@ class PaymentController extends Controller
         $data['unitPrice'] = $package->amount;
         // $data['balance'] = ($data['isInstallment']) ? ($data['amountPayable'] - $data['amountPayed']) : 0;
         $data['orderDate'] = (isset($data['orderDate'])) ? $data['orderDate'] : now();
-        if($data['isInstallment'] && $package->installment_duration) $data['paymentDueDate'] = now()->addMonths((int)$package->installment_duration);
+        if($data['isInstallment']) $data['paymentDueDate'] = now()->addMonths((int)$processedData['installmentCount']);
 
         $order = $this->orderService->save($data);
         $order->order_number = $order->id.$data['processingId'];
@@ -367,7 +370,8 @@ class PaymentController extends Controller
                 $paymentData['success'] = true;
                 $amountPaid = (isset($gatewayRes['amount'])) ? $gatewayRes['amount'] : ((isset($data['amountPayed'])) ? $data['amountPayed'] : $processedData['amountPayable']);
                 $paymentData['amount'] = $amountPaid;
-                $data['paymentStatusId'] = (($order->type == OrderType::PURCHASE->value || $order->is_installment==1) && ($data['installmentsPayed'] < $order->installment_count)) ? PaymentStatus::deposit()->id : PaymentStatus::complete()->id;
+                // $data['paymentStatusId'] = (($order->type == OrderType::PURCHASE->value || $order->is_installment==1) && ($order->balance == )) ? PaymentStatus::deposit()->id : PaymentStatus::complete()->id;
+                if($order->is_installment==0) $data['paymentStatusId'] = PaymentStatus::complete()->id;
                 $data['amountPayed'] = $amountPaid;
                 $data['balance'] = $order->balance - $amountPaid;
                 if(!$gatewayRes['paymentError']) {

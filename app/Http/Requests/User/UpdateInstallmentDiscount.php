@@ -1,11 +1,11 @@
 <?php
 
-namespace app\Http\Requests\Client;
+namespace app\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use app\Http\Requests\BaseRequest;
 
-class PrepareAdditionalPayment extends BaseRequest
+class UpdateInstallmentDiscount extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,8 +23,10 @@ class PrepareAdditionalPayment extends BaseRequest
     public function rules(): array
     {
         return [
-            "assetId" => "required|integer",
-            "amount" => "required|numeric"
+            "installments" => "required|array",
+            "installments.*" => "array",
+            "installments.*.duration" => "required|integer",
+            "installments.*.discount" => "required|numeric|max:100"
         ];
     }
 }

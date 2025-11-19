@@ -41,6 +41,7 @@ use app\Http\Controllers\User\AnalyticsController;
 use app\Http\Controllers\User\ReferralController;
 use app\Http\Controllers\User\UserBankAccountController;
 use app\Http\Controllers\User\NotificationController as UserNotificationController;
+use app\Http\Controllers\User\DiscountController;
 
 
 // Client Controllers
@@ -298,6 +299,14 @@ Route::group(['prefix' => '/v2',], function () {
         Route::group(['middleware' => HRAuth::class, 'prefix' => '/notifications'], function () {
             Route::get('/unread', [UserNotificationController::class, "unreadNotifications"]);
             Route::post('mark_as_read', [UserNotificationController::class, "read"]);
+        });
+
+        Route::group(['prefix' => '/discounts'], function () {
+            Route::get('full_payment', [DiscountController::class, "fullPayment"]);
+            Route::post('full_payment/update', [DiscountController::class, "updateFullPayment"]);
+            Route::get('/installments', [DiscountController::class, "installments"]);
+            Route::post('/installments/update', [DiscountController::class, "updateInstallmentDiscounts"]); 
+            Route::post('/installments/add', [DiscountController::class, "addInstallmentDiscounts"]); 
         });
 
 

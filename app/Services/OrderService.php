@@ -23,6 +23,7 @@ use app\Services\ClientPackageService;
 use app\Services\ClientInvestmentService;
 use app\Services\FileService;
 use app\Services\CommissionService;
+use app\Services\DiscountService;
 
 /**
  * Order service class
@@ -51,6 +52,20 @@ class OrderService
                 "discountedAmount" => $discountArr['discountedAmount']
             ];
         }
+        if($data['packageType']==PackageType::NON_INVESTMENT->value && $data['isInstallment']){
+            $discountService = new DiscountService;
+            $installment = $discountService->getInstallmentDuration($data['duration']);
+            $discountArr = Utilities::getDiscount($discountedAmount, $installment->discount);
+            $discountedAmount = $discountArr['amount'];
+            $appliedDiscounts[] = [
+                "name" => $data['duration']."Months Installment Payment Discount", 
+                "type"=>OrderDiscountType::INSTALLMENT_PAYMENT->value, 
+                "discount"=>$installment->discount,
+                "amount"=>$discountArr['amount'],
+                "discountedAmount" => $discountArr['discountedAmount']
+            ];
+        }
+
         if($promoCodeDiscount) {
             $discountArr = Utilities::getDiscount($discountedAmount, $promoCodeDiscount);
             $discountedAmount = $discountArr['amount'];

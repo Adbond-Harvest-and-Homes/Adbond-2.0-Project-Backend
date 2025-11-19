@@ -77,14 +77,7 @@ class EnumClass
 
     public static function filePurposes()
     {
-        return [
-            FilePurpose::USER_PROFILE_PHOTO->value,
-            FilePurpose::CLIENT_PROFILE_PHOTO->value,
-            FilePurpose::PROJECT_TYPE_PHOTO->value,
-            FilePurpose::PROJECT_PHOTO->value,
-            FilePurpose::PACKAGE_PHOTO->value,
-            FilePurpose::PACKAGE_BROCHURE->value
-        ];
+        return array_column(FilePurpose::cases(), 'value');
     }
 
     public static function paymentModes()
