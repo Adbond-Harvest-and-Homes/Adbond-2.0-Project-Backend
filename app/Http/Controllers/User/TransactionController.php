@@ -26,7 +26,7 @@ class TransactionController extends Controller
         $page = ($request->query('page')) ?? 1;
         $perPage = ($request->query('perPage'));
         if(!is_int((int) $page) || $page <= 0) $page = 1;
-        if(!is_int((int) $perPage) || $perPage==null) $perPage = env('PAGINATION_PER_PAGE');
+        if(!is_int((int) $perPage) || $perPage==null) $perPage = env('TRANSACTION_PAGINATION_PER_PAGE', 50);
         $offset = $perPage * ($page-1);
 
         $filter = [];
