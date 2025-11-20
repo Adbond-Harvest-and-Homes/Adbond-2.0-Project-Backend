@@ -36,7 +36,11 @@ class WalletService
 
     public function clientWallet($clientId, $with=[])
     {
-        return Wallet::with($with)->where("client_id", $clientId)->first();
+        $wallet = Wallet::with($with)->where("client_id", $clientId)->first();
+        if(!$wallet) {
+            $wallet = $this->create($clientId);
+        }
+        return $wallet;
     }
 
     public function transactions($walletId, $with=[])
