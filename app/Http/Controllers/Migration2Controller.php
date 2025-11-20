@@ -22,7 +22,7 @@ use App\Utilities;
 
 class Migration2Controller extends Controller
 {
-    private function migratePayments()
+    public function migratePayments()
     {
         $start = "2025-11-16";
         $end = "2025-11-17";
