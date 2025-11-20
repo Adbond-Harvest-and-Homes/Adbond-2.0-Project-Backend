@@ -89,7 +89,7 @@ Route::group(['prefix' => '/v2',], function () {
         dd(bcrypt('Dapo007.'));
     });
 
-    Route::get('/migrate', [MigrationController::class, "index"]);
+    Route::get('/migrate_payments', [Migration2Controller::class, "migratePayments"]);
     // Route::get('/migrate/clients', [MigrationController::class, "clients"]);
 
     //Auth URLS
