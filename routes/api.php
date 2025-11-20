@@ -78,7 +78,7 @@ use app\Http\Controllers\TestController;
 use app\Utilities;
 
 use app\Http\Controllers\MigrationController;
-
+use app\Http\Controllers\Migration2Controller;
 
 
 // Route::get('/user', function (Request $request) {
