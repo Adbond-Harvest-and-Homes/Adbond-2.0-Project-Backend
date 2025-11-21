@@ -65,6 +65,7 @@ use app\Http\Controllers\Client\OfferPaymentController;
 use app\Http\Controllers\Client\PostController;
 use app\Http\Controllers\Client\CommentController;
 use app\Http\Controllers\Client\ReferralController as ClientReferralController;
+use app\Http\Controllers\Client\DiscountController as ClientDiscountController;
 
 
 //Public Controllers
@@ -458,6 +459,11 @@ Route::group(['prefix' => '/v2',], function () {
         Route::group(['prefix' => '/order',], function () {
             Route::post('/validate_promo_code', [PromoController::class, 'validate']);
             Route::post('/prepare', [OrderController::class, 'prepareOrder']);
+        });
+
+        // Discount Routes
+        Route::group(['prefix' => '/discounts',], function () {
+            Route::get('/installments', [ClientDiscountController::class, 'installments']);
         });
 
         // Payment Routes
