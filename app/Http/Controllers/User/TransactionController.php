@@ -8,9 +8,12 @@ use app\Http\Controllers\Controller;
 use app\Http\Resources\TransactionResource;
 
 use app\Services\TransactionService;
-use app\Utilities;
+
+use app\Models\PaymentMode;
 
 use app\Enums\ProjectType;
+
+use app\Utilities;
 
 class TransactionController extends Controller
 {
@@ -49,6 +52,16 @@ class TransactionController extends Controller
             foreach($validTypes as $valid) $validTypesString .= $valid.', ';
             if(!in_array($request->query('projectType'), $validTypes)) return Utilities::error402("Valid Project Types are: ".$validTypesString);
             $filter["projectType"] = $request->query('projectType');
+        }
+        if($request->query('paymentMethod')) {
+            $validPaymentMethods = ['cash', 'card'];
+            $validPaymentMethodsString = '';
+            foreach($validPaymentMethods as $valid) $validPaymentMethodsString .= $valid.', ';
+            if(!in_array($request->query('paymentMethod'), $validPaymentMethods)) return Utilities::error402("Valid Payment Methods are: ".$validPaymentMethodsString);
+            switch($request->query('paymentMethod')) {
+                case "cash" : $filter['paymentMethod'] = PaymentMode::bankTransfer()->id; break;
+                case "card" : $filter['paymentMethod'] = PaymentMode::bankTransfer()->id; break;
+            }
         }
         $this->transactionService->filters = $filter;
 

@@ -53,6 +53,7 @@ class TransactionService
                 });
             });
         });
+        if(isset($filter['paymentMethod'])) $query = $query->where("payment_mode_id", $filter['paymentMethod']);
         if($this->count) return $query->count();
 
         if($perPage==null) $perPage=config('pagination.PER_PAGE');
