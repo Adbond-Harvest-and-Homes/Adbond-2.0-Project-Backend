@@ -110,6 +110,11 @@ class Client extends Authenticatable implements JWTSubject
         return $this->hasManyThrough(SiteTourSchedule::class, SiteTourBooking::class, "client_id", "id", "id", "site_tour_schedule_id");
     }
 
+    public function siteTourBookings()
+    {
+        return $this->hasMany(SiteTourBooking::class);
+    }
+
     public function reactions(): MorphMany
     {
         return $this->morphMany(Reaction::class, 'user');
@@ -214,5 +219,46 @@ class Client extends Authenticatable implements JWTSubject
             foreach($this->dislikedComments() as $comment) $ids[] = $comment->id;
         }
         return $ids;
+    }
+
+    public function commissionEarnings()
+    {
+        return $this->hasMany(ClientCommissionEarning::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::deleting(function (Client $client) {
+            if($client->wallet) $client->wallet->delete();
+
+            if($client->nextOfKins) $client->nextOfKins->delete();
+
+            if($client->clientIdentification) $client->clientIdentification->delete();
+
+            if($client->photo) $client->photo->delete();
+
+            if($client->siteTourBookings->count() > 0) {
+                foreach($client->siteTourBookings as $booking) $booking->delete();
+            }
+
+            if($client->reactions->count() > 0) {
+                foreach($client->reactions as $reaction) $reaction->delete();
+            }
+
+            if($client->commissionEarnings->count() > 0) {
+                foreach($client->commissionEarnings as $earning) $earning->delete();
+            }
+
+            if($client->referrals->count() > 0) {
+                foreach($client->referrals as $referral) {
+                    $referral->referer_id = null;
+                    $referral->referer_type = null;
+                    $referral->update();
+                }
+            }
+
+        });
     }
 }

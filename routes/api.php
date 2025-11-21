@@ -316,6 +316,7 @@ Route::group(['prefix' => '/v2',], function () {
             Route::get('/export', [UserClientController::class, "export"]);
             Route::get('/{clientId}', [UserClientController::class, "show"]);
             Route::post('/{clientId}', [UserClientController::class, "update"]);
+            Route::delete('/{clientId}', [UserClientController::class, "delete"]);
             Route::post('/re_upload_document/{assetId}', [UserFileController::class, "saveClientDocument"]);
 
             // Wallet Routes
