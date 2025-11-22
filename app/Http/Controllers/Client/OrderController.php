@@ -53,7 +53,7 @@ class OrderController extends Controller
 
             if($package->available_units < $data['units']) return Utilities::error402("Available Units is not up to ".$data['units']);
 
-            $promoCodeDiscount = (isset($data['promoCode'])) ? $this->promoCodeService->validatePromoCode($data['code'], $package)['discount'] : null;
+            $promoCodeDiscount = (isset($data['promoCode'])) ? $this->promoCodeService->validatePromoCode($data['promoCode'], $package)['discount'] : null;
             $promos = $this->promoService->getPromos($package, Auth::guard('client')->user());
             $processingData = ["amount" => ($package->amount * $data['units']), "isInstallment" => $data['isInstallment'], "packageType" => $package->type];
             if($data['isInstallment']) $processingData['duration'] = $data['installmentCount'];
