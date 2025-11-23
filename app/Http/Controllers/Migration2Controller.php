@@ -27,6 +27,7 @@ class Migration2Controller extends Controller
     {
         $start = "2025-11-16";
         $end = "2025-11-17";
+        dd('here');
         DB::connection('db1')->table('payments')->where("created_at", ">=", $start)->where("created_at", "<=", $end)->orderBy('id')->chunk(500, function ($records) {
             if(count($records) > 0) {
                 dd('records');
