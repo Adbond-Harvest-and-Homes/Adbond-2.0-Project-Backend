@@ -29,6 +29,7 @@ class Migration2Controller extends Controller
         $end = "2025-11-17";
         DB::connection('db1')->table('payments')->where("created_at", ">=", $start)->where("created_at", "<=", $end)->orderBy('id')->chunk(500, function ($records) {
             if(count($records) > 0) {
+                dd('records');
                 foreach ($records as $record) {
                     $v1Payment = (array) $record;
 
@@ -91,6 +92,7 @@ class Migration2Controller extends Controller
                     }
                 }
             }
+            dd('no records');
         });
         // $this->markAsMigrated($this->paymentsMigration);
     }
