@@ -5,21 +5,21 @@ namespace app\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\Order;
-use App\Models\Payment;
-use App\Models\File;
-use App\Models\ClientPackage;
-use App\Models\Client;
-use App\Models\OrderDiscount;
-use App\Models\PaymentStatus;
+use app\Models\Order;
+use app\Models\Payment;
+use app\Models\File;
+use app\Models\ClientPackage;
+use app\Models\Client;
+use app\Models\OrderDiscount;
+use app\Models\PaymentStatus;
 
-use App\Enums\OrderType;
-use App\Enums\OrderDiscountType;
-use App\Enums\PaymentPurpose;
-use App\Enums\FilePurpose;
-use App\Enums\ClientPackageOrigin;
+use app\Enums\OrderType;
+use app\Enums\OrderDiscountType;
+use app\Enums\PaymentPurpose;
+use app\Enums\FilePurpose;
+use app\Enums\ClientPackageOrigin;
 
-use App\Utilities;
+use app\Utilities;
 
 class Migration2Controller extends Controller
 {
