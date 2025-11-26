@@ -197,81 +197,18 @@ class OrderService
         $fileService = new FileService;
         $clientInvestmentService = new ClientInvestmentService;
         $clientPackageService = new ClientPackageService;
-        // try{
-        //     // generate and save contract
-        //     Helpers::generateContract($order);
-        //     // dd('generate receipt');
-        //     $uploadedContract = "files/contract_{$order->id}.pdf";
-            
-        //     $response = Helpers::moveUploadedFileToCloud($uploadedContract, FileTypes::PDF->value, $order->client->id, 
-        //     FilePurpose::CONTRACT->value, "app\Models\Client", "client-contracts");
-            
-        //     if($response['success']) {
-        //         $contractFileId = $response['upload']['file']->id;
-        //         $contractFileObj = $response['upload']['file'];
-        //     }
-            
-        // }catch(\Exception $e) {
-        //     Utilities::logStuff("Error Occurred while attempting to generate and upload contract..".$e);
-        // }
-        // generate and save letter of happiness
-
-        // try{
-        //     // generate and save contract
-            
-        //     ($order->package->project->project_type_id == ProjectType::land()->id) ? Helpers::generateLetterOfHappiness($payment) : Helpers::generateHomesLetterOfHappiness($payment);
-        //     // dd('generate receipt');
-        //     $uploadedLetter = "files/letter_of_happiness_{$order->id}.pdf";
-            
-        //     $response = Helpers::moveUploadedFileToCloud($uploadedLetter, FileTypes::PDF->value, $order->client->id, 
-        //     FilePurpose::LETTER_OF_HAPPINESS->value, "app\Models\Client", "client-letter_of_happiness");
-        //     if($response['success']) {
-        //         $letterOfHappinessFileId = $response['upload']['file']->id;
-        //         $letterOfHappinessFileObj = $response['upload']['file'];
-        //     }
-            
-        // }catch(\Exception $e) {
-        //     Utilities::logStuff("Error Occurred while attempting to generate and upload letter of happiness..".$e);
-        // }
 
         // mark the order as complete
         $order->completed = true;
         $order->update();
 
 
-        // save the clientPackage and return it
-        $clientPackageService = new ClientPackageService;
         $files = [];
-        // if($contractFileId) $files['contractFileId'] = $contractFileId;
-        // if($letterOfHappinessFileId) $files['happinessLetterFileId'] = $letterOfHappinessFileId;
-        // dd($files);
         if($order->package->type==PackageType::NON_INVESTMENT->value) {
-            $clientPackage = $clientPackageService->saveClientPackageOrder($order, $files);
-            $clientPackageService->uploadContract($order, $clientPackage);
-            $clientPackageService->uploadLetterOfHappiness($payment, $clientPackage);
+            $clientPackage = $clientPackageService->saveClientPackageOrder($order);
         }
 
         if($order->package->type==PackageType::INVESTMENT->value) {
-            // try{
-            //     // generate and save Memorandum of Agreement
-            //     Helpers::generateMemorandumAgreement($order);
-            //     // dd('generate receipt');
-            //     $uploadedMemorandum = "files/memorandum_agreement_{$order->id}.pdf";
-                
-            //     $response = Helpers::moveUploadedFileToCloud($uploadedMemorandum, FileTypes::PDF->value, $order->client->id, 
-            //     FilePurpose::MEMORANDUM_OF_AGREEMENT->value, "app\Models\Client", "client-agreement-memorandums");
-                
-            //     if($response['success']) {
-            //         $memorandumFileId = $response['upload']['file']->id;
-            //         $memorandumFileObj = $response['upload']['file'];
-            //         $clientInvestment = $clientInvestmentService->addMemorandumAgreement($memorandumFileId, $clientInvestment);
-            //     }
-                
-            // }catch(\Exception $e) {
-            //     Utilities::logStuff("Error Occurred while attempting to generate and upload Memorandum of agreement..".$e);
-            // }
-            // $investmentData['startDate'] = date("Y-m-d");
-            // $investmentData['endDate'] = 
 
             //Upload MOU and send it as email
             $clientInvestmentService->uploadMOU($order, $clientInvestment);

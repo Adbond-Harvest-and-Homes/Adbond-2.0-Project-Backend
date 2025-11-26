@@ -234,9 +234,7 @@ class PaymentController extends Controller
                     if(Auth::guard("client")->user()->referer_type == UserType::USER->value) {
                         $this->commissionService->save(Auth::guard("client")->user()->referer, $order);
                     }
-                }
-
-                $this->paymentService->uploadReceipt($payment, Auth::guard('client')->user());  
+                } 
                 $clientInvestment = (isset($clientInvestment)) ? $clientInvestment : null;
 
                 //Update the order to register the amount payed
@@ -406,6 +404,7 @@ class PaymentController extends Controller
         if($data['cardPayment']) $paymentData['reference'] = $data['reference'];
         $paymentData['paymentDate'] = ($data['cardPayment']) ? now() : $data['paymentDate'];
         $paymentData['paymentGatewayId'] = ($data['cardPayment']) ? PaymentMode::cardPayment()->id : PaymentMode::bankTransfer()->id;
+        if(Helpers::kycCompleted(Auth::guard('client')->user())) $paymentData['docsUploaded'] = true;
         $payment = $this->paymentService->save($paymentData);
 
         //update order

@@ -45,9 +45,13 @@ class ClientPackageService
     // This method either saves or updates client package
     public function save($data, $clientPackage=null)
     {
+        $new = false;
         if(!$clientPackage) {
             $clientPackage = ClientPackage::where("purchase_id", $data['purchaseId'])->where("purchase_type", $data['purchaseType'])->where("package_id",$data['packageId'])->first();
-            if(!$clientPackage) $clientPackage = new ClientPackage;
+            if(!$clientPackage) {
+                $new = true;
+                $clientPackage = new ClientPackage;
+            }
         }
         $clientPackage->client_id = $data['clientId'];
         $clientPackage->package_id = $data['packageId'];
@@ -63,6 +67,13 @@ class ClientPackageService
         $clientPackage->unit_price = $data['unitPrice'];
         if($clientPackage->purchase_complete == 1) $clientPackage->purchase_completed_at = now();
         $clientPackage->save();
+
+        //Upload contract here if its a new order and completed kyc
+        if($new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
+            $purchase = $clientPackage->purchase; 
+            $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
+            $this->uploadContract($purchase, $clientPackage, $isOffer);
+        }
 
         return $clientPackage;
     }
@@ -80,7 +91,7 @@ class ClientPackageService
         $data['amount'] = $order->amount_payable;
         $data['units'] = $order->units;
         $data['unitPrice'] = $order->unit_price;
-        $clientPackage = (!$clientPackage) ? $this->save($data) : $this->save($data, $clientPackage);
+        $clientPackage = $this->save($data);
 
         // Add Asset Metric;
         $metricService = new MetricService;

@@ -10,6 +10,8 @@ use PDF;
 use Illuminate\Support\Facades\DB;
 
 use app\Services\AgeGroupService;
+use app\Services\PackageService;
+use app\Services\ClientPackageService;
 
 use app\Models\Client;
 use app\Models\ClientNextOfKin;
@@ -21,6 +23,7 @@ use app\Exports\ClientExport;
 
 use app\Enums\KYCStatus;
 use app\Enums\ActiveToggle;
+use app\Enums\ClientPackageOrigin;
 use app\Helpers;
 
 /**
@@ -177,6 +180,9 @@ class ClientService
                 $client->update();
             }
         }
+
+        if($client->kyc_status == KYCStatus::COMPLETED->value) $this->uploadDocs($client);
+        
         return $client;
     }
 
@@ -184,6 +190,34 @@ class ClientService
     {
         $client->password =  bcrypt($password);
         $client->update();
+    }
+
+    public function uploadDocs($client)
+    {
+        $paymentService = new PaymentService;
+        $clientPackageService = new ClientPackageService;
+        //upload receipts
+        $payments = $paymentService->getClientPayments($client->id);
+        if($payments->count() > 0) {
+            foreach($payments as $payment) {
+                if($payment->docs_uploaded == 0) {
+                    $paymentService->uploadReceipt($payment, $client);
+                    $payment->docs_uploaded == 1;
+                    $payment->update();
+                }
+            }
+        }
+
+        $assets = $clientPackageService->clientAssets($client->id);
+        if($assets->count() > 0) {
+            foreach($assets as $asset) {
+                if($asset->docs_uploaded == 0 && $asset->origin != ClientPackageOrigin::INVESTMENT->value) {
+                    $clientPackageService->uploadContract($asset->purchase, $asset, ($asset->origin == ClientPackageOrigin::OFFER->value));
+                    $asset->docs_uploaded == 1;
+                    $asset->update();
+                }
+            }
+        }
     }
 
     public function saveGoogleUser($data)

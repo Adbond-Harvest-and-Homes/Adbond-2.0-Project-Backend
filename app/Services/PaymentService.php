@@ -41,6 +41,16 @@ class PaymentService
         return Payment::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->first();
     }
 
+    public function getPayments()
+    {
+        return Payment::all();
+    }
+
+    public function getClientPayments($clientId)
+    {
+        return Payment::where("client_id", $clientId)->get();
+    }
+
     public function offerPayments($with=[], $offset=0, $perPage=null)
     {
         $query = Payment::with($with)->where("purchase_type", Offer::$type);
@@ -127,9 +137,12 @@ class PaymentService
         if(isset($data['paymentDate'])) $payment->payment_date = $data['paymentDate'];
         if(isset($data['receiptFileId'])) $payment->receipt_file_id = $data['receiptFileId'];
         if(isset($data['receiptNumber'])) $payment->receipt_no = $data['receiptNumber'];
+        if(isset($data['docsUploaded'])) $payment->docs_uploaded = 1;
         $payment->purpose = $data['purpose'];
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
         $payment->save();
+
+        if(Helpers::kycCompleted(Auth::guard('client')->user()) && $payment->confirmed == 1) $this->uploadReceipt($payment, $payment->client); 
         return $payment;
     }
 
