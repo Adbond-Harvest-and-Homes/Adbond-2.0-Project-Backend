@@ -42,7 +42,7 @@ class ProjectResource extends JsonResource
             "description" => $this->description,
             "status" => ($this->active) ? "Active" : "Inactive",
             "country" => $this?->stateModel?->country?->name,
-            "state" => $this?->stateModel?->name,
+            // "state" => $this?->stateModel?->name,
             "created" => $this->created_at->format("F j, Y"),
             "projectType" => new ProjectTypeResource($this->whenLoaded("projectType")),
             "packages" => PackageResource::collection($this->whenLoaded("packages")),

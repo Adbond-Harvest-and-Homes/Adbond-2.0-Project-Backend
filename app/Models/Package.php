@@ -37,9 +37,14 @@ class Package extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function state()
+    public function stateModel()
     {
-        return $this->belongsTo("app\Models\State");
+        return $this->belongsTo(State::class, "state_id", "id");
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 
     public function brochure()

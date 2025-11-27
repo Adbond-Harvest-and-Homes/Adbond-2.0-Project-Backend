@@ -15,6 +15,8 @@ use app\Enums\PackageType;
 
 use app\Exports\PackageExport;
 
+use app\Services\CountryService;
+
 class PackageService
 {
     public $count = false;
@@ -29,11 +31,17 @@ class PackageService
         $package = $this->getByName($data['name']);
         if(!$package) {
             $package = new Package;
+            $countryService = new CountryService;
             $package->name = $data['name'];
             $package->project_id = $data['projectId'];
             $package->user_id = $data['userId'];
 
-            $package->state = $data['state'];
+            $state = $countryService->getState($data['stateId']);
+
+            $package->state_id = $data['stateId'];
+            $package->state = $state->name;
+            $package->country_id = $state->country->id;
+
             if(isset( $data['address'])) $package->address = $data['address'];
             if(isset($data['size'])) $package->size = $data['size'];
             $package->amount = $data['amount'];
@@ -83,9 +91,17 @@ class PackageService
 
     public function update($data, $package)
     {
+        $countryService = new CountryService;
+
         if(isset($data['name'])) $package->name = $data['name'];
         if(isset( $data['projectId'])) $package->project_id = $data['projectId'];
-        if(isset( $data['stateId'])) $package->state_id = $data['stateId'];
+        if(isset( $data['stateId'])) {
+            $state = $countryService->getState($data['stateId']);
+
+            $package->state_id = $data['stateId'];
+            $package->state = $state->name;
+            $package->country_id = $state->country->id;
+        }
         if(isset( $data['address'])) $package->address = $data['address'];
         if(isset( $data['size'])) $package->size = $data['size'];
         if(isset( $data['amount'])) $package->amount = $data['amount'];

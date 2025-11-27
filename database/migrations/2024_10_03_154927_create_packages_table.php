@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->references("id")->on("users");
             $table->string('name');
-            $table->foreignId('state_id')->references("id")->on("states");
+            $table->foreignId("country_id");
+            $table->foreignId('state_id');
             $table->string('address')->nullable();
             $table->foreignId('project_id')->references("id")->on("projects");
             $table->double("size")->nullable();

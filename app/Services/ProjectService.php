@@ -29,15 +29,14 @@ class ProjectService
             DB::beginTransaction();
             
             $project = new Project;
-            $countryService = new CountryService;
 
             $project->name = $data['name'];
             $project->project_type_id = $data['projectTypeId'];
             if(isset($data['description'])) $project->description = $data['description'];
-            $state = $countryService->getState($data['stateId']);
+            
 
-            $project->state_id = $data['stateId'];
-            $project->state = $state->name;
+            // $project->state_id = $data['stateId'];
+            // $project->state = $state->name;
             $project->save();
             
             $typeCode = strtoupper(substr($project->projectType->name, 0, 3));

@@ -36,7 +36,7 @@ class SavePackage extends BaseRequest
             "projectId" => "required|integer|exists:projects,id",
             "name" => ["required","string", new PackageNameUnique()],
             "type" => ["nullable", "string", Rule::in(EnumClass::packageTypes())],
-            "state" => "required|string",
+            "stateId" => "required|integer|exists:states,id",
             "address" => "nullable|string",
             "size" => ["numeric", Rule::requiredIf(function () {
                                         return $this->type && $this->type === PackageType::NON_INVESTMENT->value;
