@@ -34,7 +34,7 @@ class Project extends Model
         return $this->belongsTo("app\Models\ProjectType");
     }
 
-    public function state()
+    public function stateModel()
     {
         return $this->belongsTo(State::class);
     }
