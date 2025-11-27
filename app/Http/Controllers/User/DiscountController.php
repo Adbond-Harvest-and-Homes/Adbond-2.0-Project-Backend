@@ -73,5 +73,15 @@ class DiscountController extends Controller
 
         return Utilities::ok(InstallmentDiscountResource::collection($installments));
     }
+
+    public function deleteInstallment($duration)
+    {
+        $installment = $this->discountService->getInstallmentDuration($duration);
+        if(!$installment) return Utilities::error402("Could not find this installment duration");
+
+        $this->discountService->delete($installment);
+
+        return Utilities::okay("Installment Duration deleted successfully");
+    }
     
 }

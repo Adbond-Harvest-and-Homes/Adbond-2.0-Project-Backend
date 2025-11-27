@@ -64,4 +64,9 @@ class DiscountService
         }
     }
 
+    public function delete($installment)
+    {
+        $installment->delete();
+    }
+
 }

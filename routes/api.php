@@ -308,6 +308,7 @@ Route::group(['prefix' => '/v2',], function () {
             Route::get('/installments', [DiscountController::class, "installments"]);
             Route::post('/installments/update', [DiscountController::class, "updateInstallmentDiscounts"]); 
             Route::post('/installments/add', [DiscountController::class, "addInstallmentDiscounts"]); 
+            Route::delete('/installments/{duration}', [DiscountController::class, "deleteInstallment"]); 
         });
 
 
