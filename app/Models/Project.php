@@ -80,5 +80,19 @@ class Project extends Model
             }
         
         });
+
+        self::deleting(function (Project $project) {
+            if($project->packages->count() > 0) {
+                foreach($project->packages as $package) {
+                    $package->delete();
+                }
+            }
+
+            if($project->promoProducts->count() > 0) {
+                foreach($project->promoProducts as $promoProduct) {
+                    $promoProduct->delete();
+                }
+            }
+        });
     }
 }

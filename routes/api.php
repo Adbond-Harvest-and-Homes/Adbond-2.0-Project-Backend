@@ -416,6 +416,7 @@ Route::group(['prefix' => '/v2',], function () {
         Route::get('benefits', [UtilityController::class, 'benefits']);
         Route::get('banks', [UtilityController::class, 'banks']);
         Route::get('identifications', [UtilityController::class, 'identifications']);
+        Route::get('countries', [UtilityController::class, 'countries']);
     });
 
 
