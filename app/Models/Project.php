@@ -34,6 +34,11 @@ class Project extends Model
         return $this->belongsTo("app\Models\ProjectType");
     }
 
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
     // public function locations()
     // {
     //     return $this->hasMany("app\Models\ProjectLocation");

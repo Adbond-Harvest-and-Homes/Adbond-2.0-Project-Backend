@@ -18,6 +18,8 @@ class ProjectMinResource extends JsonResource
             "id" => $this->id,
             "identifier" => $this->identifier,
             "name" => $this->name,
+            "country" => $this?->state?->country?->name,
+            "state" => $this?->state?->name,
             "description" => $this->description,
             "status" => ($this->active) ? "Active" : "Inactive",
             "created" => $this->created_at->format("F j, Y"),
