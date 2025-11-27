@@ -29,7 +29,7 @@ class SaveProject extends BaseRequest
             })],
             "projectTypeId" => ["required","integer","exists:project_types,id"],
             "description" => "nullable|string",
-            // "stateId" => "required|integer|exists:states,id",
+            "stateId" => "required|integer|exists:states,id",
             // "address" => "required|string"
         ];
     }

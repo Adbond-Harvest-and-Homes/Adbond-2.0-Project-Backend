@@ -26,4 +26,9 @@ class CountryService
         return COuntry::find($id);
     }
 
+    public function getState($id)
+    {
+        return State::find($id);
+    }
+
 }
