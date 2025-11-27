@@ -56,9 +56,17 @@ class ProjectService
 
     public function update($data, $project)
     {
+        $countryService = new CountryService;
+
         if(isset($data['name'])) $project->name = $data['name'];
         if(isset($data['projectTypeId'])) $project->project_type_id = $data['projectTypeId'];
         if(isset($data['description'])) $project->description = $data['description'];
+        if(isset($data['stateId'])) {
+            $state = $countryService->getState($data['stateId']);
+
+            $project->state_id = $data['stateId'];
+            $project->state = $state->name;
+        }
         $project->update();
         return $project;
     }

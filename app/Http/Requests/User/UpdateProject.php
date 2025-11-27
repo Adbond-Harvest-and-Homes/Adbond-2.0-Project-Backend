@@ -27,7 +27,8 @@ class UpdateProject extends BaseRequest
             "id" => "required|integer",
             "name" => ["nullable","string"],
             "description" => "nullable|string",
-            "projectTypeId" => "nullable|integer|exists:project_types,id"
+            "projectTypeId" => "nullable|integer|exists:project_types,id",
+            "stateId" => "nullable|integer|exists:states,id",
         ];
     }
 }
