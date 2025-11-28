@@ -20,7 +20,7 @@ class CountryResource extends JsonResource
             "id" => $this->name,
             "code" => $this->code,
             "name" => $this->name,
-            "states" => StateResource::collection($this->states)
+            "states" => StateResource::collection($this->whenLoaded("states"))
         ];
     }
 }
