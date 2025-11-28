@@ -255,11 +255,15 @@ class ClientPackageService
             if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
         }
         if($this->count) return $query->count();
+
         $query = $query->orderBy("created_at", "DESC");
 
         if ($perPage !== null) {
             $query->limit($perPage)->offset($offset);
         }
+
+        // ✅ ALWAYS return a collection
+        return $query->get();
     }
 
     public function assets($with=[], $offset=0, $perPage=null)
