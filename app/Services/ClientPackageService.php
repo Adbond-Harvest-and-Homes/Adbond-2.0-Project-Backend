@@ -255,7 +255,11 @@ class ClientPackageService
             if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
         }
         if($this->count) return $query->count();
-        return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+        $query = $query->orderBy("created_at", "DESC");
+
+        if ($perPage !== null) {
+            $query->limit($perPage)->offset($offset);
+        }
     }
 
     public function assets($with=[], $offset=0, $perPage=null)
@@ -277,8 +281,15 @@ class ClientPackageService
             if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
         }
         if($this->count) return $query->count();
-        return $query->orderBy("created_at", "DESC")->offset($offset);
-        return ($perPage) ? $query->limit($perPage)->get() : $query->get();
+        $query = $query->orderBy("created_at", "DESC");
+
+        if ($offset !== null) $query = $query->offset($offset);
+
+        if ($perPage) $query = $query->limit($perPage);
+
+        return $query->get();
+        // return $query->orderBy("created_at", "DESC")->offset($offset);
+        // return ($perPage) ? $query->limit($perPage)->get() : $query->get();
     }
 
 }
