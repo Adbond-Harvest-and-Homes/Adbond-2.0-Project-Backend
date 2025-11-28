@@ -9,6 +9,9 @@ use app\Http\Resources\ProjectTypeResource;
 use app\Http\Resources\PackageResource;
 use app\Http\Resources\PromoResource;
 
+use app\Http\Resources\CountryResource;
+use app\Http\Resources\StateResource;
+
 class ProjectResource extends JsonResource
 {
     private $onlyActivePackages = false;
@@ -41,7 +44,8 @@ class ProjectResource extends JsonResource
             "name" => $this->name,
             "description" => $this->description,
             "status" => ($this->active) ? "Active" : "Inactive",
-            "country" => $this?->stateModel?->country?->name,
+            "countries" => CountryResource::collection($this->countries),
+            "states" => StateResource::collection($this->states),
             // "state" => $this?->stateModel?->name,
             "created" => $this->created_at->format("F j, Y"),
             "projectType" => new ProjectTypeResource($this->whenLoaded("projectType")),
