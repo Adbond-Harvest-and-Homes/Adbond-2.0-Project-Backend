@@ -72,6 +72,8 @@ class PackageController extends Controller
         $offset = $perPage * ($page-1);
 
         $filter = [];
+        if($request->query('countryId')) $this->packageService->countryId = $request->query('countryId');
+        if($request->query('stateId')) $this->packageService->stateId = $request->query('stateId');
         if($request->query('text')) $filter["text"] = $request->query('text');
         if($request->query('date')) $filter["date"] = $request->query('date');
         if($request->query('status')) {

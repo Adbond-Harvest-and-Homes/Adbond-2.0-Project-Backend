@@ -22,6 +22,8 @@ class PackageService
     public $count = false;
     public $projectId = null;
     public $active = null;
+    public $countryId = null;
+    public $stateId = null;
 
     public $all = null;
 
@@ -189,6 +191,8 @@ class PackageService
         $query = Package::with($with);
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if($this->active != null) $query->where("active", $this->active);
+        if($this->countryId) $query->where("country_id", $this->countryId);
+        if($this->stateId) $query->where("state_id", $this->stateId);
         if($this->count) return $query->count();
 
         if($perPage==null) return $query->orderBy("created_at", "DESC")->get(); // $perPage=env('PAGINATION_PER_PAGE');
