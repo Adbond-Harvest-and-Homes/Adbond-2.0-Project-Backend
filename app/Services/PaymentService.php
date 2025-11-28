@@ -142,7 +142,7 @@ class PaymentService
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
         $payment->save();
 
-        if(Helpers::kycCompleted(Auth::guard('client')->user()) && $payment->confirmed == 1) $this->uploadReceipt($payment, $payment->client); 
+        if(Helpers::kycCompleted($payment->client) && $payment->confirmed == 1) $this->uploadReceipt($payment, $payment->client); 
         return $payment;
     }
 
