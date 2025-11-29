@@ -51,7 +51,7 @@ class PackageController extends Controller
         $perPage = ($request->query('perPage'));
         if(!is_int((int) $perPage) || $perPage==null) $perPage = 4;
 
-        $packages = $projectType->packages()->with(['state', 'packagePhotos', 'media'])->where("packages.active", 1)->orderBy("created_at", "DESC")->limit($perPage)->get();
+        $packages = $projectType->packages()->with(['stateModel', 'packagePhotos', 'media'])->where("packages.active", 1)->orderBy("created_at", "DESC")->limit($perPage)->get();
 
         return Utilities::ok(PackageResource::collection($packages));
     }
