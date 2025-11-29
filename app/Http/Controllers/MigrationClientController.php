@@ -152,7 +152,7 @@ class MigrationClientController extends Controller
                         
                             $client = $this->getClient($v1Order['customer_id']);
                             $package = $this->getPackageFromPackageItem($v1Order['package_item_id']);
-                            dd($package);
+                            // dd($package);
 
                             $v1PaymentStatus = DB::connection('db1')->table('payment_statuses')->where("id", $v1Order['payment_status_id'])->first();
                             $paymentStatus = null;
