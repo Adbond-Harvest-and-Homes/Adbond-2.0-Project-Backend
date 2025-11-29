@@ -198,6 +198,8 @@ class MigrationClientController extends Controller
                                     $this->migrateOrderDiscounts($v1Order, $order);
                                     $this->migratePayments($v1Order, $order);
                                     $this->migrateOrderClientPackages($v1Order, $order);
+
+                                    Utilities::logSuccessMigration("Client Order Migration success");
                                 }
                             }else{
                                 Utilities::logFailedMigration("Order not Migrated.. Client not found V1OrderId: ".$v1Order['id']);
