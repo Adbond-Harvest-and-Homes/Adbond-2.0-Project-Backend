@@ -144,6 +144,7 @@ trait MigrationService
             if($v1Package) {
                 $v1Package = (array) $v1Package;
                 $name = ($packageItems->count() > 1) ? $this->getPackageNameFromPackageItem($packageItem['id'], $v1Package, $packageItems) : $v1Package['name'];
+                dd($name);
                 $package = Package::where("name", $name)->first();
             }
         }
