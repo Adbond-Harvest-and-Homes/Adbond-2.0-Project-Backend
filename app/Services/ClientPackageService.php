@@ -41,6 +41,7 @@ class ClientPackageService
     public $count = false;
     public $filter = null;
     public $active = null;
+    public $uploadContract = false;
 
     // This method either saves or updates client package
     public function save($data, $clientPackage=null)
@@ -69,11 +70,14 @@ class ClientPackageService
         $clientPackage->save();
 
         //Upload contract here if its a new order and completed kyc
-        if($new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
+        // dd($this->uploadContract);
+        if($this->uploadContract && $new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
             $purchase = $clientPackage->purchase; 
             $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
             $this->uploadContract($purchase, $clientPackage, $isOffer);
+            // dd("uploaded contract");
         }
+        // dd($new, $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value, Helpers::kycCompleted($clientPackage->client));
 
         return $clientPackage;
     }
@@ -230,6 +234,11 @@ class ClientPackageService
     public function clientPackage($id, $with=[])
     {
         return ClientPackage::with($with)->where("id", $id)->first();
+    }
+
+    public function getClientPackageByPurchase($purchaseId, $purchaseType)
+    {
+        return ClientPackage::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->first();
     }
 
     public function clientAssetSummary($clientId)

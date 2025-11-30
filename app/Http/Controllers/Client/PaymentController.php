@@ -219,6 +219,8 @@ class PaymentController extends Controller
             $this->packageService->deductUnits($order->units, $order?->package);
             if($order->package->type==PackageType::INVESTMENT->value) $clientInvestment = $this->clientInvestmentService->saveInvestment($order, $processedData);
 
+            $this->clientPackageService->uploadContract = ($payment->confirmed == 1);
+            
             if($data['cardPayment']) {
                 // dd('got here');
                 $asset = null;
@@ -240,15 +242,16 @@ class PaymentController extends Controller
                 //Update the order to register the amount payed
                 $this->orderService->update(["amountPayed" => $payment->amount], $order);
 
-
                 if ($order->is_installment == 0 || $order->balance <= 0) {
                     $clientPackage = $this->orderService->completeOrder($order, $payment, $clientInvestment);
                     $this->notificationService->save($clientPackage, NotificationType::ORDER_COMPLETION->value,  Auth::guard("client")->user());
 
                 }else{
+                    dd($this->clientPackageService->uploadContract);
                     $asset = (($order->package->type==PackageType::INVESTMENT->value) ? $this->clientPackageService->saveClientPackageInvestment($clientInvestment) : $this->clientPackageService->saveClientPackageOrder($order));
                 }
             }else{
+                dd($this->clientPackageService->uploadContract);
                 (($order->package->type==PackageType::INVESTMENT->value) ? $this->clientPackageService->saveClientPackageInvestment($clientInvestment) : $this->clientPackageService->saveClientPackageOrder($order));
             }
             // dd('skipped'.$data);
@@ -364,10 +367,10 @@ class PaymentController extends Controller
         $paymentData['purpose'] = ($processedData['isInstallment']) ? PaymentPurpose::INSTALLMENT_PAYMENT->value : PaymentPurpose::PACKAGE_FULL_PAYMENT->value;
         $paymentData['paymentModeId'] = ($data['cardPayment']) ? PaymentMode::cardPayment()->id : PaymentMode::bankTransfer()->id;
         if($data['cardPayment']) {
+            $amountPaid = (isset($gatewayRes['amount'])) ? $gatewayRes['amount'] : ((isset($data['amountPayed'])) ? $data['amountPayed'] : $processedData['amountPayable']);
+            $paymentData['amount'] = $amountPaid;
             if($gatewayRes['success']) {
                 $paymentData['success'] = true;
-                $amountPaid = (isset($gatewayRes['amount'])) ? $gatewayRes['amount'] : ((isset($data['amountPayed'])) ? $data['amountPayed'] : $processedData['amountPayable']);
-                $paymentData['amount'] = $amountPaid;
                 // $data['paymentStatusId'] = (($order->type == OrderType::PURCHASE->value || $order->is_installment==1) && ($order->balance == )) ? PaymentStatus::deposit()->id : PaymentStatus::complete()->id;
                 if($order->is_installment==0) $data['paymentStatusId'] = PaymentStatus::complete()->id;
                 $data['amountPayed'] = $amountPaid;
@@ -405,6 +408,7 @@ class PaymentController extends Controller
         $paymentData['paymentDate'] = ($data['cardPayment']) ? now() : $data['paymentDate'];
         $paymentData['paymentGatewayId'] = ($data['cardPayment']) ? PaymentMode::cardPayment()->id : PaymentMode::bankTransfer()->id;
         if(Helpers::kycCompleted(Auth::guard('client')->user())) $paymentData['docsUploaded'] = true;
+
         $payment = $this->paymentService->save($paymentData);
 
         //update order

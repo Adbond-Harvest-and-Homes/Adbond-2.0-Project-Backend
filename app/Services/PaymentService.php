@@ -141,8 +141,6 @@ class PaymentService
         $payment->purpose = $data['purpose'];
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
         $payment->save();
-
-        if(Helpers::kycCompleted($payment->client) && $payment->confirmed == 1) $this->uploadReceipt($payment, $payment->client); 
         return $payment;
     }
 
@@ -238,6 +236,7 @@ class PaymentService
         // generate receipt if the card payment was successful
         // dd($payment);
         try{
+            // dd('got here');
             $fileService = new FileService;
             Helpers::generateReceipt($payment->load('paymentMode'));
             // dd('generate receipt');
@@ -249,7 +248,7 @@ class PaymentService
                 $fileMeta = ["belongsId"=>$payment->id, "belongsType"=>"app\Models\Payment"];
                 $fileService->updateFileObj($fileMeta, $response['upload']['file']);
 
-                $this->update(['receiptFileId' => $response['upload']['file']->id], $payment);
+                
                 // dd("got here");
                 try{
                     // Send Payment Mail
@@ -259,6 +258,7 @@ class PaymentService
                     Utilities::logStuff("Error Occurred while attempting to send Payment Email..".$e);
                 }
             }
+            return $response['upload']['file'];
         }catch(\Exception $e) {
             Utilities::logStuff("Error Occurred while attempting to generate and upload receipt..".$e);
         }

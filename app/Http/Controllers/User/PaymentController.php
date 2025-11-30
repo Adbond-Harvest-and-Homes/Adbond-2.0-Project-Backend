@@ -21,9 +21,11 @@ use app\Services\OrderService;
 use app\Services\CommissionService;
 use app\Services\ClientPackageService;
 use app\Services\ClientInvestmentService;
+use app\Services\NotificationService;
 
 use app\Enums\PackageType;
 use app\Enums\UserType;
+use app\Enums\ClientPackageOrigin;
 // use app\Enums\PaymentMode;
 
 use app\Utilities;
@@ -35,6 +37,7 @@ class PaymentController extends Controller
     private $commissionService;
     private $clientPackageService;
     private $clientInvestmentService;
+    private $notificationService;
 
     public function __construct()
     {
@@ -43,6 +46,7 @@ class PaymentController extends Controller
         $this->commissionService = new CommissionService;
         $this->clientPackageService = new ClientPackageService;
         $this->clientInvestmentService = new ClientInvestmentService;
+        $this->notificationService = new NotificationService;
     }
 
     public function confirm(ConfirmPayment $request)
@@ -58,6 +62,12 @@ class PaymentController extends Controller
             $payment = $this->paymentService->confirm($payment);
 
             $order = $payment->purchase;
+
+            $clientPackage = $this->clientPackageService->getClientPackageByPurchase($order->id, Order::$type);
+            if($clientPackage && !$clientPackage->contract_file_id) {
+                $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
+                $this->clientPackageService->uploadContract($order, $clientPackage, $isOffer);
+            }
             // dd($payment->purchase);
             // update order table to reflect amount_payed and balance;
             // $order = $this->orderService->saveAmountPaid($order, $payment->amount);
@@ -82,7 +92,7 @@ class PaymentController extends Controller
             }
 
             // $this->paymentService->uploadReceipt($payment, $payment->client); 
-            if($order->is_installment == 0 || $order->installments_payed == $order->installment_count) {
+            if($order->is_installment == 0 || (($order->balance <= $payment->amount) || ($order->installments_payed == $order->installment_count))) {
                 $this->orderService->completeOrder($order, $payment);
             }else{
                 if($order->installments_payed == 1) {

@@ -204,7 +204,9 @@ class OrderService
 
 
         $files = [];
+        $clientPackage = null;
         if($order->package->type==PackageType::NON_INVESTMENT->value) {
+            $clientPackageService->uploadContract = ($payment->confirmed == 1);
             $clientPackage = $clientPackageService->saveClientPackageOrder($order);
         }
 

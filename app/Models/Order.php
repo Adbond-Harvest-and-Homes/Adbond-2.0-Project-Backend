@@ -51,6 +51,11 @@ class Order extends Model
         return $this->morphMany(ClientPackage::class, 'purchase');
     }
 
+    public function clientPackage()
+    {
+        return $this->hasOne(ClientPackage::class, 'purchase_id', "id");
+    }
+
     public function upgrade()
     {
         return $this->belongsTo(AssetUpgrade::class, "upgrade_id", "id");

@@ -27,12 +27,15 @@ use app\Utilities;
 
 class Migration2Controller extends Controller
 {
+    protected $start = "2025-10-18 00:00:00";
+    protected $end = "2025-10-30 23:59:59";
+
     public function migratePayments()
     {
-        $start = "2025-10-18 00:00:00";
-        $end = "2025-10-30 23:59:59";
+        // $start = "2025-10-18 00:00:00";
+        // $end = "2025-10-30 23:59:59";
         // dd('here');
-        DB::connection('db1')->table('payments')->where("created_at", ">=", $start)->where("created_at", "<=", $end)->orderBy('id')->chunk(500, function ($records) {
+        DB::connection('db1')->table('payments')->where("created_at", ">=", $this->start)->where("created_at", "<=", $this->end)->orderBy('id')->chunk(500, function ($records) {
             if(count($records) > 0) {
                 // dd('records');
                 foreach ($records as $record) {

@@ -32,7 +32,8 @@ use app\Http\Resources\OrderMinResource;
 use PDF;
 
 use app\Enums\ClientPackageOrigin;
-
+use app\Enums\PackageType;
+use app\Enums\ProjectType;
 use app\Utilities;
 
 Class Helpers
@@ -534,9 +535,11 @@ Class Helpers
     private static function prepareContract($purchase)
     {
         // $itemPrice = Helpers::item_price($purchase->packageItem);
+        $projectType = $purchase?->package?->project?->projectType?->name;
         $client = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->client : $purchase->client;
         $data['package'] = $purchase->package?->name;
         $data['project'] = $purchase?->package?->project?->name;
+        $data['use_type'] = ($projectType == ProjectType::AGRO->value) ? "AGRICULTURAL" : "RESIDENTIAL";
         $data['client'] =  ucfirst($purchase->client->full_name);
         $data['address'] = $client?->address;
         // $data['location'] = $purchase?->packageItem?->package?->project_location?->location?->name;
@@ -544,7 +547,7 @@ Class Helpers
         $state = $purchase?->package?->state.' State';
         $data['location'] = ($projectAddress) ? $projectAddress.', '.$state : $state;
         $data['state'] = $state;
-        $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount;
+        $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount_payable;
         $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->installment == 1) ? true : false;
         $data['installment_duration'] = $purchase?->package->installment_duration;
         // if the units purchaseed is more than 1, multiply by units
@@ -574,15 +577,18 @@ Class Helpers
             'month' => date('F'),
             'year' => date('Y'),
             'project' => $data['project'],
-            'package' => $data['package'],
-            'client' => $data['client'],
+            'product_name' => $data['package'],
+            'name' => $data['client'],
             'state' => $data['state'],
             'address' => $data['address'],
-            'price' => (float)$data['price'],
+            'amount' => (float)$data['price'],
             'size' => (float)$data['size'],
             'location' => $data['location'],
             'installment_duration' => $data['installment_duration'],
-            'installment' => $data['installment']
+            'installment' => $data['installment'],
+            'payment_plan' => $data['installment'] ? "Installment" : "Full Payment",
+            'payment_terms' => $data['installment'] ? $data['installment_duration'] . 'Months Payment Duration' : "",
+            'use_type' => $data['use_type']
         ];
         $pdf = PDF::loadView('pdf/contract', $pdfData);
         // return $pdf->stream('contract.pdf');
@@ -700,6 +706,8 @@ Class Helpers
         $pdfData = [
             'image' => 'logo.jpg', 
             'name' => ucfirst($payment?->client?->full_name),
+            'clientState' => $payment?->client?->state?->name ?? '',
+            'clientCountry' => $payment?->client?->country?->name ?? '',
             'receiptNo' => $payment->receipt_no,
             'address1' => $address1,
             'address2' => $address2,
@@ -716,6 +724,7 @@ Class Helpers
             'size' => $size,
             'discount' => $discount,
             'balance' => $payment?->purchase->balance,
+            'project_name_state' => $payment?->purchase?->package?->name . " " . $payment?->purchase?->package?->stateModel?->name
         ];
 
         // dd($pdfData);

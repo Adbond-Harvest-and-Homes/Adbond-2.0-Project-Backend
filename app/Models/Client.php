@@ -61,6 +61,16 @@ class Client extends Authenticatable implements JWTSubject
         return $name;
     }
 
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
     public function photo()
     {
         return $this->belongsTo("app\Models\File");
