@@ -247,11 +247,11 @@ class PaymentController extends Controller
                     $this->notificationService->save($clientPackage, NotificationType::ORDER_COMPLETION->value,  Auth::guard("client")->user());
 
                 }else{
-                    dd($this->clientPackageService->uploadContract);
+                    // dd($this->clientPackageService->uploadContract);
                     $asset = (($order->package->type==PackageType::INVESTMENT->value) ? $this->clientPackageService->saveClientPackageInvestment($clientInvestment) : $this->clientPackageService->saveClientPackageOrder($order));
                 }
             }else{
-                dd($this->clientPackageService->uploadContract);
+                // dd($this->clientPackageService->uploadContract);
                 (($order->package->type==PackageType::INVESTMENT->value) ? $this->clientPackageService->saveClientPackageInvestment($clientInvestment) : $this->clientPackageService->saveClientPackageOrder($order));
             }
             // dd('skipped'.$data);
