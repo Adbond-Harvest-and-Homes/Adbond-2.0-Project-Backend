@@ -205,7 +205,10 @@ class PackageService
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if($this->count) return $query->count();
 
-        if($perPage==null) $perPage=env('PAGINATION_PER_PAGE');
+        // if($perPage==null) $perPage=env('PAGINATION_PER_PAGE');
+        // return $query->offset($offset)->limit($perPage)->orderBy("created_at", "DESC")->get();
+
+        if($perPage == null) return $query->orderBy("created_at", "DESC")->get();
         return $query->offset($offset)->limit($perPage)->orderBy("created_at", "DESC")->get();
     }
 
