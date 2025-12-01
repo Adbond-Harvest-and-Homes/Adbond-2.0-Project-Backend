@@ -260,8 +260,10 @@ class PaymentController extends Controller
 
     public function saveAdditionalPayment(SaveAdditionalPayment $request)
     {
+        DB::reconnect();
+
+        DB::beginTransaction();
         try{
-            DB::beginTransaction();
             $data = $request->validated();
             $processedData = Cache::get('order_processing_' . $data['processingId']);
             if(!$processedData) return Utilities::error402("processing Id has expired.. Go back and prepare the order again");
