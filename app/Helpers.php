@@ -704,8 +704,9 @@ Class Helpers
         $unitSize = $payment?->purchase?->package?->size;
         $size = ($unitSize != null && $payment?->purchase?->units != null && $payment?->purchase?->units > 0) ? $unitSize * $payment?->purchase?->units : $unitSize;
         $purchaseBalance = $payment?->purchase?->balance ?? 0;
-        $amountPaid = $payment?->purchase?->amount_payed ?? 0;
-        $balance = $purchaseBalance - $amountPaid;
+        $amount = $payment?->amount ?? 0;
+        $totalPayed = $payment?->purchase?->amount_payed + $amount;
+        $balance = $purchaseBalance - $amount;
         $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [
             'image' => 'logo.jpg', 
@@ -723,7 +724,7 @@ Class Helpers
             'price' => $payment?->purchase?->package?->amount,
             'amount' => $payment->purchase->amount_payable,
             'currentAmount' => $payment->amount,
-            'amountPaid' => $payment->purchase->amount_payed,
+            'amountPaid' => $totalPayed,
             'units' => $payment?->purchase?->units,
             'size' => $size,
             'discount' => $discount,
