@@ -95,7 +95,7 @@ class Payment extends Model
             }
             if($payment->confirmed) {
                 $res = self::uploadReceipt($payment);
-                $payment->receipt_file_id = $res['receiptFile']->id;
+                if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
             }
         });
 
