@@ -113,7 +113,7 @@
 
             <tr>
                 <th>Site Name</th>
-                <td>--</td>
+                <td>{{ $project }}</td>
             </tr>
         </table>
 

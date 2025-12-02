@@ -548,7 +548,7 @@ Class Helpers
         $data['location'] = ($projectAddress) ? $projectAddress.', '.$state : $state;
         $data['state'] = $state;
         $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount_payable;
-        $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->installment == 1) ? true : false;
+        $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->is_installment == 1) ? true : false;
         $data['installment_duration'] = $purchase?->package->installment_duration;
         // if the units purchaseed is more than 1, multiply by units
         // if($purchase->units && $purchase->units > 1) $data['price'] = $data['price'] * $purchase->units; 
@@ -703,6 +703,10 @@ Class Helpers
         }
         $unitSize = $payment?->purchase?->package?->size;
         $size = ($unitSize != null && $payment?->purchase?->units != null && $payment?->purchase?->units > 0) ? $unitSize * $payment?->purchase?->units : $unitSize;
+        $purchaseBalance = $payment?->purchase?->balance ?? 0;
+        $amountPaid = $payment?->purchase?->amount_payed ?? 0;
+        $balance = $purchaseBalance - $amountPaid;
+        $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [
             'image' => 'logo.jpg', 
             'name' => ucfirst($payment?->client?->full_name),
@@ -723,7 +727,7 @@ Class Helpers
             'units' => $payment?->purchase?->units,
             'size' => $size,
             'discount' => $discount,
-            'balance' => $payment?->purchase->balance,
+            'balance' => $balance,
             'project_name_state' => $payment?->purchase?->package?->name . " " . $payment?->purchase?->package?->stateModel?->name
         ];
 
