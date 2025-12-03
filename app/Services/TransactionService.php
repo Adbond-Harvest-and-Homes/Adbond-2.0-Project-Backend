@@ -89,7 +89,15 @@ class TransactionService
             });
         });
         if($this->count) return $query->count();
-        return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+        // return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+        $query = $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+
+        $sql = vsprintf(
+            str_replace('?', "'%s'", $query->toSql()),
+            $query->getBindings()
+        );
+        
+        dd($sql);
     }
 
     public function exportToPDF($transactions, $clientName, $headingConfig = null)
