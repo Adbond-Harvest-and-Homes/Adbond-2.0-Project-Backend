@@ -90,7 +90,7 @@ class TransactionService
         });
         if($this->count) return $query->count();
         // return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
-        $query = $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+        $query = $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage);
 
         $sql = vsprintf(
             str_replace('?', "'%s'", $query->toSql()),
