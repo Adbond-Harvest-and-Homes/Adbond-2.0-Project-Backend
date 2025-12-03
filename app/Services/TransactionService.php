@@ -71,13 +71,17 @@ class TransactionService
     {
         $query = Payment::with($with);
         if($this->clientId) $query->where("client_id", $this->clientId);
-        if(isset($filter['text'])) $query->where("receipt_no", "LIKE", "%".$filter['text']."%")->orWhereHas('purchase', function($query2) use($filter) {
-            $query2->whereHas('package', function($query3) use($filter) {
-                $query3->where("name", "LIKE", "%".$filter['text']."%")->orWhereHas('project', function($query4) use($filter) {
-                    $query4->where("name", "LIKE", "%".$filter['text']."%");
+        if(isset($filter['text'])) {
+            $query = $query->where(function($q) use ($filter) {
+                $q->where("receipt_no", "LIKE", "%".$filter['text']."%")->orWhereHas('purchase', function($query2) use($filter) {
+                    $query2->whereHas('package', function($query3) use($filter) {
+                        $query3->where("name", "LIKE", "%".$filter['text']."%")->orWhereHas('project', function($query4) use($filter) {
+                            $query4->where("name", "LIKE", "%".$filter['text']."%");
+                        });
+                    });
                 });
             });
-        });
+        }
         if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
         if(isset($filter['projectType'])) $query = $query->whereHas('purchase', function($query1) use($filter) {
             $query1->whereHas('package', function($query2) use($filter) {
@@ -89,15 +93,15 @@ class TransactionService
             });
         });
         if($this->count) return $query->count();
-        // return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
-        $query = $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage);
+        return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+        // $query = $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage);
 
-        $sql = vsprintf(
-            str_replace('?', "'%s'", $query->toSql()),
-            $query->getBindings()
-        );
+        // $sql = vsprintf(
+        //     str_replace('?', "'%s'", $query->toSql()),
+        //     $query->getBindings()
+        // );
         
-        dd($sql);
+        // dd($sql);
     }
 
     public function exportToPDF($transactions, $clientName, $headingConfig = null)
