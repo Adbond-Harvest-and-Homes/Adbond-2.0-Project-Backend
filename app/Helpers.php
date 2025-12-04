@@ -709,7 +709,7 @@ Class Helpers
         $balance = $purchaseBalance - $amount;
         $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [
-            'image' => 'logo.jpg', 
+            'image' => 'logo.png', 
             'name' => ucfirst($payment?->client?->full_name),
             'clientState' => $payment?->client?->state?->name ?? '',
             'clientCountry' => $payment?->client?->country?->name ?? '',
