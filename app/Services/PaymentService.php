@@ -297,9 +297,10 @@ class PaymentService
     //update missing receipt_file_id
     public function addReceiptFileIds()
     {
-        Payment::whereNull("receipt_file_id")->orderBy('created_at', 'DESC')->chunk(500, function ($records) {
+        // Payment::whereNull("receipt_file_id")->orderBy('created_at', 'DESC')->chunk(500, function ($records) {
+        Payment::orderBy('created_at', 'DESC')->chunk(500, function ($records) {
             foreach ($records as $payment) {
-                $receiptFile = File::where("belongs_id", $payment->id)->where("belongs_type", Payment::$type)->first();
+                $receiptFile = File::where("belongs_id", $payment->id)->where("belongs_type", Payment::$type)->where("original_filename", "LIKE", "%receipt%")->first();
                 if($receiptFile) {
                     $payment->receipt_file_id = $receiptFile->id;
                     $payment->update();
