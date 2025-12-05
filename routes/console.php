@@ -8,9 +8,9 @@ use app\Jobs\CheckInvestmentReturns;
 
 use app\Http\Controllers\CronJobController;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+// Artisan::command('inspire', function () {
+//     $this->comment(Inspiring::quote());
+// })->purpose('Display an inspiring quote')->hourly();
 
 // Schedule::call(new CheckInvestmentReturns)->everyMinute();
 // Schedule::job(new CheckInvestmentReturns)->everyMinute();
@@ -19,3 +19,4 @@ Schedule::call(function () {
 
     $cronJobController->checkInvestmentReturns();
 })->daily();
+Schedule::command('payment:add-receipt-file-ids')->everyMinute();

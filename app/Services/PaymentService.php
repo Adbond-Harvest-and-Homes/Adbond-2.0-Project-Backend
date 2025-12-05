@@ -10,6 +10,7 @@ use app\Models\Payment;
 use app\Models\Discount;
 use app\Models\PaymentMode;
 use app\Models\PaymentGateway;
+use app\Models\File;
 
 use app\Mail\NewPayment;
 
@@ -290,6 +291,22 @@ class PaymentService
         $payment->update();
 
         return $payment->update();
+    }
+
+
+    //update missing receipt_file_id
+    public function addReceiptFileIds()
+    {
+        Payment::whereNull("receipt_file_id")->orderBy('created_at', 'DESC')->chunk(500, function ($records) {
+            foreach ($records as $payment) {
+                $receiptFile = File::where("belongs_id", $payment->id)->where("belongs_type", Payment::$type)->first();
+                if($receiptFile) {
+                    $payment->receipt_file_id = $receiptFile->id;
+                    $payment->update();
+                    Utilities::logStuff("updated payment receipt. payment Id: ".$payment->id);
+                }
+            }
+        });
     }
 
 }
