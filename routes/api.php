@@ -135,6 +135,7 @@ Route::group(['prefix' => '/v2',], function () {
         Route::group(['prefix' => '/profile'], function () {
             Route::get('', 'ProfileController@index');
             Route::post('/set_password', 'ProfileController@setPassword');
+            Route::post('/change_password', 'ProfileController@changePassword');
             Route::post('/update', 'ProfileController@update');
         });
         Route::post('/upload_photo', 'FileController@savePhoto');

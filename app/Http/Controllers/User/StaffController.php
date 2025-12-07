@@ -9,6 +9,7 @@ use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\CreateUser;
 use app\Http\Requests\User\UpdateUser;
+use app\Http\Requests\User\ChangePassword;
 
 use app\Http\Resources\UserResource;
 
@@ -16,6 +17,7 @@ use app\Mail\NewStaff;
 
 use app\Services\UserService;
 use app\Services\UserActivityLogService;
+use app\Services\UserProfileService;
 
 use app\Utilities;
 
@@ -25,11 +27,13 @@ class StaffController extends Controller
 {
     private $userService;
     private $userActivityLogService;
+    private $userProfileService;
 
     public function __construct()
     {
         $this->userService = new UserService;
         $this->userActivityLogService = new UserActivityLogService;
+        $this->userProfileService = new UserProfileService;
     }
 
     public function save(CreateUser $request)
