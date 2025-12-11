@@ -107,7 +107,7 @@ class Payment extends Model
         static::updating(function ($payment) {
             if($payment->confirmed == 1 && !$payment->receipt_file_id) {
                 $res = self::uploadReceipt($payment);
-                $payment->receipt_file_id = $res['receiptFile']->id;
+                if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
             }
 
             // if($payment->receipt_file_id) self::updateFile($payment->receipt_file_id, $payment);
