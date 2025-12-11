@@ -22,8 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(Schedule $schedule): void
     {
-        $schedule->call(function () {
-            \Log::info('Test scheduler is working!');
-        })->everyMinute();
+        // $schedule->call(function () {
+        //     \Log::info('Test scheduler is working!');
+        // })->everyMinute();
     }
 }
