@@ -81,6 +81,7 @@ use app\Utilities;
 use app\Http\Controllers\MigrationController;
 use app\Http\Controllers\Migration2Controller;
 use app\Http\Controllers\MigrationClientController;
+use app\Http\Controllers\MigrationOrderPaymentsController;
 
 
 // Route::get('/user', function (Request $request) {
@@ -91,9 +92,10 @@ Route::group(['prefix' => '/v2',], function () {
         dd(bcrypt('Dapo007.'));
     });
 
-    Route::get('/migrate_client_orders', [MigrationClientController::class, "migrateOrders"]);
-    Route::get('/migrate_payments', [Migration2Controller::class, "migratePayments"]);
+    // Route::get('/migrate_client_orders', [MigrationClientController::class, "migrateOrders"]);
+    // Route::get('/migrate_payments', [Migration2Controller::class, "migratePayments"]);
     // Route::get('/migrate/clients', [MigrationController::class, "clients"]);
+    Route::get('/migrate/order_payments', [MigrationOrderPaymentsController::class, "synchronizeOrderPayments"]);
 
     //Auth URLS
     Route::group(['prefix' => '/auth', 'namespace' => 'Auth',], function () {
