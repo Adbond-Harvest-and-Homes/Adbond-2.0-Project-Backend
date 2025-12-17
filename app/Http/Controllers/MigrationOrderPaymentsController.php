@@ -5,9 +5,9 @@ namespace app\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\Order;
-use App\Models\Payment;
-use App\Models\ClientPackage;
+use app\Models\Order;
+use app\Models\Payment;
+use app\Models\ClientPackage;
 
 class MigrationOrderPaymentsController extends Controller
 {
