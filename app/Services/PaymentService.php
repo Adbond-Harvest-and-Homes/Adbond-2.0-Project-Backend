@@ -232,11 +232,12 @@ class PaymentService
         return $res;
     }
 
-    public function uploadReceipt($payment, $user)
+    public function uploadReceipt($payment, $user=null)
     {
         // generate receipt if the card payment was successful
         // dd($payment);
         try{
+            if(!$user) $user = $payment->client;
             // dd('got here');
             $fileService = new FileService;
             Helpers::generateReceipt($payment->load('paymentMode'));
@@ -259,7 +260,7 @@ class PaymentService
                     Utilities::logStuff("Error Occurred while attempting to send Payment Email..".$e);
                 }
             }
-            return $response['upload']['file'];
+            return ($response['success']) ? $response['upload']['file'] : false;
         }catch(\Exception $e) {
             Utilities::logStuff("Error Occurred while attempting to generate and upload receipt..".$e);
         }

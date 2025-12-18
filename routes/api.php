@@ -205,6 +205,7 @@ Route::group(['prefix' => '/v2',], function () {
             Route::post('/confirm', [UserPaymentController::class, 'confirm']);
             Route::post('/reject', [UserPaymentController::class, 'reject']);
             Route::post('/flag', [UserPaymentController::class, 'flag']);
+            Route::post('/generate_receipt', [UserPaymentController::class, 'generateReceipt']);
         });
 
         //Assets Routes

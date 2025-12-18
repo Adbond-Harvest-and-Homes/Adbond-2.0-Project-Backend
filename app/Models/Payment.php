@@ -79,7 +79,8 @@ class Payment extends Model
         //     // dd("uploaded contract");
         // }
         if(Helpers::kycCompleted($payment->client)) {
-            $res['receiptFile'] =  $paymentService->uploadReceipt($payment, $payment->client); 
+            $file =  $paymentService->uploadReceipt($payment, $payment->client); 
+            if($file) $res['receiptFile'] = $file;
             // dd($res);
         }
         return $res;

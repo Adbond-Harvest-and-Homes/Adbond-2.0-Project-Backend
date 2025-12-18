@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 use app\Http\Requests\User\ConfirmPayment;
 use app\Http\Requests\User\DeclinePayment;
+use app\Http\Requests\User\GenerateReceipt;
 
 use app\Http\Resources\PaymentResource;
 
@@ -152,6 +153,21 @@ class PaymentController extends Controller
                 "payment" => new PaymentResource($payment)
             ]);
         }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
+    }
+
+    public function generateReceipt(GenerateReceipt $request)
+    {
+        try{
+            $payment = $this->paymentService->getPayment($request->validated("paymentId"));
+            if(!$payment) return Utilities::error402("Payment not found");
+
+            $file = $this->paymentService->uploadReceipt($payment);
+            if($file) $this->paymentService->update(['receiptFileId' => $file], $payment);
+
+            return Utilities::okay("Payment Receipt Generated Successfully");
+        } catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }
