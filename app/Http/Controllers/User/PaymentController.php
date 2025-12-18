@@ -164,6 +164,7 @@ class PaymentController extends Controller
             if(!$payment) return Utilities::error402("Payment not found");
 
             $file = $this->paymentService->uploadReceipt($payment);
+            dd($file)
             if($file) $this->paymentService->update(['receiptFileId' => $file], $payment);
 
             return Utilities::okay("Payment Receipt Generated Successfully");
