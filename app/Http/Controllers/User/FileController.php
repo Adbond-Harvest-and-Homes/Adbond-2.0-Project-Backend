@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use app\Http\Requests\SavePhoto;
 use app\Http\Requests\User\SaveClientPackageDocument;
+use app\Http\Requests\User\DeleteFile;
 
 use app\Http\Resources\FileResource;
 use app\Http\Resources\AssetResource;
@@ -100,5 +101,19 @@ class FileController extends Controller
             case FilePurpose::DEED_OF_ASSIGNMENT->value : return "client-deed-of-assignments"; break;
         }
         return "client-documents";
+    }
+
+    public function deleteFile(DeleteFile $request)
+    {
+        try{
+            $file = $this->fileService->getFile($request->validated("fileId"));
+            if(!$file) return Utilities::error402("File not found");
+
+            $this->fileService->deleteFile($file);
+
+            return Utilities::okay("File deleted successfully");
+        } catch(\Exception $e) {
+            return Utilities::error($e, "An Error Occurred while attempting to delete file");
+        }
     }
 }

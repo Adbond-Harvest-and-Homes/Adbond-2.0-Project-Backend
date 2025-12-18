@@ -160,6 +160,10 @@ class PaymentService
         if(isset($data['receiptFileId'])) $payment->receipt_file_id = $data['receiptFileId'];
         if(isset($data['receiptNumber'])) $payment->receipt_no = $data['receiptNumber'];
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
+
+        $payment->update();
+
+        return $payment;
     }
 
     public function implementCardPayment($data)

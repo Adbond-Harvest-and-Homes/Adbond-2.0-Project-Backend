@@ -66,8 +66,7 @@ use app\Http\Controllers\Client\PostController;
 use app\Http\Controllers\Client\CommentController;
 use app\Http\Controllers\Client\ReferralController as ClientReferralController;
 use app\Http\Controllers\Client\DiscountController as ClientDiscountController;
-
-
+use app\Http\Controllers\Client\FileController;
 //Public Controllers
 use app\Http\Controllers\ProjectController;
 use app\Http\Controllers\PackageController;
@@ -140,7 +139,11 @@ Route::group(['prefix' => '/v2',], function () {
             Route::post('/change_password', 'ProfileController@changePassword');
             Route::post('/update', 'ProfileController@update');
         });
-        Route::post('/upload_photo', 'FileController@savePhoto');
+        Route::post('/upload_photo', [UserFileController::class, "savePhoto"]);
+
+        Route::group(['prefix' => '/file'], function() {
+            Route::post('/delete', [UserFileController::class, "deleteFile"]);
+        });
 
         //Staff Routes
         Route::group(['middleware' => SuperAdminAuth::class, 'prefix' => '/staffs'], function () {
