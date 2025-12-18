@@ -246,6 +246,7 @@ class PaymentService
             // dd('time to move..'.$uploadedReceipt);
             $response = Helpers::moveUploadedFileToCloud($uploadedReceipt, FileTypes::PDF->value, $user->id, 
                                 FilePurpose::PAYMENT_RECEIPT->value, UserType::CLIENT->value, "client-receipts");
+            dd($response);
             if($response['success']) {
                 $fileMeta = ["belongsId"=>$payment->id, "belongsType"=>"app\Models\Payment"];
                 $fileService->updateFileObj($fileMeta, $response['upload']['file']);
