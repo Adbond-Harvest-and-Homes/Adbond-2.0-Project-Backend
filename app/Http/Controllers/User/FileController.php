@@ -106,10 +106,10 @@ class FileController extends Controller
     public function deleteFile(DeleteFile $request)
     {
         try{
-            $file = $this->fileService->getFile($request->validated("fileId"));
-            if(!$file) return Utilities::error402("File not found");
+            // $file = $this->fileService->getFile($request->validated("fileId"));
+            // if(!$file) return Utilities::error402("File not found");
 
-            $this->fileService->deleteFile($file);
+            $this->fileService->deleteFile($request->validated("fileId"));
 
             return Utilities::okay("File deleted successfully");
         } catch(\Exception $e) {
