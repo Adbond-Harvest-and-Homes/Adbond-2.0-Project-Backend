@@ -80,6 +80,8 @@ class MigrationOrderPaymentsController extends Controller
                             if($balance > 0) {
                                 $order->completed = 0;
 
+                                $order->update();
+
                                 $asset = ClientPackage::where("purchase_id", $order->id)->where("purchase_type", Order::$type)->first();
                                 if($asset) {
                                     $asset->purchase_complete = 0;
