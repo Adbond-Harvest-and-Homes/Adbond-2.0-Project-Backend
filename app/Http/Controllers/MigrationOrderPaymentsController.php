@@ -77,6 +77,8 @@ class MigrationOrderPaymentsController extends Controller
                             if($balance < 0) $balance = 0;
                             if($order->balance != $balance) $order->balance = $balance;
 
+                            // if($order->id == 4278)
+
                             if($balance > 0) {
                                 $order->completed = 0;
 
@@ -89,6 +91,7 @@ class MigrationOrderPaymentsController extends Controller
                                     $asset->update();
                                 }
                             }
+                            DB::commit();
                         } catch(\Exception $e) {
                             DB::rollBack();
                             Utilities::error($e);
