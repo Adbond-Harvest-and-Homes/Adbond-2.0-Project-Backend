@@ -306,7 +306,7 @@ Route::group(['prefix' => '/v2',], function () {
             Route::get('/redemptions', [ReferralController::class, "commissionRedemptions"]);
         });
 
-        Route::group(['middleware' => HRAuth::class, 'prefix' => '/notifications'], function () {
+        Route::group(['middleware' => UserAuth::class, 'prefix' => '/notifications'], function () {
             Route::get('/unread', [UserNotificationController::class, "unreadNotifications"]);
             Route::post('mark_as_read', [UserNotificationController::class, "read"]);
         });
