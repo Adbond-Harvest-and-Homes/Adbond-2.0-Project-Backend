@@ -152,6 +152,7 @@ class AssetResource extends JsonResource
                 $flag = ($this->balance() > 0);
             }
         }
+        dd($flag);
         $payments = $this->purchase->payments;
         if(!$payments || $payments->count() == 0) {
             $flag = true;
