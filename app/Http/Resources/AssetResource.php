@@ -157,12 +157,8 @@ class AssetResource extends JsonResource
             $flag = true;
         }else{
             foreach($payments as $payment) {
-                if($payment->confirmed === null) {
-                    dd($payment);
-                    $flag = false;
-                }
+                if($payment->confirmed === null) $flag = false;
             }
-            dd($flag);
         }
         // if($this->requestedSwitch() && ) $flag = false;
         return $flag;
