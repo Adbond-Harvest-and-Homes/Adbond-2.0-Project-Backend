@@ -152,7 +152,6 @@ class AssetResource extends JsonResource
                 $flag = ($this->balance() > 0);
             }
         }
-        dd($flag);
         $payments = $this->purchase->payments;
         if(!$payments || $payments->count() == 0) {
             $flag = true;
@@ -160,6 +159,7 @@ class AssetResource extends JsonResource
             foreach($payments as $payment) {
                 if($payment->confirmed === null) $flag = false;
             }
+            dd($flag);
         }
         // if($this->requestedSwitch() && ) $flag = false;
         return $flag;
