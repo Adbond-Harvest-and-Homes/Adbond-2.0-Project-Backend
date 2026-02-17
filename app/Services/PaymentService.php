@@ -103,7 +103,9 @@ class PaymentService
         }
         if(count($promos) > 0) {
             foreach($promos as $promo) {
-                $discountedAmount = Utilities::getDiscount($discountedAmount, $promo->discount);
+                $isPercentage = ($promo->discount) ? true : false;
+                $discount = ($promo->discount) ? $promo->discount : $promo->discount_amount;
+                $discountedAmount = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
                 $appliedDiscounts[] = [
                     "name" => $promo->title." Promo", 
                     "type"=>OrderDiscountType::PROMO->value, 

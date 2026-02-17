@@ -20,7 +20,8 @@ class NotificationResource extends JsonResource
             "targetId" => $this->target_id,
             "userId" => $this->user_id,
             "message" => $this->message,
-            "read" => ($this->read == 1) ? true : false
+            "read" => ($this->read == 1) ? true : false,
+            "date" => $this->created_at
         ];
     }
 }

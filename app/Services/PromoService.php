@@ -18,7 +18,11 @@ class PromoService
     {
         $promo = new Promo;
         $promo->title = $data['title'];
-        $promo->discount = $data['discount'];
+        if(isset($data['discount'])) {
+            $promo->discount = $data['discount'];
+        }else{
+            $promo->discount_amount = $data['discountAmount'];
+        }
         $promo->user_id = $data['userId'];
         if(isset($data['start'])) $promo->start = $data['start'];
         if(isset($data['end'])) $promo->end = $data['end'];

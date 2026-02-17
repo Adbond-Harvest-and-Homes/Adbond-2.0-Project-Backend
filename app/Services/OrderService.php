@@ -79,7 +79,9 @@ class OrderService
         }
         if(count($promos) > 0) {
             foreach($promos as $promo) {
-                $discountArr = Utilities::getDiscount($discountedAmount, $promo->discount);
+                $isPercentage = ($promo->discount) ? true : false;
+                $discount = ($promo->discount) ? $promo->discount : $promo->discount_amount;
+                $discountArr = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
                 $discountedAmount = $discountArr['amount'];
                 $appliedDiscounts[] = [
                     "name" => $promo->title." Promo", 

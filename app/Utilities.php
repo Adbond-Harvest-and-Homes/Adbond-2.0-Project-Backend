@@ -232,15 +232,19 @@ class Utilities
         return $dates;
     }
 
-    public static function getDiscount($amount, $discount)
+    public static function getDiscount($amount, $discount, $percentage=true)
     {
         $discounted = $amount;
-        if(($discount <= 0) || $discount > 100) {
-            self::logStuff("Getting discount of ".$discount." that is outside 0-100 for the amount: ".$amount);
-            // return ["amount" => $amount, "discountedAmount" => 0];
-            $discounted = 0;
-        }elseif($discount < 100) {
-            $discounted =  ($discount/100) * $amount;
+        if($percentage) {
+            if(($discount <= 0) || $discount > 100) {
+                self::logStuff("Getting discount of ".$discount." that is outside 0-100 for the amount: ".$amount);
+                // return ["amount" => $amount, "discountedAmount" => 0];
+                $discounted = 0;
+            }elseif($discount < 100) {
+                $discounted =  ($discount/100) * $amount;
+            }
+        }else{
+            $discounted = $discount;
         }
         // if($discount == 100) return 0;
         $discountedAmount = $amount - $discounted;
