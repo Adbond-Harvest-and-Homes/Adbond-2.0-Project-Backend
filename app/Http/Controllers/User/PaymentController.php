@@ -106,6 +106,11 @@ class PaymentController extends Controller
                 }
             }
 
+            if(!$payment->receipt_file_id){ // The receipt has not been generated
+                $file = $this->paymentService->uploadReceipt($payment);
+                if($file) $this->paymentService->update(['receiptFileId' => $file->id], $payment);
+            }
+
             DB::commit();
 
             return Utilities::ok([
