@@ -38,7 +38,14 @@ class PromoService
     public function update($data, $promo)
     {
         if(isset($data['title'])) $promo->title = $data['title'];
-        if(isset($data['discount'])) $promo->discount = $data['discount'];
+        if(isset($data['discount'])) {
+            $promo->discount = $data['discount'];
+            $promo->discount_amount = null;
+        }
+        if(isset($data['discountAmount'])) {
+            $promo->discount_amount = $data['discountAmount'];
+            $promo->discount = null;
+        }
         if(isset($data['start'])) $promo->start = $data['start'];
         if(isset($data['end'])) $promo->end = $data['end'];
         if(isset($data['description'])) $promo->description = $data['description'];
