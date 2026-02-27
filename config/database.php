@@ -61,10 +61,20 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
                 PDO::ATTR_TIMEOUT => 60,
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_PERSISTENT => false, // Don't use persistent connections
+                PDO::ATTR_EMULATE_PREPARES => true,
+                PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci, 
+                                                SESSION wait_timeout = 28800, 
+                                                SESSION interactive_timeout = 28800,
+                                                SESSION net_read_timeout = 120,
+                                                SESSION net_write_timeout = 120'
             ]) : [
                 PDO::ATTR_TIMEOUT => 60,
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             ],
+            'read_timeout' => 60,
+            'write_timeout' => 60,
+
             'sticky' => true,
         ],
 
