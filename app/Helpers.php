@@ -549,7 +549,7 @@ Class Helpers
         $data['state'] = $state;
         $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount_payable;
         $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->is_installment == 1) ? true : false;
-        $data['installment_duration'] = $purchase?->package->installment_duration;
+        $data['installment_duration'] = $purchase?->installment_count;
         // if the units purchaseed is more than 1, multiply by units
         // if($purchase->units && $purchase->units > 1) $data['price'] = $data['price'] * $purchase->units; 
         $data['size'] = ($purchase?->package?->size && $purchase->units > 0) ? $purchase?->package?->size * $purchase->units : null;

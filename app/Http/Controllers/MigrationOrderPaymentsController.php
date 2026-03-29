@@ -73,8 +73,7 @@ class MigrationOrderPaymentsController extends Controller
                         try{
 
                             if($order->amount_payed != $totalPayment) $order->amount_payed = $totalPayment;
-                            $balance = $order->amount_payable - $totalPayment;
-                            if($balance < 0) $balance = 0;
+                            $balance = max(0, $order->amount_payable - $totalPayment);
                             if($order->balance != $balance) $order->balance = $balance;
 
                             // if($order->id == 4278)
@@ -82,15 +81,16 @@ class MigrationOrderPaymentsController extends Controller
                             if($balance > 0) {
                                 $order->completed = 0;
 
-                                $order->update();
+                                // $order->update();
 
                                 $asset = ClientPackage::where("purchase_id", $order->id)->where("purchase_type", Order::$type)->first();
                                 if($asset) {
                                     $asset->purchase_complete = 0;
                                     $asset->purchase_completed_at = null;
-                                    $asset->update();
+                                    $asset->save();
                                 }
                             }
+                            $order->save();
                             DB::commit();
                         } catch(\Exception $e) {
                             DB::rollBack();

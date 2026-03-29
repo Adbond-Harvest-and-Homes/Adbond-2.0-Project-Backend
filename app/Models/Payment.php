@@ -91,10 +91,11 @@ class Payment extends Model
         parent::boot();
         
         static::creating(function ($payment) {
+            if($payment->receipt_file_id == $payment->evidence_file_id) $payment->receipt_file_id = null;
             if($payment->confirmed==null && $payment->payment_mode_id && $payment->payment_mode_id == PaymentMode::cardPayment()->id) {
                 $payment->confirmed = ($payment->flag==0 && $payment->success==1);
             }
-            if($payment->confirmed) {
+            if($payment->confirmed == 1) {
                 $res = self::uploadReceipt($payment);
                 if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
             }
@@ -105,14 +106,14 @@ class Payment extends Model
 
         });
 
-        static::updating(function ($payment) {
-            if($payment->confirmed == 1 && !$payment->receipt_file_id) {
-                $res = self::uploadReceipt($payment);
-                if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
-            }
+        // static::updating(function ($payment) {
+        //     if($payment->confirmed == 1 && !$payment->receipt_file_id) {
+        //         $res = self::uploadReceipt($payment);
+        //         if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
+        //     }
 
-            // if($payment->receipt_file_id) self::updateFile($payment->receipt_file_id, $payment);
-        });
+        //     // if($payment->receipt_file_id) self::updateFile($payment->receipt_file_id, $payment);
+        // });
     }
 
     private static function updateFile($fileId, $payment)
