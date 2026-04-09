@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 use Illuminate\Support\Facades\Mail;
 
@@ -30,6 +31,16 @@ class SendContractMail implements ShouldQueue
     {
         //
     }
+
+    /**
+     * Middleware for the job.
+     */
+    public function middleware(): array
+    {
+        // Prevent sending multiple emails at the same time for the same asset
+        return [new WithoutOverlapping($this->asset->id)];
+    }
+    
 
     /**
      * Execute the job.

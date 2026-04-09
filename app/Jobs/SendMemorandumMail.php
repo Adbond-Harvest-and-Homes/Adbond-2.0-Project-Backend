@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 use app\Mail\MOU;
 
@@ -24,6 +25,15 @@ class SendMemorandumMail implements ShouldQueue
     public function __construct(protected Order $order, protected $uploadedFile = null)
     {
         //
+    }
+
+    /**
+     * Middleware for the job.
+     */
+    public function middleware(): array
+    {
+        // Prevent sending multiple emails at the same time for the same order
+        return [new WithoutOverlapping($this->order->id)];
     }
 
     /**

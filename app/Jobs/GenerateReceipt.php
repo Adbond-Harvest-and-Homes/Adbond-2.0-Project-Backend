@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 use app\Jobs\SendPaymentEmail;
 
@@ -27,6 +28,15 @@ class GenerateReceipt implements ShouldQueue
     public function __construct(protected int $paymentId, protected bool $sendMail = true)
     {
         // Utilities::JobLog("Generate Receipt Job triggered for Payment: ".$paymentId);
+    }
+
+    /**
+     * Middleware for the job.
+     */
+    public function middleware(): array
+    {
+        // Prevent another job with the same investmentId from running simultaneously
+        return [new WithoutOverlapping($this->paymentId)];
     }
 
     /**

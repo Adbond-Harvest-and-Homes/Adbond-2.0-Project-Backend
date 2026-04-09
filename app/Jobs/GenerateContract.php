@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 use app\Jobs\SendContractMail;
 
@@ -29,6 +30,15 @@ class GenerateContract implements ShouldQueue
     public function __construct(protected int $assetId, protected bool $isOffer=false, protected bool $sendMail = true)
     {
         //
+    }
+
+    /**
+     * Middleware for the job.
+     */
+    public function middleware(): array
+    {
+        // Prevent another job with the same assetId from running simultaneously
+        return [new WithoutOverlapping($this->assetId)];
     }
 
     /**

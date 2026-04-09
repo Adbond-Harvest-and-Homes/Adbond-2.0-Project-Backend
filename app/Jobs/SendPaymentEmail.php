@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 use Illuminate\Support\Facades\Mail;
 
@@ -31,6 +32,15 @@ class SendPaymentEmail implements ShouldQueue
     {
         $this->payment = $payment;
         $this->uploadedReceipt = $uploadedReceipt;
+    }
+
+    /**
+     * Middleware for the job.
+     */
+    public function middleware(): array
+    {
+        // Prevent sending multiple emails at the same time for the same payment
+        return [new WithoutOverlapping($this->payment->id)];
     }
 
     /**
