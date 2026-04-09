@@ -5,14 +5,65 @@ namespace app\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use app\Jobs\GenerateReceipt;
+
 use app\Models\Order;
 use app\Models\Payment;
 use app\Models\ClientPackage;
+
+use app\Services\PaymentService;
+use app\Services\FileService;
+use app\Services\ReceiptService;
+
+use app\Enums\FilePurpose;
 
 use app\Utilities;
 
 class MigrationOrderPaymentsController extends Controller
 {
+
+    public function synchronizePaymentReceipts()
+    {
+        $purpose = FilePurpose::PAYMENT_RECEIPT->value;
+        // get all payments
+        Payment::where("confirmed", 1)->orderBy('created_at', "DESC")->chunk(500, function ($payments) use($purpose) {
+            if($payments->count() > 0) {
+                foreach($payments as $payment) {
+                    $fileIsOk = false;
+                    // check if the payment has receipt_id, 
+                    $file = null;
+                    if(!$payment->receipt_file_id) {
+                        // check if the file exists
+                        Utilities::logStuff("receipt file id not found for payment Id: ".$payment->id);
+                        $file = app(FileService::class)->getSpecificFile(Payment::$type, $payment->id, $purpose);
+                    }else{
+                        // check if the receipt file is a receipt file
+                        $receiptFile = $payment->paymentReceipt;
+                        if($receiptFile->purpose != $purpose) {
+                            $file = app(FileService::class)->getSpecificFile(Payment::$type, $payment->id, $purpose);
+                        }else{
+                            Utilities::logStuff("receipt file for payment Id: ".$payment->id." is okay");
+                            $fileIsOk = true;
+                        }
+                    }
+                    if(!$fileIsOk) {
+                        if($file) {
+                            Utilities::logStuff("Found receipt file for payment Id: ".$payment->id);
+                            $payment->receipt_file_id = $file->id;
+                            $payment->docs_uploaded = 1;
+                            $payment->save();
+                        }else{
+                            Utilities::logStuff("Generate receipt file for payment Id: ".$payment->id);
+                            // dispatch job to create the receipt
+                            GenerateReceipt::dispatch($payment->id, false);
+                        }
+                    }
+                }
+            }
+        });
+
+            
+    }
     
     public function synchronizeOrderPayments()
     {

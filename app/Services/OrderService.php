@@ -189,6 +189,11 @@ class OrderService
         }
     }
 
+    public function getTotalDiscount($order)
+    {
+        return $order->discounts()->sum('amount');
+    }
+
 
     public function completeOrder($order, $payment, $clientInvestment=null)
     {
@@ -208,14 +213,14 @@ class OrderService
         $files = [];
         $clientPackage = null;
         if($order->package->type==PackageType::NON_INVESTMENT->value) {
-            $clientPackageService->uploadContract = ($payment->confirmed == 1);
+            // $clientPackageService->uploadContract = ($payment->confirmed == 1);
             $clientPackage = $clientPackageService->saveClientPackageOrder($order);
         }
 
-        if($order->package->type==PackageType::INVESTMENT->value) {
+        if($clientInvestment && $order->package->type==PackageType::INVESTMENT->value) {
 
             //Upload MOU and send it as email
-            $clientInvestmentService->uploadMOU($order, $clientInvestment);
+            // $clientInvestmentService->uploadMOU($order, $clientInvestment);
 
             $clientPackage = $clientPackageService->saveClientPackageInvestment($clientInvestment);
 

@@ -66,6 +66,22 @@ class Payment extends Model
         return $this->belongsTo(File::class, "receipt_file_id", "id");
     }
 
+    public function markDocUploaded()
+    {
+        $this->docs_uploaded = 1;
+        $this->save();
+
+        return $this;
+    }
+
+    public function markReceiptSent()
+    {
+        $this->receipt_sent = 1;
+        $this->save();
+
+        return $this;
+    }
+
     private static function uploadReceipt($payment)
     {
         $res = [];

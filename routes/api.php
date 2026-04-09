@@ -94,7 +94,8 @@ Route::group(['prefix' => '/v2',], function () {
     // Route::get('/migrate_client_orders', [MigrationClientController::class, "migrateOrders"]);
     // Route::get('/migrate_payments', [Migration2Controller::class, "migratePayments"]);
     // Route::get('/migrate/clients', [MigrationController::class, "clients"]);
-    Route::get('/migrate/order_payments', [MigrationOrderPaymentsController::class, "synchronizeOrderPayments"]);
+    // Route::get('/migrate/order_payments', [MigrationOrderPaymentsController::class, "synchronizeOrderPayments"]);
+    Route::get('/migrate/synchronize_payment_receipts', [MigrationOrderPaymentsController::class, "synchronizePaymentReceipts"]);
 
     //Auth URLS
     Route::group(['prefix' => '/auth', 'namespace' => 'Auth',], function () {

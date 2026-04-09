@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use app\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
+
+use app\Exceptions\AppException;
 
 use app\Http\Requests\User\ConfirmPayment;
 use app\Http\Requests\User\DeclinePayment;
@@ -23,6 +26,13 @@ use app\Services\CommissionService;
 use app\Services\ClientPackageService;
 use app\Services\ClientInvestmentService;
 use app\Services\NotificationService;
+
+use app\Domain\Payments\Context\PaymentConfirmationContext;
+use app\Domain\Payments\Events\PaymentProcessed;
+use app\Domain\Payments\Events\PaymentCompleted;
+
+use app\Domain\Payments\Pipelines\Stages\ReferralCommissionStage;
+use app\Domain\Payments\Pipelines\PostConfirmationStages\OrderUpdateStage;
 
 use app\Enums\PackageType;
 use app\Enums\UserType;
@@ -52,64 +62,17 @@ class PaymentController extends Controller
 
     public function confirm(ConfirmPayment $request)
     {
+        DB::beginTransaction();
         try{
-            DB::beginTransaction();
-            $payment = $this->paymentService->getPayment($request->validated("paymentId"));
-            if(!$payment) return Utilities::error402("Payment not found");
+            $context = new PaymentConfirmationContext($request->validated());
 
-            if($payment->confirmed === 0) return Utilities::error402("This Payment has been rejected, let another request be made");
-            if($payment->confirmed === 1) return Utilities::error402("This Payment is already Confirmed");
+            Utilities::logStuff("Started confirmation process");
+            $payment = $this->paymentService->confirm($context->payment);
+            Utilities::logStuff("Finished confirmation process");
 
-            $payment = $this->paymentService->confirm($payment);
+            event(new PaymentCompleted($context));
 
-            $order = $payment->purchase;
-
-            $clientPackage = $this->clientPackageService->getClientPackageByPurchase($order->id, Order::$type);
-            if($clientPackage && !$clientPackage->contract_file_id) {
-                $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
-                $this->clientPackageService->uploadContract($order, $clientPackage, $isOffer);
-            }
-            // dd($payment->purchase);
-            // update order table to reflect amount_payed and balance;
-            // $order = $this->orderService->saveAmountPaid($order, $payment->amount);
-            // $data['paymentStatusId'] = ($order->balance <= 0) ? PaymentStatus::complete()->id : PaymentStatus::deposit()->id;
-            // $data['installmentsPayed'] = $order->installments_payed+1;
-            if($payment->payment_mode_id == PaymentMode::bankTransfer()->id) $data['amountPayed'] = $payment->amount;
-            if($order->is_installment == 1 && $order->amount_per_installment && $payment->amount != $order->amount_per_installment) {
-                $data['updateInstallment'] = true;
-            }
-            $order = $this->orderService->update($data, $order);
-
-            // update staff commission
-            $referrer = $payment->client->referer;
-            if(($order->is_installment==0 || ($order->installments_payed < 2 || $order->payment_status_id==PaymentStatus::complete()->id)) && $payment->client->referer) {
-                // calculate the bonus/commission for the referer and save it
-                if($order->payment_status_id==PaymentStatus::complete()->id && $payment->client->referer_type == UserType::CLIENT->value) {
-                    $this->commissionService->saveClientEarning($payment->client->referer, $order);
-                }
-                if($payment->client->referer_type == UserType::USER->value) {
-                    $this->commissionService->save($payment->client->referer, $order);
-                }
-            }
-
-            // $this->paymentService->uploadReceipt($payment, $payment->client); 
-            if($order->is_installment == 0 || (($order->balance <= $payment->amount) || ($order->installments_payed == $order->installment_count))) {
-                $this->orderService->completeOrder($order, $payment);
-            }else{
-                if($order->installments_payed == 1) {
-                    if($order->package->type==PackageType::INVESTMENT->value) {
-                        $clientInvestment = $this->clientInvestmentService->getByOrderId($order->id);
-                        if($clientInvestment) $this->clientPackageService->saveClientPackageInvestment($clientInvestment);
-                    }else{
-                        $this->clientPackageService->saveClientPackageOrder($order);
-                    }
-                }
-            }
-
-            if(!$payment->receipt_file_id){ // The receipt has not been generated
-                $file = $this->paymentService->uploadReceipt($payment);
-                if($file) $this->paymentService->update(['receiptFileId' => $file->id], $payment);
-            }
+            Event::dispatch(new PaymentProcessed($context));
 
             DB::commit();
 
@@ -117,9 +80,12 @@ class PaymentController extends Controller
                 "message" => "payment has been Confirmed",
                 "payment" => new PaymentResource($payment)
             ]);
+        }catch(AppException $e){
+            DB::rollBack();
+            throw $e;
         }catch(\Exception $e){
             DB::rollBack();
-            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+            return Utilities::error($e, 'An error occurred while trying to confirm payment, Please try again later or contact support');
         }
     }
 

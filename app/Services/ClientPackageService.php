@@ -74,7 +74,7 @@ class ClientPackageService
         if($this->uploadContract && $new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
             $purchase = $clientPackage->purchase; 
             $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
-            $this->uploadContract($purchase, $clientPackage, $isOffer);
+            // $this->uploadContract($purchase, $clientPackage, $isOffer);
             // dd("uploaded contract");
         }
         // dd($new, $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value, Helpers::kycCompleted($clientPackage->client));
@@ -202,34 +202,34 @@ class ClientPackageService
         }
     }
 
-    public function uploadContract($order, $asset, $isOffer=false)
-    {
-        // generate Contract
-        try{
-            $fileService = new FileService;
-            if($isOffer) Helpers::$purchaseOrigin = ClientPackageOrigin::OFFER->value;
-            $uploadedFile = Helpers::generateContract($order);
-            // dd('generate Contract');
-            $response = Helpers::moveUploadedFileToCloud($uploadedFile, FileTypes::PDF->value, $asset->client->id, 
-                                FilePurpose::CONTRACT->value, UserType::CLIENT->value, "client-contracts");
-            if($response['success']) {
-                $fileMeta = ["belongsId"=>$asset->id, "belongsType"=>ClientPackage::$type];
-                $fileService->updateFileObj($fileMeta, $response['upload']['file']);
+    // public function uploadContract($order, $asset, $isOffer=false)
+    // {
+    //     // generate Contract
+    //     try{
+    //         $fileService = new FileService;
+    //         if($isOffer) Helpers::$purchaseOrigin = ClientPackageOrigin::OFFER->value;
+    //         $uploadedFile = Helpers::generateContract($order);
+    //         // dd('generate Contract');
+    //         $response = Helpers::moveUploadedFileToCloud($uploadedFile, FileTypes::PDF->value, $asset->client->id, 
+    //                             FilePurpose::CONTRACT->value, UserType::CLIENT->value, "client-contracts");
+    //         if($response['success']) {
+    //             $fileMeta = ["belongsId"=>$asset->id, "belongsType"=>ClientPackage::$type];
+    //             $fileService->updateFileObj($fileMeta, $response['upload']['file']);
 
-                $this->update(['contractFileId' => $response['upload']['file']->id], $asset);
-                // dd("got here");
-                try{
-                    // Send Contract Mail
-                    Mail::to($asset->client->email)->send(new Contract($asset->client, $uploadedFile));
-                    unlink($response['path']);
-                }catch(\Exception $e) {
-                    Utilities::logStuff("Error Occurred while attempting to send Contract Email..".$e);
-                }
-            }
-        }catch(\Exception $e) {
-            Utilities::logStuff("Error Occurred while attempting to generate and upload Contract..".$e);
-        }
-    }
+    //             $this->update(['contractFileId' => $response['upload']['file']->id], $asset);
+    //             // dd("got here");
+    //             try{
+    //                 // Send Contract Mail
+    //                 Mail::to($asset->client->email)->send(new Contract($asset->client, $uploadedFile));
+    //                 unlink($response['path']);
+    //             }catch(\Exception $e) {
+    //                 Utilities::logStuff("Error Occurred while attempting to send Contract Email..".$e);
+    //             }
+    //         }
+    //     }catch(\Exception $e) {
+    //         Utilities::logStuff("Error Occurred while attempting to generate and upload Contract..".$e);
+    //     }
+    // }
 
     public function clientPackage($id, $with=[])
     {
@@ -303,6 +303,14 @@ class ClientPackageService
         return $query->get();
         // return $query->orderBy("created_at", "DESC")->offset($offset);
         // return ($perPage) ? $query->limit($perPage)->get() : $query->get();
+    }
+
+    public function markAsUploaded($asset)
+    {
+        $asset->docs_uploaded = 1;
+        $asset->update();
+
+        return $asset;
     }
 
 }

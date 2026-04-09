@@ -16,9 +16,10 @@ use app\Models\Client_package;
 use Illuminate\Support\Facades\Http;
 use app\Services\HybridStaffDrawService;
 use app\Services\UserService;
-usE app\Services\LoyaltyService;
+use app\Services\LoyaltyService;
 use app\Services\FileService;
 use app\Services\ClientService;
+use app\Services\OrderService;
 
 use app\Http\Resources\MonthlyWeekDaysResource; 
 use app\Http\Resources\InspectionDayMinResource;
@@ -34,6 +35,8 @@ use PDF;
 use app\Enums\ClientPackageOrigin;
 use app\Enums\PackageType;
 use app\Enums\ProjectType;
+use app\Enums\OrderType;
+
 use app\Utilities;
 
 Class Helpers
@@ -417,6 +420,7 @@ Class Helpers
                 Utilities::logStuff("Receipt could not be uploaded... ".$uploadRes['message']);
             }
         } else {
+            dd("receipt found..".$filePath);
             Utilities::logStuff("receipt generated cannot be found");
         }
         return ($success) ? ['success'=>$success, 'upload' => $uploadRes, 'path' => $filePath] : ['success' => $success];
@@ -532,7 +536,7 @@ Class Helpers
 
 
 
-    private static function prepareContract($purchase)
+    public static function prepareContract($purchase)
     {
         // $itemPrice = Helpers::item_price($purchase->packageItem);
         $projectType = $purchase?->package?->project?->projectType?->name;
@@ -695,12 +699,8 @@ Class Helpers
             if(isset($addressArr[1])) $address2 = $addressArr[1];
             if(isset($addressArr[2])) $address3 = $addressArr[2];
         }
-        $discount = 0;
-        if($payment?->purchase?->discounts && $payment?->purchase?->discounts->count() > 0) {
-            foreach($payment?->purchase->discounts as $orderDiscount) {
-                $discount += $orderDiscount->discount;
-            }
-        }
+        $discount = app(OrderService::class)->getTotalDiscount($payment?->purchase);
+
         $unitSize = $payment?->purchase?->package?->size;
         $size = ($unitSize != null && $payment?->purchase?->units != null && $payment?->purchase?->units > 0) ? $unitSize * $payment?->purchase?->units : $unitSize;
         $purchaseBalance = $payment?->purchase?->balance ?? 0;
@@ -844,7 +844,7 @@ Class Helpers
     //     $pdf->save('files/receipt'.$payment->receipt_no.'.pdf');
     // }
 
-    private static function formatAddress($address)
+    public static function formatAddress($address)
     {
         $res = [];
         $addressArr = explode(' ', $address);

@@ -59,6 +59,12 @@ class MOU extends Mailable
      */
     public function attachments(): array
     {
+        if (str_starts_with($this->filePath, 'http')) {
+            return [
+                Attachment::fromData(fn () => file_get_contents($this->filePath), "Contract.pdf")
+            ];
+        }
+        
         return [
             Attachment::fromPath(public_path($this->filePath))->as("Memorandum_of_understanding.php")
         ];

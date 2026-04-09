@@ -12,6 +12,8 @@ use app\Models\PaymentMode;
 use app\Models\PaymentGateway;
 use app\Models\File;
 
+use app\Jobs\SendPaymentEmail;
+
 use app\Mail\NewPayment;
 
 use app\Enums\OrderDiscountType;
@@ -50,6 +52,16 @@ class PaymentService
     public function getClientPayments($clientId)
     {
         return Payment::where("client_id", $clientId)->get();
+    }
+
+    public function getMissingOrUnsentReceipts()
+    {
+        return Payment::whereNull("receipt_file_id")->orWhere("receipt_sent", 0)->get();
+    }
+
+    public function getPurchasePayments($purchaseId, $purchaseType, $confirmed=1)
+    {
+        return Payment::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->where("confirmed", $confirmed)->get();
     }
 
     public function offerPayments($with=[], $offset=0, $perPage=null)
@@ -105,7 +117,9 @@ class PaymentService
             foreach($promos as $promo) {
                 $isPercentage = ($promo->discount) ? true : false;
                 $discount = ($promo->discount) ? $promo->discount : $promo->discount_amount;
-                $discountedAmount = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
+                // $discountedAmount = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
+                $discountArr = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
+                $discountedAmount = $discountArr['amount'];
                 $appliedDiscounts[] = [
                     "name" => $promo->title." Promo", 
                     "type"=>OrderDiscountType::PROMO->value, 
@@ -159,7 +173,10 @@ class PaymentService
         if(isset($data['flagMessage'])) $payment->flag_message = $data['flagMessage'];
         if(isset($data['bankAccountId'])) $payment->bank_account_id = $data['bankAccountId'];
         if(isset($data['paymentDate'])) $payment->payment_date = $data['paymentDate'];
-        if(isset($data['receiptFileId'])) $payment->receipt_file_id = $data['receiptFileId'];
+        if(isset($data['receiptFileId'])) {
+            $payment->receipt_file_id = $data['receiptFileId'];
+            $payment->docs_uploaded = 1;
+        }
         if(isset($data['receiptNumber'])) $payment->receipt_no = $data['receiptNumber'];
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
 
@@ -258,13 +275,14 @@ class PaymentService
 
                 
                 // dd("got here");
-                try{
-                    // Send Payment Mail
-                    Mail::to($payment->client->email)->send(new NewPayment($payment, $uploadedReceipt));
-                    unlink($response['path']);
-                }catch(\Exception $e) {
-                    Utilities::logStuff("Error Occurred while attempting to send Payment Email..".$e);
-                }
+                SendPaymentEmail::dispatch($payment, $uploadedReceipt);
+                // try{
+                //     // Send Payment Mail
+                //     Mail::to($payment->client->email)->send(new NewPayment($payment, $uploadedReceipt));
+                //     unlink($response['path']);
+                // }catch(\Exception $e) {
+                //     Utilities::logStuff("Error Occurred while attempting to send Payment Email..".$e);
+                // }
             }
             return ($response['success']) ? $response['upload']['file'] : false;
         }catch(\Exception $e) {

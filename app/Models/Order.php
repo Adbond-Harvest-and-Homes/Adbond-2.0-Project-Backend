@@ -53,7 +53,13 @@ class Order extends Model
 
     public function clientPackage()
     {
-        return $this->hasOne(ClientPackage::class, 'purchase_id', "id");
+        // return $this->hasOne(ClientPackage::class, 'purchase_id', "id");
+        return $this->morphOne(ClientPackage::class, 'purchase');
+    }
+
+    public function clientInvestment()
+    {
+        return $this->hasOne(ClientInvestment::class);
     }
 
     public function upgrade()

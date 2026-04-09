@@ -12,6 +12,8 @@ use app\Mail\MOU;
 use app\Enums\FilePurpose;
 use app\Enums\FileTypes;
 
+use app\Services\ContractService;
+
 use app\Utilities;
 use app\Helpers;
 
@@ -21,6 +23,11 @@ class ClientInvestmentService
     public function getByOrderId($orderId)
     {
         return ClientInvestment::where("order_id", $orderId)->first();
+    }
+
+    public function getInvestment($id)
+    {
+        return ClientInvestment::find($id);
     }
 
     public function runningInvestments()
@@ -101,8 +108,20 @@ class ClientInvestmentService
         // generate MOU
         try{
             $fileService = new FileService;
-            $uploadedFile = Helpers::generateMemorandumAgreement($order);
+            $contractService = new ContractService;
+            // $uploadedFile = Helpers::generateMemorandumAgreement($order);
+            // $uploadedFile = $contractService->generateMOU($order);
             // dd('generate MOU');
+            $uploadedFile = "files/memorandum_agreement_{$order->id}.pdf";
+            $publicFile = public_path($uploadedFile);
+            // dd('generate Contract');
+            if(!file_exists($publicFile)) {
+                // check if it has already been moved to the cloud
+
+                if($investment->memorandum_agreement_file_id) return null;
+                $uploadedFile = $contractService->generateMOU($order);
+            }
+
             $response = Helpers::moveUploadedFileToCloud($uploadedFile, FileTypes::PDF->value, $order->client->id, 
                                 FilePurpose::MEMORANDUM_OF_AGREEMENT->value, UserType::CLIENT->value, "client-MOUs");
             if($response['success']) {
@@ -110,14 +129,16 @@ class ClientInvestmentService
                 $fileService->updateFileObj($fileMeta, $response['upload']['file']);
 
                 $this->addMemorandumAgreement($response['upload']['file']->id, $investment);
+
+                $investment->markDocUploaded();
                 // dd("got here");
-                try{
-                    // Send MOU Mail
-                    Mail::to($order->client->email)->send(new MOU($order->client, $uploadedFile));
-                    unlink($response['path']);
-                }catch(\Exception $e) {
-                    Utilities::logStuff("Error Occurred while attempting to send MOU Email..".$e);
-                }
+                // try{
+                //     // Send MOU Mail
+                //     Mail::to($order->client->email)->send(new MOU($order->client, $uploadedFile));
+                //     unlink($response['path']);
+                // }catch(\Exception $e) {
+                //     Utilities::logStuff("Error Occurred while attempting to send MOU Email..".$e);
+                // }
             }
         }catch(\Exception $e) {
             Utilities::logStuff("Error Occurred while attempting to generate and upload MOU..".$e);
