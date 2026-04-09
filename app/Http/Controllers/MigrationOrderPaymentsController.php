@@ -39,11 +39,15 @@ class MigrationOrderPaymentsController extends Controller
                     }else{
                         // check if the receipt file is a receipt file
                         $receiptFile = $payment->paymentReceipt;
-                        if($receiptFile->purpose != $purpose) {
-                            $file = app(FileService::class)->getSpecificFile(Payment::$type, $payment->id, $purpose);
+                        if($receiptFile) {
+                            if($receiptFile->purpose != $purpose) {
+                                $file = app(FileService::class)->getSpecificFile(Payment::$type, $payment->id, $purpose);
+                            }else{
+                                Utilities::logStuff("receipt file for payment Id: ".$payment->id." is okay");
+                                $fileIsOk = true;
+                            }
                         }else{
-                            Utilities::logStuff("receipt file for payment Id: ".$payment->id." is okay");
-                            $fileIsOk = true;
+                            Utilities::logStuff("Receipt File does not exist for Payment: ".$payment->id." and receipt_file_id: ".$payment->receipt_file_id);
                         }
                     }
                     if(!$fileIsOk) {
