@@ -31,4 +31,9 @@ class CountryService
         return State::find($id);
     }
 
+    public function addState($countryId, $state)
+    {
+        return State::firstOrCreate(["country_id" => $countryId, "name" => $state]);
+    }
+
 }

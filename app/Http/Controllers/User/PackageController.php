@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+use app\Exceptions\AppException;
+
 use app\Http\Resources\PackageResource;
 use app\Http\Resources\FileResource;
 
@@ -134,9 +136,12 @@ class PackageController extends Controller
             DB::commit();
 
             return Utilities::ok(new PackageResource($package));
+        }catch(AppException $e){
+            DB::rollBack();
+            throw $e;
         }catch(\Exception $e){
             DB::rollBack();
-            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+            return Utilities::error($e, 'An error occurred while trying to save Package, Please try again later or contact support');
         }
     }
 

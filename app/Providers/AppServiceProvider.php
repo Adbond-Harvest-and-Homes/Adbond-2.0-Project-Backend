@@ -12,12 +12,17 @@ use app\Domain\Payments\Events\InvestmentActivated;
 use app\Domain\Payments\Events\PaymentProcessed;
 use app\Domain\Payments\Events\PaymentCompleted;
 use app\Domain\Payments\Events\ReceiptGenerated;
+
+use app\Domain\Orders\Events\OrderCompleted;
+
 use app\Domain\Payments\Listeners\SendOrderNotificationListener;
 use app\Domain\Payments\Listeners\PostPaymentListener;
 use app\Domain\Payments\Listeners\GenerateContractListener;
 use app\Domain\Payments\Listeners\GenerateMOUListener;
 use app\Domain\Payments\Listeners\GenerateReceiptListener;
 use app\Domain\Payments\Listeners\UploadReceiptListener;
+
+use app\Domain\Orders\Listeners\CompleteOrderListener;
 
 use app\Jobs\CheckInvestmentReturns;
 
@@ -58,6 +63,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             ReceiptGenerated::class,
             UploadReceiptListener::class
+        );
+
+        Event::listen(
+            OrderCompleted::class,
+            CompleteOrderListener::class
         );
     }
 

@@ -36,12 +36,12 @@ class PostPaymentListener
     {
         $context = $event->context;
         // Determine if we should deduct units
-        $shouldProcess = $context->order?->package && $context->payment->confirmed == 1;
+        // $shouldProcess = $context->order?->package && $context->payment->confirmed == 1;
         
-        if ($shouldProcess) {
-            $packageService = new PackageService;
-            $packageService->deductUnits($context->order->units, $context->order->package);
-        }
+        // if ($shouldProcess) {
+        //     $packageService = new PackageService;
+        //     $packageService->deductUnits($context->order->units, $context->order->package);
+        // }
 
         // Apply strategy based on package type
         Utilities::logStuff("Get Strategy");

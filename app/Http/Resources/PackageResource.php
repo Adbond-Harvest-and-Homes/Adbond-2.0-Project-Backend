@@ -50,6 +50,24 @@ class PackageResource extends JsonResource
             "state" => $this?->stateModel?->name,
             "address" => $this->address,
             "location" => $this->address." ".$this->state,
+
+            //bonds
+            "bondSlots" => $this->bond_slots,
+            "availableSlots" => $this->bond_available_slots,
+            "slotAmount" => $this->bond_slots_amount,
+            "bondOwnershipType" => $this->bond_ownership_type,
+            "bondCountDown" => $this->bond_count_down,
+            "bondCountDownMetric" => $this->bond_count_down_metric,
+            "bondInvestmentDuration" => $this->bond_investment_duration,
+            "bondInvestmentDurationMetric" => $this->bond_investment_duration_metric,
+            "bondNetRentalIncome" => $this->bond_net_rental_income,
+            "bondNetRentalIncomeMeasurement" => $this->bond_net_rental_income_measurement,
+            "bondNetRentalIncomeTimeline" => $this->bond_net_rental_income_timeline,
+            "bondAssetAppreciation" => $this->bond_asset_appreciation,
+            "bondAssetAppreciationMeasurement" => $this->bond_asset_appreciation_measurement,
+            "bondAssetAppreciationTimeline" => $this->bond_asset_appreciation_timeline,
+
+
             "brochure" => new FileResource($this->whenLoaded("brochure")),
             "media" => FileResource::collection($this->whenLoaded("media")),
             "promos" => PromoResource::collection($this->promos),

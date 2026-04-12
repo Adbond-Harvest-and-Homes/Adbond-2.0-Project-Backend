@@ -30,7 +30,7 @@ class PostPaymentActionsStage implements PaymentStage
              ($context->gatewayResponse && !$context->gatewayResponse['paymentError']));
         
         if ($shouldProcess) {
-            $this->packageService->deductUnits($context->order->units, $context->order->package);
+            // $this->packageService->deductUnits($context->order->units, $context->order->package);
             
             // Apply strategy based on package type
             $this->strategy = $this->getStrategy($context);

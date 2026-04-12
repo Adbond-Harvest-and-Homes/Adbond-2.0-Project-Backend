@@ -1,5 +1,5 @@
 <?php 
 
 return [
-    'allowed' => ['Nigeria', 'Ghana'],
+    'allowed' => ['Nigeria', 'Ghana', 'South Africa'],
 ];

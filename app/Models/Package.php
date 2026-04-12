@@ -97,6 +97,19 @@ class Package extends Model
         return $this->morphMany(PromoProduct::class, 'product');
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /*
+        Gets the total number of units or slots(for the case of co-ownership bonds) that has been purchased for a package
+    */
+    public function purchasedUnits()
+    {
+        return $this->orders()->sum("units");
+    }
+
     /**
      * Get all promos for this package
      */
@@ -115,6 +128,10 @@ class Package extends Model
     protected static function boot()
     {
         parent::boot();
+
+        self::updating(function (Package $package) {
+            //
+        });
 
         self::deleting(function (Package $package) {
             if($package->assets->count() > 0) {

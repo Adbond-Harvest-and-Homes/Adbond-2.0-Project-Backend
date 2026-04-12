@@ -14,6 +14,8 @@ use app\Services\ClientPackageService;
 use app\Services\PaymentService;
 
 use app\Enums\ClientPackageOrigin;
+use app\Enums\PackageType;
+use app\Enums\BondOwnershipType;
 
 use app\Helpers;
 
@@ -122,13 +124,26 @@ class Payment extends Model
 
         });
 
-        // static::updating(function ($payment) {
-        //     if($payment->confirmed == 1 && !$payment->receipt_file_id) {
-        //         $res = self::uploadReceipt($payment);
-        //         if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
-        //     }
 
-        //     // if($payment->receipt_file_id) self::updateFile($payment->receipt_file_id, $payment);
+
+        // static::updated(function ($payment) {
+        //     if($payment->confirmed == 1) {
+        //         // if payment is confirmed
+
+        //         //if its a order purchase
+        //         if($payment->purchase_type == Order::$type) {
+        //             //deduct unit or bond slot from the package
+        //             $order = $payment->purchase;
+        //             $package = $order?->package;
+        //             if($package) {
+        //                 //if its a bond package and co-ownership
+        //                 if($package->type == PackageType::BOND->value && $package->bond_ownership_type == BondOwnershipType::CO_OWNERSHIP->value) {
+
+        //                 }
+        //             }
+        //         }
+
+        //     }
         // });
     }
 

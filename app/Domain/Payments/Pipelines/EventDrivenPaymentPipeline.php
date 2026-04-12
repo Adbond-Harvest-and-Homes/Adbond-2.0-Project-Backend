@@ -38,9 +38,9 @@ class EventDrivenPaymentPipeline extends PaymentPipeline
             $result = parent::process($context);
             
             // Dispatch event after successful processing
-            if ($this->dispatchProcessedEvent) {
-                Event::dispatch(new PaymentProcessed($result));
-            }
+            // if ($this->dispatchProcessedEvent) {
+            //     Event::dispatch(new PaymentProcessed($result));
+            // }
 
             
             
