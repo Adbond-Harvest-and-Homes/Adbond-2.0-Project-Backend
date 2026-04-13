@@ -48,10 +48,10 @@ class CheckAndGenerateReceipts extends Command
                 $payment->markDocUploaded();
 
                 //send the receipt to client's mail
-                $this->sendReceipt($payment, $filePath);
+                // $this->sendReceipt($payment, $filePath);
             }else{
                 if($payment->receipt_sent == 0) {
-                    $this->sendReceipt($payment);
+                    // $this->sendReceipt($payment);
                 }
             }
         }
