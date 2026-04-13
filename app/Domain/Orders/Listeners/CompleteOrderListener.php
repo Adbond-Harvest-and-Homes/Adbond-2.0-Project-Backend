@@ -30,9 +30,9 @@ class CompleteOrderListener
             // Confirm that the order is actually completed, i.e the balance is zero
             if($order->totalPaymentAmount() < $order->amount_payable) {
                 // payments is incomplete
-                $order->completed == 0;
+                $order->completed = 0;
                 $order->completedEvent = true;
-                $order->save();
+                $order->saveQuietly();
 
                 if($asset && ($asset->purchase_complete == 1 || $asset->purchase_completed_at)) {
                     $asset->purchase_complete = 0;

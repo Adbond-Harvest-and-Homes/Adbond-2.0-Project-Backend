@@ -97,11 +97,11 @@ class Order extends Model
             if($order->balance < 0) $order->balance = 0;
         });
 
-        self::created(function (Order $order) {
-            if(!$this->completedEvent && ($this->completed == 1 || $this->totalPaymentAmount() >= $this->amount_payable)) {
-                Event::dispatch(new OrderCompleted($order));
-            }
-        });
+        // self::created(function (Order $order) {
+        //     if(!$order->completedEvent && ($this->completed == 1 || $this->totalPaymentAmount() >= $this->amount_payable)) {
+        //         Event::dispatch(new OrderCompleted($order));
+        //     }
+        // });
 
         self::updating(function (Order $order) {
             $order->balance = $order->amount_payable - $order->amount_payed;
@@ -110,7 +110,8 @@ class Order extends Model
         });
 
         self::updated(function (Order $order) {
-            if(!$this->completedEvent && ($this->completed == 1 || $this->totalPaymentAmount() >= $this->amount_payable)) {
+            // if(!$this->completedEvent && ($this->completed == 1 || $this->totalPaymentAmount() >= $this->amount_payable)) {
+            if ($order->wasChanged(['completed', 'amount_payable']) && ($order->completed == 1 || $order->totalPaymentAmount() >= $order->amount_payable)) {
                 Event::dispatch(new OrderCompleted($order));
             }
         });
