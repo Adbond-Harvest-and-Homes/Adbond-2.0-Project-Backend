@@ -25,11 +25,14 @@ class CompleteOrderStage
         if($context->payment->confirmed == 1) {
             if ($context->order->is_installment == 0 || ($context->order->amount_payed == $context->order->amount_payable)) {
                 $clientPackage = $orderService->completeOrder($context->order, $context->payment, $context->investment);
-                $notificationService->save(
-                    $clientPackage, 
-                    NotificationType::ORDER_COMPLETION->value, 
-                    Auth::guard('client')->user()
-                );
+                $client = $context?->client ?? Auth::guard('client')->user();
+                if($client) {
+                    $notificationService->save(
+                        $clientPackage, 
+                        NotificationType::ORDER_COMPLETION->value, 
+                        $client
+                    );
+                }
             }
         }
 

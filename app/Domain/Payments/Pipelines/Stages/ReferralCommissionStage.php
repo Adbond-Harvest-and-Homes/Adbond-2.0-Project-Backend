@@ -13,6 +13,8 @@ use app\Services\CommissionService;
 
 use app\Models\PaymentStatus;
 
+use app\Enums\UserType;
+
 class ReferralCommissionStage 
 {
     public function handle(PaymentContext $context, Closure $next)

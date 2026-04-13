@@ -13,6 +13,8 @@ use app\Services\CommissionService;
 
 use app\Models\PaymentStatus;
 
+use app\Enums\UserType;
+
 use app\Utilities;
 
 class ReferralCommissionStage 
@@ -28,8 +30,8 @@ class ReferralCommissionStage
         if ($context->payment->confirmed == 1 && $context->isFirstOrFullPayment() && $context->client->referer) {
             $commissionService = new CommissionService;
 
-            $referer = Auth::guard('client')->user()->referer;
-            $refererType = Auth::guard('client')->user()->referer_type;
+            $referer = $context->client->referer;
+            $refererType = $context->client->referer_type;
             
             if ($context->order->payment_status_id == PaymentStatus::complete()->id && 
                 $refererType == UserType::CLIENT->value) {

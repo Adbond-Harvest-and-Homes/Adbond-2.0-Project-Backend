@@ -2,6 +2,8 @@
 
 namespace app\Domain\Payments\Context;
 
+use illuminate\Support\Facades\Auth;
+
 use app\Models\Order;
 use app\Models\Offer;
 use app\Models\Payment;
@@ -33,6 +35,7 @@ class PaymentContext
     {
         $this->requestData = $requestData;
         $this->processedData = $processedData;
+        $this->client = Auth::guard("client")->user();
     }
 
     public static function fromPaymentRequest(array $requestData): self
