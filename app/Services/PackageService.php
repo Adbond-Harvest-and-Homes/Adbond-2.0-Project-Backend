@@ -188,7 +188,43 @@ class PackageService
         if(isset($data['redemptionOptions'])) $package->redemption_options = json_encode($data['redemptionOptions']);
         if(isset($data['redemptionPackageId'])) $package->redemption_package_id = $data['redemptionPackageId'];
 
-        $package->update();
+
+        //bonds
+        if((isset($data['type']) && $data['type'] == PackageType::BOND->value) || $package->type == PackageType::BOND->value) {
+            $ownershipType = (isset($data['bondOwnershipType'])) ? $data['bondOwnershipType'] : $package->bond_ownership_type;
+            $bondSlots = (isset($data['bondSlots'])) ? $data['bondSlots'] : $package->bond_slots;
+            $units = (isset($data['units'])) ? $data['units'] : $package->units;
+            
+            if($package?->project?->projectType?->name != ProjectType::HOMES->value) throw new AppException(402, "bonds only apply to Homes");
+            if( $ownershipType == BondOwnershipType::CO_OWNERSHIP->value && !$bondSlots) throw new AppException(402, "Bond Slots is required for co-ownership");
+
+            if($package->assets->count() == 0) {
+                if($bondSlots) $package->bond_slots = $bondSlots;
+                $package->bond_available_slots = $bondSlots * $units;
+                $package->bond_slots_amount = round($package->amount/$bondSlots, 2);
+            }
+            if($ownershipType) $package->bond_ownership_type = $ownershipType;
+
+            // Count Down
+            if(isset($data['bondCountDown'])) $package->bond_count_down = $data['bondCountDown'];
+            if(isset($data['bondCountDownMetric'])) $package->bond_count_down_metric = $data['bondCountDownMetric'];
+
+            // Investment Duration
+            if(isset($data['bondInvestmentDuration'])) $package->bond_investment_duration = $data['bondInvestmentDuration'];
+            if(isset($data['bondInvestmentDurationMetric'])) $package->bond_investment_duration_metric = $data['bondInvestmentDurationMetric'];
+
+            // rental Income
+            if(isset($data['bondNetRentalIncome'])) $package->bond_net_rental_income = $data['bondNetRentalIncome'];
+            if(isset($data['bondNetRentalIncomeMeasurement'])) $package->bond_net_rental_income_measurement = $data['bondNetRentalIncomeMeasurement'];
+            if(isset($data['bondNetRentalIncomeTimeline'])) $package->bond_net_rental_income_timeline = $data['bondNetRentalIncomeTimeline'];
+
+            // Capital Appreciation
+            if(!isset($data['bondAssetAppreciation'])) $package->bond_asset_appreciation = $data['bondAssetAppreciation'];
+            if(isset($data['bondAssetAppreciationMeasurement'])) $package->bond_asset_appreciation_measurement = $data['bondAssetAppreciationMeasurement'];
+            if(isset($data['bondAssetAppreciationTimeline'])) $package->bond_asset_appreciation_timeline = $data['bondAssetAppreciationTimeline'];
+        }
+
+        $package->save();
 
         if(isset($data['benefits'])) $package->benefits()->sync($data['benefits']);
         if(isset($data['packageMediaIds'])) $package->media()->attach($data['packageMediaIds']);
