@@ -70,17 +70,20 @@ class OrderController extends Controller
             
             $data['amountDetail'] = $amountDetail;
 
-            if($data['isInstallment']) {
-                // if its installment payment, ensure that the client is not paying less than the minimum
-                $minPayable = round($amountDetail['amount']/$data['installmentCount'], 2);
-                if($data['amount'] < $minPayable) return Utilities::error402("You cannot pay less than ".$minPayable);
-                if($data['amount'] > $amountDetail['amount']) return Utilities::error402("you cannot pay more than ".$amountDetail['amount']);
-            }
+            // if($data['isInstallment']) {
+            //     // if its installment payment, ensure that the client is not paying less than the minimum
+            //     $minPayable = round($amountDetail['amount']/$data['installmentCount'], 2);
+            //     if($data['amount'] < $minPayable) return Utilities::error402("You cannot pay less than ".$minPayable);
+            //     if($data['amount'] > $amountDetail['amount']) return Utilities::error402("you cannot pay more than ".$amountDetail['amount']);
+            // }
 
             $data['amountPayable'] = ($data['isInstallment']) ? $data['amount'] : $amountDetail['amount'];
             // Cache this data to be used to complete the order processing
             if(isset($data['processingId'])) Cache::forget('order_processing_' . $processingId);
             Cache::put('order_processing_' . $processingId, $data, now()->addHours(12));
+
+            $processedData = Cache::get('order_processing_' . $processingId);
+            Utilities::logStuff($processedData);
 
             return Utilities::ok([
                 "processingId" => $processingId,

@@ -9,11 +9,16 @@ use PDF;
 
 use Illuminate\Support\Facades\DB;
 
+use app\Jobs\GenerateContract;
+use app\Jobs\GenerateMOU;
+use app\Jobs\GenerateReceipt;
+
 use app\Services\AgeGroupService;
 use app\Services\PackageService;
 use app\Services\ClientPackageService;
 
 use app\Models\Client;
+use app\Models\Offer;
 use app\Models\ClientNextOfKin;
 use app\Models\ClientSummaryView;
 use app\Models\ClientCommissionEarning;
@@ -200,10 +205,11 @@ class ClientService
         $payments = $paymentService->getClientPayments($client->id);
         if($payments->count() > 0) {
             foreach($payments as $payment) {
-                if($payment->docs_uploaded == 0) {
-                    $paymentService->uploadReceipt($payment, $client);
-                    $payment->docs_uploaded == 1;
-                    $payment->update();
+                if(!$payment->receipt_file_id) {
+                    GenerateReceipt::dispatch($payment->id, false);
+                    // $paymentService->uploadReceipt($payment, $client);
+                    // $payment->docs_uploaded == 1;
+                    // $payment->update();
                 }
             }
         }
@@ -211,10 +217,14 @@ class ClientService
         $assets = $clientPackageService->clientAssets($client->id);
         if($assets->count() > 0) {
             foreach($assets as $asset) {
-                if($asset->docs_uploaded == 0 && $asset->origin != ClientPackageOrigin::INVESTMENT->value) {
-                    $clientPackageService->uploadContract($asset->purchase, $asset, ($asset->origin == ClientPackageOrigin::OFFER->value));
-                    $asset->docs_uploaded == 1;
-                    $asset->update();
+                switch($asset->purchase_type) {
+                    case ClientPackageOrigin::ORDER->value : 
+                        $isOffer = ($asset->purchase_type == Offer::$type);
+                        GenerateContract::dispatch($asset->id, $isOffer, false);
+                        break;
+                    case ClientPackageOrigin::INVESTMENT->value : 
+                        if($asset?->purchase) GenerateMOU::dispatch($asset->purchase_id, false);
+                        break;
                 }
             }
         }

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Event;
 use app\Domain\Payments\Events\OrderSaved;
 use app\Domain\Payments\Events\OrderActivated;
 use app\Domain\Payments\Events\InvestmentActivated;
+use app\Domain\Payments\Events\BondActivated;
 use app\Domain\Payments\Events\PaymentProcessed;
 use app\Domain\Payments\Events\PaymentCompleted;
 use app\Domain\Payments\Events\ReceiptGenerated;
@@ -19,6 +20,7 @@ use app\Domain\Payments\Listeners\SendOrderNotificationListener;
 use app\Domain\Payments\Listeners\PostPaymentListener;
 use app\Domain\Payments\Listeners\GenerateContractListener;
 use app\Domain\Payments\Listeners\GenerateMOUListener;
+use app\Domain\Payments\Listeners\GenerateBondMOUListener;
 use app\Domain\Payments\Listeners\GenerateReceiptListener;
 use app\Domain\Payments\Listeners\UploadReceiptListener;
 
@@ -53,6 +55,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             InvestmentActivated::class,
             GenerateMOUListener::class
+        );
+
+        Event::listen(
+            BondActivated::class,
+            GenerateBondMOUListener::class
         );
 
         Event::listen(

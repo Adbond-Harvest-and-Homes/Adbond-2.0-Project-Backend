@@ -12,11 +12,14 @@ use app\Models\Payment;
 use app\Models\Package;
 use app\Models\ClientPackage;
 use app\Models\ClientInvestment;
+use app\Models\ClientBond;
 use app\Models\PaymentMode;
 use app\Models\PaymentStatus;
 
 use app\Services\PaymentService;
 use app\Services\OrderService;
+
+use app\Enums\PackageType;
 
 class PaymentConfirmationContext extends PaymentContext
 {
@@ -31,6 +34,7 @@ class PaymentConfirmationContext extends PaymentContext
     public ?Payment $payment = null;
     public ?ClientPackage $asset = null;
     public ?ClientInvestment $investment = null;
+    public ?ClientBond $bond = null;
     public bool $shouldDeductUnits = false;
     public bool $isFirstPayment = false;
 
@@ -60,11 +64,21 @@ class PaymentConfirmationContext extends PaymentContext
 
             $this->order = $payment->purchase;
 
-            if(!$this->order?->clientPackage) throw new AppException(402, "Asset not found");
+            $asset = null;
+            switch($this->order?->package?->type) {
+                case PackageType::NON_INVESTMENT->value :
+                    $asset = $this->order?->clientPackage; break;
+                case PackageType::INVESTMENT->value :
+                    $asset = $this->order?->clientInvestment?->clientPackage; break;
+                case PackageType::BOND->value :
+                    $asset = $this->order?->clientBond?->clientPackage; break;
+            }
+            if(!$asset) throw new AppException(402, "Asset not found");
 
             $this->asset = $this->order->clientPackage;
             
             if($this->order?->clientInvestment) $this->investment = $this->order?->clientInvestment;
+            if($this->order?->clientBond) $this->bond = $this->order?->clientBond;
         }
         if($payment->purchase_type == Offer::$type) $this->offer = $payment->purchase;
 

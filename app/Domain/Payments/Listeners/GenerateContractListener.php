@@ -34,7 +34,8 @@ class GenerateContractListener
 
             $uploadedFile = null;
 
-            GenerateContract::dispatch($context->asset->id, $isOffer);
+            $sendMail = ($context?->client && $context->client->kyc_status == KYCStatus::COMPLETED->value) ? true : false;
+            GenerateContract::dispatch($context->asset->id, $isOffer, $sendMail);
 
             // Generate and upload contract if it has not been generated
             // if (!$context->asset->contract_file_id || $context->asset->docs_uploaded == 0) {

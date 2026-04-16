@@ -6,19 +6,19 @@ use Closure;
 
 use app\Domain\Payments\Context\PaymentContext;
 
-use app\Services\ClientInvestmentService;
+use app\Services\ClientBondService;
 
 use app\Utilities;
 
-class SaveInvestmentStage 
+class SaveBondStage 
 {
     public function handle(PaymentContext $context, Closure $next)
     {
         if(!$context->confirmation) {
-            $clientInvestmentService = new ClientInvestmentService;
+            $clientBondService = new ClientBondService;
 
-            $clientInvestment = $clientInvestmentService->saveInvestment($context->order, $context->processedData);
-            $context->investment = $clientInvestment;
+            $clientBond = $clientBondService->saveBond($context->order, $context->processedData);
+            $context->bond = $clientBond;
         }
 
         return $next($context);

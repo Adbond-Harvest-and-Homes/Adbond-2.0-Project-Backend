@@ -11,9 +11,7 @@ use Illuminate\Queue\SerializesModels;
 
 use Illuminate\Mail\Mailables\Attachment;
 
-use app\Models\Client;
-
-class MOU extends Mailable
+class BondMOU extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -35,7 +33,7 @@ class MOU extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Memorandum Of Understanding',
+            subject: 'Bond Memorandum Of Understanding',
         );
     }
 
@@ -45,7 +43,7 @@ class MOU extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.mou',
+            view: 'emails.bond_mou',
             with: [
                 "client" => $this->client
             ]
@@ -61,12 +59,12 @@ class MOU extends Mailable
     {
         if (str_starts_with($this->filePath, 'http')) {
             return [
-                Attachment::fromData(fn () => file_get_contents($this->filePath), "Memorandum_of_understanding.pdf")
+                Attachment::fromData(fn () => file_get_contents($this->filePath), "bond_memorandum_agreement.pdf")
             ];
         }
         
         return [
-            Attachment::fromPath(public_path($this->filePath))->as("Memorandum_of_understanding.pdf")
+            Attachment::fromPath(public_path($this->filePath))->as("bond_memorandum_agreement.pdf")
         ];
     }
 }

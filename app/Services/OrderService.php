@@ -21,6 +21,7 @@ use app\Utilities;
 
 use app\Services\ClientPackageService;
 use app\Services\ClientInvestmentService;
+use app\Services\ClientBondService;
 use app\Services\FileService;
 use app\Services\CommissionService;
 use app\Services\DiscountService;
@@ -212,28 +213,20 @@ class OrderService
 
         $files = [];
         $clientPackage = null;
-        if($order->package->type==PackageType::NON_INVESTMENT->value) {
-            // $clientPackageService->uploadContract = ($payment->confirmed == 1);
-            $clientPackage = $clientPackageService->saveClientPackageOrder($order);
+
+        switch($order?->package?->type) {
+            case PackageType::NON_INVESTMENT->value : 
+                $clientPackage = $clientPackageService->saveClientPackageOrder($order);
+                break;
+            case PackageType::INVESTMENT->value : 
+                $clientPackage = $clientPackageService->saveClientPackageInvestment($order->clientInvestment);
+                $clientInvestmentService->start($order->clientInvestment);
+                break;
+            case PackageType::INVESTMENT->value : 
+                $clientPackage = $clientPackageService->saveClientPackageBond($order->clientBond);
+                app(ClientBondService::class)->start($order->clientBond);
+                break;
         }
-
-        if($clientInvestment && $order->package->type==PackageType::INVESTMENT->value) {
-
-            //Upload MOU and send it as email
-            // $clientInvestmentService->uploadMOU($order, $clientInvestment);
-
-            $clientPackage = $clientPackageService->saveClientPackageInvestment($clientInvestment);
-
-            // $fileMeta = ["belongsId"=>$clientPackage->id, "belongsType"=>"app\Models\ClientInvestment"];
-            // if($memorandumFileObj) $fileService->updateFileObj($fileMeta, $memorandumFileObj);
-
-            // Start the investment
-            $clientInvestmentService->start($clientInvestment);
-        }
-
-        // $fileMeta = ["belongsId"=>$clientPackage->id, "belongsType"=>"app\Models\ClientPackage"];
-        // if($contractFileObj) $fileService->updateFileObj($fileMeta, $contractFileObj);
-        // if($letterOfHappinessFileObj) $fileService->updateFileObj($fileMeta, $letterOfHappinessFileObj);
 
         //if its an upgrade order, 
         if($order->type == OrderType::UPGRADE->value) {

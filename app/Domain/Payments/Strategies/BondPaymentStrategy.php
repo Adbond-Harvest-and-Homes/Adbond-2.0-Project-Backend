@@ -2,45 +2,43 @@
 
 namespace app\Domain\Payments\Strategies;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Pipeline\Pipeline;
-use Illuminate\Support\Facades\Event;
 
 use app\Domain\Payments\Pipelines\StrategyStages\{
     CompleteOrderStage,
     OrderUpdateStage,
     ReferralCommissionStage,
-    SaveAssetStage,
-    OrderActivatedStage
+    SaveBondStage,
+    SaveBondAssetStage,
+    BondActivatedStage
 };
 
 use app\Domain\Payments\Context\PaymentContext;
 
 use app\Utilities;
 
-class NonInvestmentPaymentStrategy implements PaymentStrategy
+class BondPaymentStrategy implements PaymentStrategy
 {
     private $stages;
 
     public function __construct() {
-        Utilities::logStuff("Implementing non investment Strategy");
-        
         $this->stages = [
             new OrderUpdateStage,
+            new SaveBondStage,
             new CompleteOrderStage,
-            new SaveAssetStage,
+            new SaveBondAssetStage,
             new ReferralCommissionStage,
-            new OrderActivatedStage
+            new BondActivatedStage
         ];
     }
 
     public function execute(PaymentContext $context): PaymentContext
     {
-        Utilities::logStuff("Executing Non-Investment Strategy");
+        Utilities::logStuff("Executing Bond Strategy");
 
         return app(Pipeline::class)
-            ->send($context)
-            ->through($this->stages)
-            ->thenReturn();
+        ->send($context)
+        ->through($this->stages)
+        ->thenReturn();
     }
 }

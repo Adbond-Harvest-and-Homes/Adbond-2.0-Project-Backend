@@ -10,6 +10,7 @@ use app\Models\Payment;
 use app\Models\Package;
 use app\Models\ClientPackage;
 use app\Models\ClientInvestment;
+use app\Models\ClientBond;
 use app\Models\PaymentStatus;
 use app\Models\Client;
 
@@ -26,6 +27,7 @@ class PaymentContext
     public ?Payment $payment = null;
     public ?ClientPackage $asset = null;
     public ?ClientInvestment $investment = null;
+    public ?ClientBond $bond = null;
     public ?array $gatewayResponse = null;
     public ?array $uploadedReceipt = null;
     public bool $shouldDeductUnits = false;

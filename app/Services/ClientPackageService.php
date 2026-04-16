@@ -13,6 +13,7 @@ use app\Models\Offer;
 use app\Models\ClientInvestment;
 use app\Models\ClientAssetsView;
 use app\Models\ProjectType;
+use app\Models\ClientBond;
 
 use app\Mail\LetterOfHappiness;
 use app\Mail\Contract;
@@ -69,14 +70,22 @@ class ClientPackageService
         if($clientPackage->purchase_complete == 1) $clientPackage->purchase_completed_at = now();
         $clientPackage->save();
 
+        if($data['origin'] != ClientPackageOrigin::OFFER->value) {
+            // Add Asset Metric;
+            $metricService = new MetricService;
+
+            $order = ($data['purchaseType'] == Order::$type) ? $clientPackage->purchase : $clientPackage->purchase->order;
+            ($order->is_installment == 1) ? $metricService->addAssetMetric(MetricType::BOTH->value) : $metricService->addAssetMetric(MetricType::TOTAL->value);
+        }
+
         //Upload contract here if its a new order and completed kyc
         // dd($this->uploadContract);
-        if($this->uploadContract && $new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
-            $purchase = $clientPackage->purchase; 
-            $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
-            // $this->uploadContract($purchase, $clientPackage, $isOffer);
-            // dd("uploaded contract");
-        }
+        // if($this->uploadContract && $new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
+        //     $purchase = $clientPackage->purchase; 
+        //     $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
+        //     // $this->uploadContract($purchase, $clientPackage, $isOffer);
+        //     // dd("uploaded contract");
+        // }
         // dd($new, $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value, Helpers::kycCompleted($clientPackage->client));
 
         return $clientPackage;
@@ -96,11 +105,6 @@ class ClientPackageService
         $data['units'] = $order->units;
         $data['unitPrice'] = $order->unit_price;
         $clientPackage = $this->save($data);
-
-        // Add Asset Metric;
-        $metricService = new MetricService;
-
-        ($order->is_installment == 1) ? $metricService->addAssetMetric(MetricType::BOTH->value) : $metricService->addAssetMetric(MetricType::TOTAL->value);
         
         return $clientPackage;
     }
@@ -130,6 +134,20 @@ class ClientPackageService
         if($clientInvestment->order->completed == 1) $data['purchaseComplete'] = true;
         $data['amount'] = $clientInvestment->capital;
         $data['unitPrice'] = $clientInvestment->order->unit_price;
+
+        $clientPackage = $this->save($data);
+        return $clientPackage;
+    }
+
+    public function saveClientPackageBond($clientBond) {
+        $data['clientId'] = $clientBond->client_id;
+        $data['packageId'] = $clientBond->package_id;
+        $data['origin'] = ClientPackageOrigin::BOND->value;
+        $data['purchaseId'] = $clientBond->id;
+        $data['purchaseType'] = ClientBond::$type;
+        if($clientBond->order->completed == 1) $data['purchaseComplete'] = true;
+        $data['amount'] = $clientBond->start_capital;
+        $data['unitPrice'] = $clientBond->order->unit_price;
 
         $clientPackage = $this->save($data);
         return $clientPackage;

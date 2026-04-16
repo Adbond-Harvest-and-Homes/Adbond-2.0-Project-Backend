@@ -145,4 +145,44 @@ class ContractService
         $pdf->save($publicFile);
         return $file;
     }
+
+    public function generateBondMOU($order)
+    {
+        $file = "files/bond_memorandum_agreement_{$order->id}.pdf";
+        $publicFile = public_path($file);
+
+        if(file_exists($publicFile)) return $file;
+
+        $data = Helpers::prepareContract($order);
+        if(!isset($data['project']) || $data['project']==null) $data['project'] = '';
+        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
+        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
+        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
+        if(!isset($data['state']) || $data['state']==null) $data['state'] = '';
+        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
+        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
+        if(!isset($data['installment_duration']) || $data['installment_duration']==null) $data['installment_duration'] = 12;
+        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        $pdfData = [
+            'image' => public_path('images/logo.PNG'),
+            'day' => date('jS'),
+            'month' => date('F'),
+            'year' => date('Y'),
+            'project' => $data['project'],
+            'package' => $data['package'],
+            'client' => $data['client'],
+            'state' => $data['state'],
+            'address' => $data['address'],
+            'price' => (float)$data['price'],
+            'size' => (float)$data['size'],
+            'location' => $data['location'],
+            'installment_duration' => $data['installment_duration'],
+            'installment' => $data['installment']
+        ];
+        $pdf = PDF::loadView('pdf/memorandum_agreement', $pdfData);
+        // return $pdf->stream('memorandum_agreement.pdf');
+        // $file = "files/memorandum_agreement_{$order->id}.pdf";
+        $pdf->save($publicFile);
+        return $file;
+    }
 }

@@ -67,6 +67,11 @@ class Order extends Model
         return $this->hasOne(ClientInvestment::class);
     }
 
+    public function clientBond()
+    {
+        return $this->hasOne(ClientBond::class);
+    }
+
     public function upgrade()
     {
         return $this->belongsTo(AssetUpgrade::class, "upgrade_id", "id");

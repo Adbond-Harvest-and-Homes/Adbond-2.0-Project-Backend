@@ -29,7 +29,8 @@ class GenerateMOUListener
     {
         $context = $event->context;
 
-        GenerateMOU::dispatch($context->investment->id);
+        $sendMail = ($context?->client && $context->client->kyc_status == KYCStatus::COMPLETED->value) ? true : false;
+        GenerateMOU::dispatch($context->investment->id, $sendMail);
         
         // if($context->investment && $context->payment->confirmed == 1 && !$context->investment->memorandum_agreement_file_id) {
         //     app(ContractService::class)->generateMOU($context->order);

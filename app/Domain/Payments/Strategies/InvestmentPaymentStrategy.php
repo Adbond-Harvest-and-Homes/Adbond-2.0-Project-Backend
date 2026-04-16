@@ -14,6 +14,7 @@ use app\Domain\Payments\Pipelines\StrategyStages\{
 };
 
 use app\Domain\Payments\Context\PaymentContext;
+use App\Utilities;
 
 class InvestmentPaymentStrategy implements PaymentStrategy
 {
@@ -32,6 +33,8 @@ class InvestmentPaymentStrategy implements PaymentStrategy
 
     public function execute(PaymentContext $context): PaymentContext
     {
+        Utilities::logStuff("Executing Investment Strategy");
+
         return app(Pipeline::class)
         ->send($context)
         ->through($this->stages)

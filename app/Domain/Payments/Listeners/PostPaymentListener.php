@@ -11,6 +11,7 @@ use app\Domain\Payments\Events\PaymentProcessed;
 
 use app\Domain\Payments\Strategies\InvestmentPaymentStrategy;
 use app\Domain\Payments\Strategies\NonInvestmentPaymentStrategy;
+use app\Domain\Payments\Strategies\BondPaymentStrategy;
 use app\Domain\Payments\Strategies\PaymentStrategy;
 
 use app\Enums\PackageType;
@@ -56,6 +57,7 @@ class PostPaymentListener
         $strategies = [
             PackageType::INVESTMENT->value => app(InvestmentPaymentStrategy::class),
             PackageType::NON_INVESTMENT->value => app(NonInvestmentPaymentStrategy::class),
+            PackageType::BOND->value => app(BondPaymentStrategy::class)
         ];
         
         $packageType = $context->package->type;

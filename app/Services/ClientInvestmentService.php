@@ -11,6 +11,7 @@ use app\Mail\MOU;
 
 use app\Enums\FilePurpose;
 use app\Enums\FileTypes;
+use app\Enums\UserType;
 
 use app\Services\ContractService;
 
