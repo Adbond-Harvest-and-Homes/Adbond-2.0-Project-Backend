@@ -82,7 +82,8 @@ class PaymentConfirmationContext extends PaymentContext
             }
             if(!$asset) throw new AppException(402, "Asset not found..".$this->order?->package?->type);
 
-            $this->asset = $this->order->clientPackage;
+            $this->order->refresh();
+            $this->asset = $asset;
             
             if($this->order?->clientInvestment) $this->investment = $this->order?->clientInvestment;
             if($this->order?->clientBond) $this->bond = $this->order?->clientBond;
