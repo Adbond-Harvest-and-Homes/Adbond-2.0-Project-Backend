@@ -73,7 +73,7 @@ class PaymentConfirmationContext extends PaymentContext
                 case PackageType::BOND->value :
                     $asset = $this->order?->clientBond?->clientPackage; break;
             }
-            if(!$asset) throw new AppException(402, "Asset not found");
+            if(!$asset) throw new AppException(402, "Asset not found..".$this->order?->package?->type);
 
             $this->asset = $this->order->clientPackage;
             

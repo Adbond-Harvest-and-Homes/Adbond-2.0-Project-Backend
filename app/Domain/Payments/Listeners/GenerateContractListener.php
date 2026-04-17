@@ -10,7 +10,10 @@ use app\Domain\Payments\Events\OrderActivated;
 use app\Jobs\GenerateContract;
 
 use app\Services\ContractService;
-use App\Utilities;
+
+use app\Enums\KYCStatus;
+
+use app\Utilities;
 
 class GenerateContractListener
 {
