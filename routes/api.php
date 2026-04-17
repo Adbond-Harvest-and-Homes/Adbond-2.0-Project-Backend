@@ -428,6 +428,7 @@ Route::group(['prefix' => '/v2',], function () {
         Route::get('banks', [UtilityController::class, 'banks']);
         Route::get('identifications', [UtilityController::class, 'identifications']);
         Route::get('countries', [UtilityController::class, 'countries']);
+        Route::get('states/{countryId}', [UtilityController::class, 'states']);
     });
 
 

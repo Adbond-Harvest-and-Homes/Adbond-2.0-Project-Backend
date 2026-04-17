@@ -11,6 +11,7 @@ use app\Http\Resources\WalletBankAccountResource;
 use app\Http\Resources\ResellOrderResource;
 use app\Http\Resources\ClientIdentificationResource;
 use app\Http\Resources\CountryResource;
+use app\Http\Resources\StateResource;
 
 use app\Services\UtilityService;
 use app\Services\CountryService;
@@ -72,5 +73,12 @@ class UtilityController extends Controller
         $countries = $this->countryService->countries();
 
         return Utilities::ok(CountryResource::collection($countries));
+    }
+
+    public function states($countryId)
+    {
+        $states = $this->countryService->getStates($countryId);
+
+        return Utilities::ok(StateResource::collection($states));
     }
 }

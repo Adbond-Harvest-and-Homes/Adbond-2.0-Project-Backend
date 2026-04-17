@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
             new ProjectTypes,
             new Roles,
             new StaffTypes,
-            new States,
+            // new States,
             new Users,
             // new Projects,
             // new Packages,
@@ -68,7 +68,7 @@ class DatabaseSeeder extends Seeder
             new Benefits,
             // new WalletSeeder,
             new BankAccounts,
-            new Ghana,
+            // new Ghana,
             new LoadPackageStates
             // new AddRefererUserCode
         ];
