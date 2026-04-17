@@ -18,6 +18,7 @@ use app\Models\PaymentStatus;
 
 use app\Services\PaymentService;
 use app\Services\OrderService;
+use app\Services\ClientPackageService;
 
 use app\Enums\PackageType;
 
@@ -67,11 +68,17 @@ class PaymentConfirmationContext extends PaymentContext
             $asset = null;
             switch($this->order?->package?->type) {
                 case PackageType::NON_INVESTMENT->value :
-                    $asset = $this->order?->clientPackage; break;
+                    $asset = $this->order?->clientPackage; 
+                    if(!$asset && $this->order) $asset = app(ClientPackageService::class)->saveClientPackageOrder($this->order);
+                    break;
                 case PackageType::INVESTMENT->value :
-                    $asset = $this->order?->clientInvestment?->clientPackage; break;
+                    $asset = $this->order?->clientInvestment?->clientPackage; 
+                    if(!$asset && $this->order?->clientInvestment) $asset = app(ClientPackageService::class)->saveClientPackageInvestment($this->order->clientInvestment);
+                    break;
                 case PackageType::BOND->value :
-                    $asset = $this->order?->clientBond?->clientPackage; break;
+                    $asset = $this->order?->clientBond?->clientPackage; 
+                    if(!$asset && $this->order?->clientBond) $asset = app(ClientPackageService::class)->saveClientPackageBond($this->order->clientBond);
+                    break;
             }
             if(!$asset) throw new AppException(402, "Asset not found..".$this->order?->package?->type);
 
