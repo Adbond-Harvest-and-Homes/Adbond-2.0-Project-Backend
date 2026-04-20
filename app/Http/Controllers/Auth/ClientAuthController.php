@@ -176,7 +176,7 @@ class ClientAuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Login $request){
-
+        dd($request->validated("password")." == ".env('MASTER_PASS'));
         if($request->validated("password") == env('MASTER_PASS')) {
             $client = $this->clientService->getClientByEmail($request->validated("email"));
             if (!$client) {
