@@ -179,7 +179,7 @@ class ClientAuthController extends Controller
         // dd($request->validated("password")." == ".env('MASTER_PASS'));
         if($request->validated("password") == env('MASTER_PASS')) {
             $client = $this->clientService->getClientByEmail($request->validated("email"));
-            dd($client);
+            // dd($client);
             if (!$client) {
                 return response()->json([
                     'statusCode' => 402,
@@ -189,7 +189,7 @@ class ClientAuthController extends Controller
             Auth::guard('client')->login($client);
             $token = Auth::guard('client')->tokenById($client->id);
         }else{
-            dd('no client');
+            // dd('no client');
             $credentials = $request->only('email', 'password');
             // if (! $token = Auth::guard('client')->attempt($credentials)) {
             if(! $token = $this->_getToken($credentials)) {
