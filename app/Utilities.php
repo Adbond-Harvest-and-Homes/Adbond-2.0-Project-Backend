@@ -312,7 +312,8 @@ class Utilities
         if($percentage <= 0) {
             return 0;
         }
-        return ($percentage/100) * $amount;
+        
+        return round(($percentage/100) * $amount, 2);
     }
 
     public static function generateRandomNumber($length)

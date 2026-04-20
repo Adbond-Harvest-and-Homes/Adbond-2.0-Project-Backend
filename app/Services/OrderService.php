@@ -222,7 +222,7 @@ class OrderService
                 $clientPackage = $clientPackageService->saveClientPackageInvestment($order->clientInvestment);
                 $clientInvestmentService->start($order->clientInvestment);
                 break;
-            case PackageType::INVESTMENT->value : 
+            case PackageType::BOND->value : 
                 $clientPackage = $clientPackageService->saveClientPackageBond($order->clientBond);
                 app(ClientBondService::class)->start($order->clientBond);
                 break;

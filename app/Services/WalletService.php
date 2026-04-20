@@ -208,6 +208,14 @@ class WalletService
         return $request;
     }
 
+    public function addToLockedAmount($wallet, $amount)
+    {
+        $wallet->locked_amount = $amount;
+        $wallet->save();
+
+        return $wallet;
+    }
+
     public function debit($wallet, $amount)
     {
         $wallet->amount = $wallet->amount - $amount;

@@ -4,23 +4,30 @@ namespace app\Services;
 
 use DateTime;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+
+use app\Exceptions\AppException;
 
 use app\Models\ClientBond;
+use app\Models\ClientBondPayout;
 
 use app\Mail\MOU;
 
 use app\Enums\FilePurpose;
 use app\Enums\FileTypes;
 use app\Enums\BondOccurrenceMetric;
+use app\Enums\BondIncomeMeasurement;
 use app\Enums\UserType;
 
 use app\Services\ContractService;
+use app\Services\WalletService;
 
 use app\Utilities;
 use app\Helpers;
 
 class ClientBondService
 {
+    public $clientId = null;
 
     public function getByOrderId($orderId)
     {
@@ -35,6 +42,25 @@ class ClientBondService
     public function runningBonds()
     {
         return ClientBond::where("started", 1)->where("ended", 0)->orderBy("created_at", "DESC")->get();
+    }
+
+    public function notStartedBonds()
+    {
+        return ClientBond::where("started", 0)->where("ended", 0)->orderBy("created_at", "DESC")->get();
+    }
+
+    public function getBondPayouts($with=[])
+    {
+        return ClientBondPayout::with($with)->when($this->clientId, function($query) {
+            $query->where("client_id", $this->clientId);
+        })->orderBy("created_at", "DESC")->get();
+    }
+
+    public function getBondPayout($id, $with=[])
+    {
+        return ClientBondPayout::with($with)->where("id", $id)->when($this->clientId, function($query) {
+            $query->where("client_id", $this->clientId);
+        })->first();
     }
 
     public function save($data)
@@ -84,6 +110,14 @@ class ClientBondService
         return $bond;
     }
 
+    public function getPayout($bond)
+    {
+        //if its a fixed amount, return that fixed amount as the payout
+        if($bond->net_rental_income_measurement == BondIncomeMeasurement::FIXED->value) return $bond->net_rental_income;
+
+        return Utilities::getPercentageAmount($bond->current_capital, $bond->net_rental_income);
+    }
+
     public function saveBond($order, $data)
     {
         $package = $order->package;
@@ -130,6 +164,25 @@ class ClientBondService
             case BondOccurrenceMetric::YEARLY->value :
                 return "1 year"; break;
             default: return null;
+        }
+    }
+
+    public function addPayout($bond, $payout)
+    {
+        DB::beginTransaction();
+        try{
+            $bondPayout = new ClientBondPayout;
+            $bondPayout->client_id = $bond->client_id;
+            $bondPayout->client_bond_id = $bond->id;
+            $bondPayout->payout_amount = $payout;
+            $bondPayout->interest = $bond->net_rental_income;
+            $bondPayout->interest_measurement = $bond->net_rental_income_measurement;
+
+            $bondPayout->save();
+
+            app(WalletService::class)->addToLockedAmount($bond->client->wallet, $payout);
+        }catch(\Exception $e) {
+            Utilities::error($e, "An error Occurred trying to add payout");
         }
     }
 
