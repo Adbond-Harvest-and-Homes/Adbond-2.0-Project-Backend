@@ -1,15 +1,11 @@
 <?php
 
-namespace app\Http\Requests\User;
+namespace app\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
 use app\Http\Requests\BaseRequest;
 
-use app\EnumClass;
-
-class UpdateDiscount extends BaseRequest
+class RenewBond extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,8 +23,7 @@ class UpdateDiscount extends BaseRequest
     public function rules(): array
     {
         return [
-            "discount" => "required|numeric|max:100",
-            "measurement" => ["nullable", Rule::in(EnumClass::Measurements())]
+            "bondId" => "required|integer"
         ];
     }
 }

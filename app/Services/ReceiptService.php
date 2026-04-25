@@ -59,7 +59,7 @@ class ReceiptService
         $size = ($unitSize != null && $payment?->purchase?->units != null && $payment?->purchase?->units > 0) ? $unitSize * $payment?->purchase?->units : $unitSize;
         $purchaseBalance = $payment?->purchase?->balance ?? 0;
         $amount = $payment?->amount ?? 0;
-        $totalPayed = $payment?->purchase?->amount_payed + $amount;
+        $totalPayed = $payment?->purchase?->amount_payed;
         $balance = $purchaseBalance - $amount;
         $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [

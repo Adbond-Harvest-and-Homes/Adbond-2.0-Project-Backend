@@ -3,7 +3,7 @@ EmploymentStatus: {'unemployed', 'employed', 'self-employed'}
 
 PackageType: { 'investment', 'non-investment', 'bond'}
 
-BondIncomeMeasurement: { 'fixed',  'percentage' }
+Measurement: { 'fixed',  'percentage' }
 
 BondOccurrenceMetric: { 'weekly', 'monthly', 'quarterly', 'yearly'}
 

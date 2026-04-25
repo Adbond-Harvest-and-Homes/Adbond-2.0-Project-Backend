@@ -26,10 +26,11 @@ class DiscountService
         return InstallmentDiscount::where("duration", $duration)->first();
     }
 
-    public function updateDiscount($type, $percentage)
+    public function updateDiscount($type, $data)
     {
         $discount = Discount::where("type", $type)->first();
-        $discount->discount = $percentage;
+        $discount->discount = $data['discount'];
+        if(isset($data['measurement'])) $discount->discount_measurement = $data['measurement'];
         $discount->update();
 
         return $discount;

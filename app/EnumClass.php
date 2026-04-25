@@ -24,7 +24,7 @@ use app\Enums\PromoProductType;
 use app\Enums\NotificationType;
 
 //bonds
-use app\Enums\BondIncomeMeasurement;
+use app\Enums\Measurement;
 use app\Enums\BondOccurrenceMetric;
 use app\Enums\BondOwnershipType;
 use app\Enums\BondTimeMetric;
@@ -185,9 +185,9 @@ class EnumClass
         return array_column(NotificationType::cases(), 'value');
     }
 
-    public static function bondIncomeMeasurements()
+    public static function Measurements()
     {
-        return array_column(BondIncomeMeasurement::cases(), 'value');
+        return array_column(Measurement::cases(), 'value');
     }
 
     public static function bondOccurrenceMetrics()

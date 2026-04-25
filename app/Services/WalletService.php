@@ -172,7 +172,7 @@ class WalletService
         $transaction->reference_no = $this->generateReferenceNo();
         $transaction->wallet_id = $wallet->id;
         $transaction->amount = $clientCommission->amount_after_tax;
-        $transaction->balance = $wallet->amount + $transaction->amount;
+        $transaction->balance = $transaction->balance + $transaction->amount;
         $transaction->transaction_type = TransactionType::IN_FLOW->value;
         $transaction->source_type = WalletTransactionSource::COMMISSION->value;
         $transaction->source_id = $clientCommission->id;
@@ -216,6 +216,15 @@ class WalletService
         return $wallet;
     }
 
+    public function releaseLockedAmount($wallet, $amount, $source)
+    {
+        $wallet->locked_amount = $wallet->locked_amount - $amount;
+        $wallet->save();
+        
+        $this->credit($wallet, $amount, $source);
+        
+    }
+
     public function debit($wallet, $amount)
     {
         $wallet->amount = $wallet->amount - $amount;
@@ -230,6 +239,26 @@ class WalletService
         $transaction->save();
 
         $wallet->update();
+
+        return $wallet;
+    }
+
+    public function credit($wallet, $amount, $source)
+    {
+        $wallet->amount = $wallet->amount + $amount;
+
+        $transaction = new WalletTransaction;
+        $transaction->reference_no = $this->generateReferenceNo();
+        $transaction->wallet_id = $wallet->id;
+        $transaction->amount = $amount;
+        $transaction->balance = $wallet->amount;
+        $transaction->transaction_type = TransactionType::IN_FLOW->value;
+        $transaction->source_type = $source['type'];
+        $transaction->source_id = $source['id'];
+        $transaction->confirmed = true;
+        $transaction->save();
+
+        $wallet->save();
 
         return $wallet;
     }

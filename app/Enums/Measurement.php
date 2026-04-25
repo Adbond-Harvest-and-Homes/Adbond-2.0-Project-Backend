@@ -2,7 +2,7 @@
 
 namespace app\Enums;
 
-enum BondIncomeMeasurement: string
+enum Measurement: string
     {
         case FIXED = 'fixed';
         case PERCENTAGE = 'percentage';

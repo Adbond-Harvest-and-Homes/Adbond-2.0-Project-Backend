@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Carbon\Carbon;
 
 use app\Jobs\BondPayout;
+use app\Jobs\ClientBondEnded;
 
 use app\Services\ClientBondService;
 
@@ -72,9 +73,10 @@ class MonitorBonds extends Command
                     $payout = app(ClientBondService::class)->getPayout($startedBond);
 
                     //add the payout to the wallet;
-                    app(ClientBondService::class)->addPayout($startedBond, $payout);
+                    $bondPayout = app(ClientBondService::class)->addPayout($startedBond, $payout);
 
                     // dispatch job to notify client that they have a new payout
+                    BondPayout::dispatch($bondPayout->id);
 
                     // calculate the next payout date
                     $nextCapitalPayoutDuration = $this->convertTimelineToDuration($startedBond->net_rental_income_timeline);
@@ -89,6 +91,7 @@ class MonitorBonds extends Command
                     $startedBond->ended = 1;
 
                     // dispatch job to notify client that their bond has ended
+                    ClientBondEnded::dispatch($startedBond->id);
                 }
 
                 $startedBond->save();

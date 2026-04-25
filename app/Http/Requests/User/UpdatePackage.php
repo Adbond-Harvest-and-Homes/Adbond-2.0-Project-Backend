@@ -76,10 +76,10 @@ class UpdatePackage extends BaseRequest
             "bondInvestmentDuration" => "integer|required_if:type,".PackageType::BOND->value,
             "bondInvestmentDurationMetric" => ["string", "required_with:bondInvestmentDuration", Rule::in(EnumClass::bondTimeMetrics())],
             "bondNetRentalIncome" => "integer|required_if:type,".PackageType::BOND->value,
-            "bondNetRentalIncomeMeasurement" => ["string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::bondIncomeMeasurements())],
+            "bondNetRentalIncomeMeasurement" => ["string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::Measurements())],
             "bondNetRentalIncomeTimeline" => ["string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::bondOccurrenceMetrics())],
             "bondAssetAppreciation" => "numeric|required_if:type,".PackageType::BOND->value,
-            "bondAssetAppreciationMeasurement" => ["string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::bondIncomeMeasurements())],
+            "bondAssetAppreciationMeasurement" => ["string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::Measurements())],
             "bondAssetAppreciationTimeline" => ["string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::bondOccurrenceMetrics())],
         
         ];

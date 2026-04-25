@@ -37,6 +37,7 @@ return new class extends Migration
             $table->foreignId("mou_file_id")->nullable();
             $table->boolean("docs_uploaded")->default(false);
             $table->boolean("mou_sent")->default(false);
+            $table->boolean("redeemed")->nullable();
             $table->timestamps();
         });
     }

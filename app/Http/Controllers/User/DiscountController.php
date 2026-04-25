@@ -36,8 +36,9 @@ class DiscountController extends Controller
 
     public function updateFullPayment(UpdateDiscount $request)
     {
+        $data = $request->validated();
         $type = DiscountType::FULL_PAYMENT->value;
-        $fullPayment = $this->discountService->updateDiscount($type, $request->validated("discount"));
+        $fullPayment = $this->discountService->updateDiscount($type, $data);
 
         return Utilities::ok(
             ["discount" => $fullPayment->discount]

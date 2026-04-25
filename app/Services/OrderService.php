@@ -26,6 +26,8 @@ use app\Services\FileService;
 use app\Services\CommissionService;
 use app\Services\DiscountService;
 
+use app\Enums\Measurement;
+
 /**
  * Order service class
  */
@@ -42,8 +44,11 @@ class OrderService
         $appliedDiscounts = [];
         $discountedAmount = $data['amount'];
         if($data['packageType']==PackageType::NON_INVESTMENT->value && !$data['isInstallment']) {
-            $fullPaymentDiscount = Discount::fullPayment()->discount;
-            $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount);
+            $fullPaymentDiscountObj =  Discount::fullPayment();
+            $fullPaymentDiscount = $fullPaymentDiscountObj->discount;
+            $discountMeasurement = $fullPaymentDiscountObj->discount_measurement;
+            $isPercentage = $discountMeasurement == Measurement::PERCENTAGE->value;
+            $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount, $isPercentage);
             $discountedAmount = $discountArr['amount'];
             $appliedDiscounts[] = [
                 "name" => "Full Payment Discount", 
@@ -114,12 +119,13 @@ class OrderService
             $order->installment_count = $data['installmentCount'];
             $order->amount_per_installment = round($data['amountPayable']/$data['installmentCount']);
         }
-        if(isset($data['isInstallment'])) $order->installments_payed = 1;
+        if(isset($data['isInstallment']) && ($data['isInstallment'] == 1)) $order->installments_payed = 1;
         $order->payment_status_id = $data['paymentStatusId'];
         $order->order_date = $data['orderDate'];
         if(isset($data['paymentDueDate'])) $order->payment_due_date = $data['paymentDueDate'];
         if(isset($data['gracePeriodEndDate'])) $order->grace_period_end_date = $data['gracePeriodEndDate'];
         if(isset($data['paymentPeriodStatusId'])) $order->payment_period_status_id = $data['paymentPeriodStatusId'];
+        if(isset($data["type"])) $order->type = $data["type"];
 
         $order->save();
 

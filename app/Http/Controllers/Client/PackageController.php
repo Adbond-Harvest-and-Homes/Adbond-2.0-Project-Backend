@@ -10,6 +10,8 @@ use app\Http\Resources\PackageResource;
 
 use app\Services\PackageService;
 
+use app\Enums\PackageType;
+
 use app\Utilities;
 
 class PackageController extends Controller
@@ -47,6 +49,7 @@ class PackageController extends Controller
         if($request->query('countryId')) $this->packageService->countryId = $request->query('countryId');
         if($request->query('stateId')) $this->packageService->stateId = $request->query('stateId');
         if($request->query('text')) $filter["text"] = $request->query('text');
+        if($request->query('type')) $filter["type"] = $request->query('type');
         if($request->query('date')) $filter["date"] = $request->query('date');
         if($request->query('status')) {
             $validStatus = ["active" => ProjectFilter::ACTIVE->value, "inactive" => ProjectFilter::INACTIVE->value];

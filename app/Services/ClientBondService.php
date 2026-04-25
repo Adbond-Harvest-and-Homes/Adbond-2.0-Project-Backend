@@ -16,11 +16,12 @@ use app\Mail\MOU;
 use app\Enums\FilePurpose;
 use app\Enums\FileTypes;
 use app\Enums\BondOccurrenceMetric;
-use app\Enums\BondIncomeMeasurement;
+use app\Enums\Measurement;
 use app\Enums\UserType;
 
 use app\Services\ContractService;
 use app\Services\WalletService;
+use app\Services\ClientPackageService;
 
 use app\Utilities;
 use app\Helpers;
@@ -37,6 +38,13 @@ class ClientBondService
     public function getBond($id)
     {
         return ClientBond::find($id);
+    }
+
+    public function getBonds($with=[])
+    {
+        return ClientBond::with($with)->when($this->clientId, function($query) {
+            $query->where("client_id", $this->clientId);
+        })->orderBy("created_at", "DESC")->get();
     }
 
     public function runningBonds()
@@ -92,6 +100,7 @@ class ClientBondService
             $clientBond->end_date = $data['endDate'];
             $clientBond->next_capital_payout = $data['nextCapitalPayout'];
         }
+        if(isset($data['parentBondId'])) $clientBond->parent_bond_id = $data['parentBondId'];
 
         $clientBond->save();
 
@@ -113,7 +122,7 @@ class ClientBondService
     public function getPayout($bond)
     {
         //if its a fixed amount, return that fixed amount as the payout
-        if($bond->net_rental_income_measurement == BondIncomeMeasurement::FIXED->value) return $bond->net_rental_income;
+        if($bond->net_rental_income_measurement == Measurement::FIXED->value) return $bond->net_rental_income;
 
         return Utilities::getPercentageAmount($bond->current_capital, $bond->net_rental_income);
     }
@@ -140,16 +149,23 @@ class ClientBondService
         $bondData['assetAppreciationTimeline'] = $package->bond_asset_appreciation_timeline;
 
         if($order->completed == 1) {
-            $bondData['startDate'] = (new DateTime())->modify('+'.$bondData['countDown'].' '.$bondData['countDownMetric'])->format('Y-m-d');
-
-            $bondData['endDate'] = (new DateTime($bondData['startDate']))->modify('+'.$bondData['duration'].' '.$bondData['durationMetric'])->format('Y-m-d');
-
-            $nextCapitalPayoutDuration = $this->convertTimelineToDuration($bondData['netRentalIncomeTimeline']);
-            $bondData['nextCapitalPayout'] = (new DateTime($bondData['startDate']))->modify('+'.$nextCapitalPayoutDuration)->format('Y-m-d');
+            $bondData = $this->calculateBondDates($bondData);
         }
         $clientBond = $this->save($bondData);
 
         return $clientBond;
+    }
+
+    private function calculateBondDates($bondData)
+    {
+        $bondData['startDate'] = (new DateTime())->modify('+'.$bondData['countDown'].' '.$bondData['countDownMetric'])->format('Y-m-d');
+
+        $bondData['endDate'] = (new DateTime($bondData['startDate']))->modify('+'.$bondData['duration'].' '.$bondData['durationMetric'])->format('Y-m-d');
+
+        $nextCapitalPayoutDuration = $this->convertTimelineToDuration($bondData['netRentalIncomeTimeline']);
+        $bondData['nextCapitalPayout'] = (new DateTime($bondData['startDate']))->modify('+'.$nextCapitalPayoutDuration)->format('Y-m-d');
+
+        return $bondData;
     }
 
     public function convertTimelineToDuration($measurement)
@@ -180,9 +196,115 @@ class ClientBondService
 
             $bondPayout->save();
 
-            app(WalletService::class)->addToLockedAmount($bond->client->wallet, $payout);
+            $client = $bond->client;
+            $wallet = $client->wallet;
+            if(!$wallet) {
+                $wallet = app(WalletService::class)->create($client->id);
+            }
+            app(WalletService::class)->addToLockedAmount($wallet, $payout);
+
+            DB::commit();
+
+            return $bondPayout;
         }catch(\Exception $e) {
+            DB::rollBack();
             Utilities::error($e, "An error Occurred trying to add payout");
+        }
+    }
+
+    public function redeem($bond)
+    {
+        $this->checkBondEnded($bond);
+        DB::beginTransaction();
+        try{
+            //account for parent bonds
+            $parentBondIds = [];
+            $loopBond = $bond;
+            while($loopBond->parentBond) {
+                $parentBondIds[] = $loopBond->parentBond->id;
+                $loopBond = $loopBond->parentBond;
+            }
+
+            $allBondIds = array_merge([$bond->id], $parentBondIds);
+
+            $total = ClientBondPayout::whereIn('bond_id', $allBondIds)->sum('payout_amount');
+
+            $client = $bond->client;
+            $wallet = $client->wallet;
+            if(!$wallet) {
+                throw new AppException(402, "Serious error.. contact the admin");
+            }
+
+            if($wallet->locked_amount < $total) throw new AppException(402, "Calculation error.. contact admin");
+
+            $source = ["id"=>$bond->id, "type"=>ClientBond::$type];
+
+            app(WalletService::class)->releaseLockedAmount($wallet, $total, $source);
+            app(WalletService::class)->credit($wallet, $bond->current_capital, $source);
+
+            $bond->redeemed = 1;
+
+            $bond->save();
+
+            DB::commit();
+        }catch(\Exception $e) {
+            DB::rollBack();
+            throw new AppException(402, "An Error Occurred while attempting to redeem Bond Investment");
+        }
+    }
+
+    public function renew($bond, $order)
+    {
+        $this->checkBondEnded($bond);
+        $package = $bond->package;
+        $bondData = [
+            "clientId" => $bond->client_id,
+            "packageId" => $bond->package_id,
+            "orderId" => $order->id,
+            "capital" => $bond->current_capital,
+            "duration" => $package->bond_investment_duration,
+            "durationMetric" => $package->bond_investment_duration_metric,
+            "countDown" => $package->bond_count_down,
+            "countDownMetric" => $package->bond_count_down_metric,
+            "netRentalIncomeTimeline" => $package->bond_net_rental_income_timeline,
+            "netRentalIncome" => $package->bond_net_rental_income,
+            "netRentalIncomeMeasurement" => $package->bond_net_rental_income_measurement,
+            "assetAppreciation" => $package->bond_asset_appreciation,
+            "assetAppreciationMeasurement" => $package->bond_asset_appreciation_measurement,
+            "assetAppreciationTimeline" => $package->bond_asset_appreciation_timeline,
+        ];
+        $bondData = $this->calculateBondDates($bondData);
+
+        $renewedBond = $this->save($bondData);
+
+        //Create new asset
+        $asset = app(ClientPackageService::class)->saveClientPackageBond($renewedBond);
+
+        //delete old bond asset
+        $bond->clientPackage->delete();
+
+        return $renewedBond;
+    }
+
+    public function checkBondEnded($bond)
+    {
+        $startDate = Carbon::parse($bond->start_date); 
+        if ($startDate->isFuture()) {
+            if($bond->started == 1) {
+                $bond->started = 0;
+                $bond->save();
+            }
+            throw new AppException(402, "bond has not started");
+        }
+
+
+        $endDate = Carbon::parse($bond->end_date);
+        if ($endDate->isFuture()) {
+            if($bond->ended == 1) {
+                $bond->ended = 0;
+                $bond->save();
+            }
+            throw new AppException(402, "bond has not ended");
         }
     }
 

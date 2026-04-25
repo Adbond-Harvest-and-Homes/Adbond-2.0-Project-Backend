@@ -14,7 +14,7 @@ use app\Models\PackageMedia;
 use app\Enums\ProjectFilter;
 use app\Enums\PackageType;
 use app\Enums\BondOwnershipType;
-use app\Enums\BondIncomeMeasurement;
+use app\Enums\Measurement;
 use app\Enums\BondOccurrenceMetric;
 use app\Enums\BondTimeMetric;
 use app\Enums\ProjectType;
@@ -31,6 +31,7 @@ class PackageService
     public $active = null;
     public $countryId = null;
     public $stateId = null;
+    public $type;
 
     public $all = null;
 
@@ -116,7 +117,7 @@ class PackageService
                 if(!isset($data['bondNetRentalIncome'])) throw new AppException(402, "Bond Rental Income is required for bond package");
                 $package->bond_net_rental_income = $data['bondNetRentalIncome'];
 
-                $package->bond_net_rental_income_measurement = (isset($data['bondNetRentalIncomeMeasurement'])) ? $data['bondNetRentalIncomeMeasurement'] : (($data['bondNetRentalIncome'] <= 100) ? BondIncomeMeasurement::PERCENTAGE->value : BondIncomeMeasurement::FIXED);
+                $package->bond_net_rental_income_measurement = (isset($data['bondNetRentalIncomeMeasurement'])) ? $data['bondNetRentalIncomeMeasurement'] : (($data['bondNetRentalIncome'] <= 100) ? Measurement::PERCENTAGE->value : Measurement::FIXED);
 
                 $package->bond_net_rental_income_timeline = (isset($data['bondNetRentalIncomeTimeline'])) ? $data['bondNetRentalIncomeTimeline'] : BondOccurrenceMetric::YEARLY->value;
 
@@ -125,7 +126,7 @@ class PackageService
                 if(!isset($data['bondAssetAppreciation'])) throw new AppException(402, "Bond Rental Income is required for bond package");
                 $package->bond_asset_appreciation = $data['bondAssetAppreciation'];
 
-                $package->bond_asset_appreciation_measurement = (isset($data['bondAssetAppreciationMeasurement'])) ? $data['bondAssetAppreciationMeasurement'] : (($data['bondAssetAppreciation'] <= 100) ? BondIncomeMeasurement::PERCENTAGE->value : BondIncomeMeasurement::FIXED);
+                $package->bond_asset_appreciation_measurement = (isset($data['bondAssetAppreciationMeasurement'])) ? $data['bondAssetAppreciationMeasurement'] : (($data['bondAssetAppreciation'] <= 100) ? Measurement::PERCENTAGE->value : Measurement::FIXED);
 
                 $package->bond_asset_appreciation_timeline = (isset($data['bondAssetAppreciationTimeline'])) ? $data['bondAssetAppreciationTimeline'] : BondOccurrenceMetric::YEARLY->value;
             }
@@ -300,6 +301,7 @@ class PackageService
         if($this->active != null) $query->where("active", $this->active);
         if($this->countryId) $query->where("country_id", $this->countryId);
         if($this->stateId) $query->where("state_id", $this->stateId);
+        if($this->type) $query->where("type", $this->type);
         if($this->count) return $query->count();
 
         if($perPage==null) return $query->orderBy("created_at", "DESC")->get(); // $perPage=env('PAGINATION_PER_PAGE');

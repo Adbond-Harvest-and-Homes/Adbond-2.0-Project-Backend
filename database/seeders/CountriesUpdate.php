@@ -17,17 +17,17 @@ class CountriesUpdate extends Seeder
         // Correct path
         $jsonPath = __DIR__ . '/data/country.json';
         
-        $this->command->info("Looking for file at: " . $jsonPath);
+        if ($this->command) $this->command->info("Looking for file at: " . $jsonPath);
         
         if (!file_exists($jsonPath)) {
-            $this->command->error("File not found: " . $jsonPath);
+            if ($this->command) $this->command->error("File not found: " . $jsonPath);
             return;
         }
         
         $jsonString = file_get_contents($jsonPath);
         
         if ($jsonString === false) {
-            $this->command->error("Failed to read file: " . $jsonPath);
+            if ($this->command) $this->command->error("Failed to read file: " . $jsonPath);
             return;
         }
         
@@ -36,16 +36,16 @@ class CountriesUpdate extends Seeder
         $countries = json_decode($jsonString, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->command->error("JSON Error: " . json_last_error_msg());
+            if ($this->command) $this->command->error("JSON Error: " . json_last_error_msg());
             return;
         }
         
         if (!$countries) {
-            $this->command->error("No countries found or invalid JSON structure");
+            if ($this->command) $this->command->error("No countries found or invalid JSON structure");
             return;
         }
         
-        $this->command->info("Found " . count($countries) . " countries in JSON file");
+        if ($this->command) $this->command->info("Found " . count($countries) . " countries in JSON file");
         
         $updated = 0;
         $notFound = 0;
@@ -70,7 +70,7 @@ class CountriesUpdate extends Seeder
                     $updated++;
                     
                     if ($updated % 50 == 0) {
-                        $this->command->info("Updated $updated countries...");
+                        if ($this->command) $this->command->info("Updated $updated countries...");
                     }
                 }else{
                     $doubleCode[] = $country['isoCode'];
@@ -89,16 +89,18 @@ class CountriesUpdate extends Seeder
                 $countryObj->save();
                 $notFound++;
                 if ($notFound <= 10) { // Show first 10 not found
-                    $this->command->warn("Country not found in database: " . $country['name']);
+                    if ($this->command) $this->command->warn("Country not found in database: " . $country['name']);
                 }
             }
         }
         
-        $this->command->info("\n=== Seeder Completed ===");
-        $this->command->info("Updated: $updated countries");
-        $this->command->info("Not found: $notFound countries");
-        $this->command->info("Double Code Countries: ".count($doubleCode));
-        if(count($doubleCode) > 0) foreach($doubleCode as $code) $this->command->info($code);
+        if ($this->command) {
+            $this->command->info("\n=== Seeder Completed ===");
+            $this->command->info("Updated: $updated countries");
+            $this->command->info("Not found: $notFound countries");
+            $this->command->info("Double Code Countries: ".count($doubleCode));
+            if(count($doubleCode) > 0) foreach($doubleCode as $code) $this->command->info($code);
+        }
 
     }
 }
