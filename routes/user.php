@@ -200,7 +200,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::post('', [UserBankAccountController::class, "addAccount"]);
     });
 
-    Route::group(['middleware' => HRAuth::class, 'prefix' => '/staff_bank_accounts'], function () {
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/staff_bank_accounts'], function () {
         Route::get('/{staffId}', [UserBankAccountController::class, "bankAccounts"]);
     });
 
@@ -210,7 +210,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::get('/redemptions', [ReferralController::class, "staffRedemptions"]);
     });
 
-    Route::group(['middleware' => HRAuth::class, 'prefix' => '/admin_referrals'], function () {
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/admin_referrals'], function () {
         Route::get('', [ReferralController::class, "referralCommissions"]);
         Route::get('/earnings/{staffId}', [ReferralController::class, "referralEarnings"]);
         Route::post('/redemptions/complete_payment', [ReferralController::class, "completePayment"]);
@@ -218,7 +218,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::get('/redemptions', [ReferralController::class, "commissionRedemptions"]);
     });
 
-    Route::group(['middleware' => UserAuth::class, 'prefix' => '/notifications'], function () {
+    Route::group(['middleware' => 'userAuth', 'prefix' => '/notifications'], function () {
         Route::get('/unread', [UserNotificationController::class, "unreadNotifications"]);
         Route::post('mark_as_read', [UserNotificationController::class, "read"]);
     });
