@@ -13,6 +13,7 @@ use app\Models\Offer;
 use app\Models\ClientInvestment;
 use app\Models\ClientAssetsView;
 use app\Models\ProjectType;
+use app\Models\ClientBond;
 
 use app\Mail\LetterOfHappiness;
 use app\Mail\Contract;
@@ -41,13 +42,18 @@ class ClientPackageService
     public $count = false;
     public $filter = null;
     public $active = null;
+    public $uploadContract = false;
 
     // This method either saves or updates client package
     public function save($data, $clientPackage=null)
     {
+        $new = false;
         if(!$clientPackage) {
             $clientPackage = ClientPackage::where("purchase_id", $data['purchaseId'])->where("purchase_type", $data['purchaseType'])->where("package_id",$data['packageId'])->first();
-            if(!$clientPackage) $clientPackage = new ClientPackage;
+            if(!$clientPackage) {
+                $new = true;
+                $clientPackage = new ClientPackage;
+            }
         }
         $clientPackage->client_id = $data['clientId'];
         $clientPackage->package_id = $data['packageId'];
@@ -63,6 +69,24 @@ class ClientPackageService
         $clientPackage->unit_price = $data['unitPrice'];
         if($clientPackage->purchase_complete == 1) $clientPackage->purchase_completed_at = now();
         $clientPackage->save();
+
+        if($data['origin'] != ClientPackageOrigin::OFFER->value) {
+            // Add Asset Metric;
+            $metricService = new MetricService;
+
+            $order = ($data['purchaseType'] == Order::$type) ? $clientPackage->purchase : $clientPackage->purchase->order;
+            ($order->is_installment == 1) ? $metricService->addAssetMetric(MetricType::BOTH->value) : $metricService->addAssetMetric(MetricType::TOTAL->value);
+        }
+
+        //Upload contract here if its a new order and completed kyc
+        // dd($this->uploadContract);
+        // if($this->uploadContract && $new && $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && Helpers::kycCompleted($clientPackage->client)) {
+        //     $purchase = $clientPackage->purchase; 
+        //     $isOffer = ($clientPackage->origin == ClientPackageOrigin::OFFER->value);
+        //     // $this->uploadContract($purchase, $clientPackage, $isOffer);
+        //     // dd("uploaded contract");
+        // }
+        // dd($new, $clientPackage->origin != ClientPackageOrigin::INVESTMENT->value, Helpers::kycCompleted($clientPackage->client));
 
         return $clientPackage;
     }
@@ -80,12 +104,7 @@ class ClientPackageService
         $data['amount'] = $order->amount_payable;
         $data['units'] = $order->units;
         $data['unitPrice'] = $order->unit_price;
-        $clientPackage = (!$clientPackage) ? $this->save($data) : $this->save($data, $clientPackage);
-
-        // Add Asset Metric;
-        $metricService = new MetricService;
-
-        ($order->is_installment == 1) ? $metricService->addAssetMetric(MetricType::BOTH->value) : $metricService->addAssetMetric(MetricType::TOTAL->value);
+        $clientPackage = $this->save($data);
         
         return $clientPackage;
     }
@@ -115,6 +134,20 @@ class ClientPackageService
         if($clientInvestment->order->completed == 1) $data['purchaseComplete'] = true;
         $data['amount'] = $clientInvestment->capital;
         $data['unitPrice'] = $clientInvestment->order->unit_price;
+
+        $clientPackage = $this->save($data);
+        return $clientPackage;
+    }
+
+    public function saveClientPackageBond($clientBond) {
+        $data['clientId'] = $clientBond->client_id;
+        $data['packageId'] = $clientBond->package_id;
+        $data['origin'] = ClientPackageOrigin::BOND->value;
+        $data['purchaseId'] = $clientBond->id;
+        $data['purchaseType'] = ClientBond::$type;
+        if($clientBond->order->completed == 1) $data['purchaseComplete'] = true;
+        $data['amount'] = $clientBond->start_capital;
+        $data['unitPrice'] = $clientBond->order->unit_price;
 
         $clientPackage = $this->save($data);
         return $clientPackage;
@@ -187,38 +220,43 @@ class ClientPackageService
         }
     }
 
-    public function uploadContract($order, $asset, $isOffer=false)
-    {
-        // generate Contract
-        try{
-            $fileService = new FileService;
-            if($isOffer) Helpers::$purchaseOrigin = ClientPackageOrigin::OFFER->value;
-            $uploadedFile = Helpers::generateContract($order);
-            // dd('generate Contract');
-            $response = Helpers::moveUploadedFileToCloud($uploadedFile, FileTypes::PDF->value, $asset->client->id, 
-                                FilePurpose::CONTRACT->value, UserType::CLIENT->value, "client-contracts");
-            if($response['success']) {
-                $fileMeta = ["belongsId"=>$asset->id, "belongsType"=>ClientPackage::$type];
-                $fileService->updateFileObj($fileMeta, $response['upload']['file']);
+    // public function uploadContract($order, $asset, $isOffer=false)
+    // {
+    //     // generate Contract
+    //     try{
+    //         $fileService = new FileService;
+    //         if($isOffer) Helpers::$purchaseOrigin = ClientPackageOrigin::OFFER->value;
+    //         $uploadedFile = Helpers::generateContract($order);
+    //         // dd('generate Contract');
+    //         $response = Helpers::moveUploadedFileToCloud($uploadedFile, FileTypes::PDF->value, $asset->client->id, 
+    //                             FilePurpose::CONTRACT->value, UserType::CLIENT->value, "client-contracts");
+    //         if($response['success']) {
+    //             $fileMeta = ["belongsId"=>$asset->id, "belongsType"=>ClientPackage::$type];
+    //             $fileService->updateFileObj($fileMeta, $response['upload']['file']);
 
-                $this->update(['contractFileId' => $response['upload']['file']->id], $asset);
-                // dd("got here");
-                try{
-                    // Send Contract Mail
-                    Mail::to($asset->client->email)->send(new Contract($asset->client, $uploadedFile));
-                    unlink($response['path']);
-                }catch(\Exception $e) {
-                    Utilities::logStuff("Error Occurred while attempting to send Contract Email..".$e);
-                }
-            }
-        }catch(\Exception $e) {
-            Utilities::logStuff("Error Occurred while attempting to generate and upload Contract..".$e);
-        }
-    }
+    //             $this->update(['contractFileId' => $response['upload']['file']->id], $asset);
+    //             // dd("got here");
+    //             try{
+    //                 // Send Contract Mail
+    //                 Mail::to($asset->client->email)->send(new Contract($asset->client, $uploadedFile));
+    //                 unlink($response['path']);
+    //             }catch(\Exception $e) {
+    //                 Utilities::logStuff("Error Occurred while attempting to send Contract Email..".$e);
+    //             }
+    //         }
+    //     }catch(\Exception $e) {
+    //         Utilities::logStuff("Error Occurred while attempting to generate and upload Contract..".$e);
+    //     }
+    // }
 
     public function clientPackage($id, $with=[])
     {
         return ClientPackage::with($with)->where("id", $id)->first();
+    }
+
+    public function getClientPackageByPurchase($purchaseId, $purchaseType)
+    {
+        return ClientPackage::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->first();
     }
 
     public function clientAssetSummary($clientId)
@@ -244,7 +282,15 @@ class ClientPackageService
             if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
         }
         if($this->count) return $query->count();
-        return $query->orderBy("created_at", "DESC")->offset($offset)->limit($perPage)->get();
+
+        $query = $query->orderBy("created_at", "DESC");
+
+        if ($perPage !== null) {
+            $query->limit($perPage)->offset($offset);
+        }
+
+        // ✅ ALWAYS return a collection
+        return $query->get();
     }
 
     public function assets($with=[], $offset=0, $perPage=null)
@@ -266,8 +312,23 @@ class ClientPackageService
             if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
         }
         if($this->count) return $query->count();
-        return $query->orderBy("created_at", "DESC")->offset($offset);
-        return ($perPage) ? $query->limit($perPage)->get() : $query->get();
+        $query = $query->orderBy("created_at", "DESC");
+
+        if ($offset !== null) $query = $query->offset($offset);
+
+        if ($perPage) $query = $query->limit($perPage);
+
+        return $query->get();
+        // return $query->orderBy("created_at", "DESC")->offset($offset);
+        // return ($perPage) ? $query->limit($perPage)->get() : $query->get();
+    }
+
+    public function markAsUploaded($asset)
+    {
+        $asset->docs_uploaded = 1;
+        $asset->update();
+
+        return $asset;
     }
 
 }

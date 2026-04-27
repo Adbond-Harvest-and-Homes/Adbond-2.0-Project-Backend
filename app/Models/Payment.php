@@ -7,7 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 use app\Models\PaymentMode;
+use app\Models\Order;
+
 use app\Services\FileService;
+use app\Services\ClientPackageService;
+use app\Services\PaymentService;
+
+use app\Enums\ClientPackageOrigin;
+use app\Enums\PackageType;
+use app\Enums\BondOwnershipType;
+
+use app\Helpers;
 
 class Payment extends Model
 {
@@ -58,28 +68,91 @@ class Payment extends Model
         return $this->belongsTo(File::class, "receipt_file_id", "id");
     }
 
+    public function markDocUploaded()
+    {
+        $this->docs_uploaded = 1;
+        $this->save();
+
+        return $this;
+    }
+
+    public function markReceiptSent()
+    {
+        $this->receipt_sent = 1;
+        $this->save();
+
+        return $this;
+    }
+
+    private static function uploadReceipt($payment)
+    {
+        $res = [];
+        $clientPackageService = new ClientPackageService;
+        $paymentService = new PaymentService;
+        // if($payment->purchase_type == Order::$type && $payment->purchase->clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && 
+        //     Helpers::kycCompleted($payment->client)) {
+        //     $purchase = $payment->purchase; 
+        //     $isOffer = ($payment->purchase->clientPackage->origin == ClientPackageOrigin::OFFER->value);
+        //     $clientPackageService->uploadContract($purchase, $payment->purchase->clientPackage, $isOffer);
+        //     // dd("uploaded contract");
+        // }
+        if(Helpers::kycCompleted($payment->client)) {
+            $file =  $paymentService->uploadReceipt($payment, $payment->client); 
+            if($file) $res['receiptFile'] = $file;
+            // dd($res);
+        }
+        return $res;
+    }
+
     protected static function boot()
     {
         parent::boot();
         
         static::creating(function ($payment) {
+            if($payment->receipt_file_id == $payment->evidence_file_id) $payment->receipt_file_id = null;
             if($payment->confirmed==null && $payment->payment_mode_id && $payment->payment_mode_id == PaymentMode::cardPayment()->id) {
                 $payment->confirmed = ($payment->flag==0 && $payment->success==1);
+            }
+            if($payment->confirmed == 1) {
+                $res = self::uploadReceipt($payment);
+                if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
             }
         });
 
         static::created(function ($payment) {
             if($payment->evidence_file_id) self::updateFile($payment->evidence_file_id, $payment);
-            if($payment->receipt_file_id) self::updateFile($payment->receipt_file_id, $payment);
+
         });
+
+
+
+        // static::updated(function ($payment) {
+        //     if($payment->confirmed == 1) {
+        //         // if payment is confirmed
+
+        //         //if its a order purchase
+        //         if($payment->purchase_type == Order::$type) {
+        //             //deduct unit or bond slot from the package
+        //             $order = $payment->purchase;
+        //             $package = $order?->package;
+        //             if($package) {
+        //                 //if its a bond package and co-ownership
+        //                 if($package->type == PackageType::BOND->value && $package->bond_ownership_type == BondOwnershipType::CO_OWNERSHIP->value) {
+
+        //                 }
+        //             }
+        //         }
+
+        //     }
+        // });
     }
 
-    private static function updateFile($fileId, $clientPackage)
+    private static function updateFile($fileId, $payment)
     {
         $fileService = new FileService;
         $file = $fileService->getFile($fileId);
         if($file && (!$file->belongs_id || !$file->belongs_type)){
-            $fileMeta = ["belongsId"=>$clientPackage->id, "belongsType"=>self::$type];
+            $fileMeta = ["belongsId"=>$payment->id, "belongsType"=>self::$type];
             $fileService->updateFileObj($fileMeta, $file);
         }
     }

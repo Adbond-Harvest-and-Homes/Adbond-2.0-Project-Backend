@@ -99,6 +99,22 @@ class ClientPackage extends Model
         return $this->activeOffer->count() > 0;
     }
 
+    public function markDocUploaded()
+    {
+        $this->docs_uploaded = 1;
+        $this->save();
+
+        return $this;
+    }
+
+    public function markContractSent()
+    {
+        $this->contract_sent = 1;
+        $this->save();
+
+        return $this;
+    }
+
     protected static function boot()
     {
         parent::boot();

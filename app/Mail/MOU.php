@@ -45,7 +45,7 @@ class MOU extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.mou',
+            view: 'emails.mou',
             with: [
                 "client" => $this->client
             ]
@@ -59,8 +59,14 @@ class MOU extends Mailable
      */
     public function attachments(): array
     {
+        if (str_starts_with($this->filePath, 'http')) {
+            return [
+                Attachment::fromData(fn () => file_get_contents($this->filePath), "Memorandum_of_understanding.pdf")
+            ];
+        }
+        
         return [
-            Attachment::fromPath(public_path($this->filePath))->as("Memorandum_of_understanding.php")
+            Attachment::fromPath(public_path($this->filePath))->as("Memorandum_of_understanding.pdf")
         ];
     }
 }

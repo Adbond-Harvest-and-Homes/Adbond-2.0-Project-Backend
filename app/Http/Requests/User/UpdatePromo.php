@@ -31,6 +31,7 @@ class UpdatePromo extends BaseRequest
                 Rule::unique("promos", "title")->ignore($this->route("promoId"))
             ],
             "discount" => "nullable|numeric",
+            "discountAmount" => "nullable|numeric",
             "start" => "nullable|date|date_format:Y-m-d",
             "end" => "nullable|date|date_format:Y-m-d",
             "description" => "nullable|string",

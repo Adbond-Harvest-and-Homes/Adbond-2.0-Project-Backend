@@ -10,17 +10,22 @@ use app\Http\Resources\BankResource;
 use app\Http\Resources\WalletBankAccountResource;
 use app\Http\Resources\ResellOrderResource;
 use app\Http\Resources\ClientIdentificationResource;
+use app\Http\Resources\CountryResource;
+use app\Http\Resources\StateResource;
 
 use app\Services\UtilityService;
+use app\Services\CountryService;
 use app\Utilities;
 
 class UtilityController extends Controller
 {
     private $utilityService;
+    protected $countryService;
 
     public function __construct()
     {
         $this->utilityService = new UtilityService;
+        $this->countryService = new CountryService;
     }
 
     public function benefits()
@@ -61,5 +66,19 @@ class UtilityController extends Controller
     {
         $identifications = $this->utilityService->identifications();
         return Utilities::ok(ClientIdentificationResource::collection($identifications));
+    }
+
+    public function countries()
+    {
+        $countries = $this->countryService->countries();
+
+        return Utilities::ok(CountryResource::collection($countries));
+    }
+
+    public function states($countryId)
+    {
+        $states = $this->countryService->getStates($countryId);
+
+        return Utilities::ok(StateResource::collection($states));
     }
 }

@@ -204,7 +204,7 @@ class UserService
         if(isset($data['firstname'])) $user->firstname = $data['firstname'];
         if(isset($data['lastname'])) $user->lastname = $data['lastname'];
         if(isset($data['email'])) $user->email = $data['email'];
-        if(isset($data['role_id'])) $user->role_id = $data['role_id'];
+        if(isset($data['roleId'])) $user->role_id = $data['roleId'];
         if(isset($data['staff_type_id'])) $user->staff_type_id = $data['staff_type_id'];
         if(isset($data['phone_number'])) $user->phone_number = $data['phone_number'];
         if(isset($data['address'])) $user->address = $data['address'];

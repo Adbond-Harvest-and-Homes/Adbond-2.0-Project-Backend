@@ -23,26 +23,22 @@ use app\Enums\Weekday;
 use app\Enums\PromoProductType;
 use app\Enums\NotificationType;
 
+//bonds
+use app\Enums\Measurement;
+use app\Enums\BondOccurrenceMetric;
+use app\Enums\BondOwnershipType;
+use app\Enums\BondTimeMetric;
+
 class EnumClass
 {
     public static function employmentStatuses()
     {
-        return [
-            EmploymentStatus::EMPLOYED->value,
-            EmploymentStatus::SELF_EMPLOYED->value,
-            EmploymentStatus::UNEMPLOYED->value,
-        ];   
+        return array_column(EmploymentStatus::cases(), 'value');  
     }
 
     public static function maritalStatus()
     {
-        return [
-            MaritalStatus::MARRIED->value,
-            MaritalStatus::SINGLE->value,
-            MaritalStatus::DIVORCED->value,
-            MaritalStatus::WIDOW->value,
-            MaritalStatus::WIDOWER->value
-        ];
+        return array_column(MaritalStatus::cases(), 'value');  
     }
 
     public static function kycStatus()
@@ -64,27 +60,12 @@ class EnumClass
 
     public static function fileTypes()
     {
-        return [
-            FileTypes::CSV->value,
-            FileTypes::DOC->value,
-            FileTypes::DOCX->value,
-            FileTypes::IMAGE->value,
-            FileTypes::PDF->value,
-            FileTypes::VIDEO->value,
-            FileTypes::XLS->value
-        ];
+        return array_column(FileTypes::cases(), 'value');
     }
 
     public static function filePurposes()
     {
-        return [
-            FilePurpose::USER_PROFILE_PHOTO->value,
-            FilePurpose::CLIENT_PROFILE_PHOTO->value,
-            FilePurpose::PROJECT_TYPE_PHOTO->value,
-            FilePurpose::PROJECT_PHOTO->value,
-            FilePurpose::PACKAGE_PHOTO->value,
-            FilePurpose::PACKAGE_BROCHURE->value
-        ];
+        return array_column(FilePurpose::cases(), 'value');
     }
 
     public static function paymentModes()
@@ -131,21 +112,12 @@ class EnumClass
 
     public static function postTypes()
     {
-        return [
-            PostType::BLOG->value,
-            PostType::EVENTS->value,
-            PostType::NEWS->value,
-            PostType::OFFERS->value,
-            PostType::PROMOTIONS->value
-        ];
+        return array_column(PostType::cases(), 'value');
     }
 
     public static function packageTypes()
     {
-        return [
-            PackageType::INVESTMENT->value,
-            PackageType::NON_INVESTMENT->value
-        ];
+        return array_column(PackageType::cases(), 'value');
     }
 
     public static function investmentRedemptionOptions()
@@ -210,14 +182,26 @@ class EnumClass
 
     public static function notificationTypes()
     {
-        return [
-            NotificationType::ASSET_UPGRADE_REQ->value,
-            NotificationType::ASSET_DOWNGRADE_REQ->value,
-            NotificationType::NEW_OFFER_APPROVAL_REQ->value,
-            NotificationType::OFFER_PAYMENT_CONF->value,
-            NotificationType::ORDER_COMPLETION->value,
-            NotificationType::ORDER_PAYMENT_CONFIRMATION_REQ->value,
-            NotificationType::WALLET_WITHDRAWAL_REQ->value
-        ];
+        return array_column(NotificationType::cases(), 'value');
+    }
+
+    public static function Measurements()
+    {
+        return array_column(Measurement::cases(), 'value');
+    }
+
+    public static function bondOccurrenceMetrics()
+    {
+        return array_column(BondOccurrenceMetric::cases(), 'value');
+    }
+
+    public static function bondOwnershipTypes()
+    {
+        return array_column(BondOwnershipType::cases(), 'value');
+    }
+
+    public static function bondTimeMetrics()
+    {
+        return array_column(BondTimeMetric::cases(), 'value');
     }
 }

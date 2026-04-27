@@ -81,11 +81,11 @@ class AssetResource extends JsonResource
 
     private function amountPaid()
     {
-        if($this->purchase_complete==0) {
+        // if($this->purchase_complete==0) {
             if($this->origin == ClientPackageOrigin::INVESTMENT->value) return $this->purchase->order->amount_payed;
             return $this->purchase?->amount_payed;
-        }
-        return $this->amount;
+        // }
+        // return $this->amount;
     }
 
     private function balance()

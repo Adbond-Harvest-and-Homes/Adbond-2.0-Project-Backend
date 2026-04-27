@@ -71,6 +71,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
         ],
 
+        'job' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/jobs.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
         'success_migration' => [
             'driver' => 'single',
             'path' => storage_path('logs/success_migration.log'),

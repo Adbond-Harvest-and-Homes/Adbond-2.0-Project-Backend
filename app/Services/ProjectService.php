@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 
+use app\Services\CountryService;
+
 use app\Enums\ProjectFilter;
 use app\Exports\ProjectExport;
 
@@ -27,9 +29,14 @@ class ProjectService
             DB::beginTransaction();
             
             $project = new Project;
+
             $project->name = $data['name'];
             $project->project_type_id = $data['projectTypeId'];
             if(isset($data['description'])) $project->description = $data['description'];
+            
+
+            // $project->state_id = $data['stateId'];
+            // $project->state = $state->name;
             $project->save();
             
             $typeCode = strtoupper(substr($project->projectType->name, 0, 3));
@@ -48,9 +55,17 @@ class ProjectService
 
     public function update($data, $project)
     {
+        $countryService = new CountryService;
+
         if(isset($data['name'])) $project->name = $data['name'];
         if(isset($data['projectTypeId'])) $project->project_type_id = $data['projectTypeId'];
         if(isset($data['description'])) $project->description = $data['description'];
+        if(isset($data['stateId'])) {
+            $state = $countryService->getState($data['stateId']);
+
+            $project->state_id = $data['stateId'];
+            $project->state = $state->name;
+        }
         $project->update();
         return $project;
     }

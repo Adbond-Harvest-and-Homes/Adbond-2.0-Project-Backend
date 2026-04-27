@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
+use app\Exceptions\AppException;
+
 use app\Services\AuthService;
 use app\Models\User;
 use app\Models\Client;
@@ -30,6 +32,22 @@ class Utilities
     {
         Log::stack(['project'])->info($e->getMessage().' in '.$e->getFile().' at Line '.$e->getLine());
         Log::stack(['project'])->info($e);
+        
+        // For AppException with 402 status, use the specific method
+        if ($e instanceof AppException && $e->getStatusCode() == 402) {
+            return self::error402($e->getMessage());
+        }
+
+        // For AppException with 401 status, use the specific method
+        if ($e instanceof AppException && $e->getStatusCode() == 401) {
+            return self::error401($e->getMessage());
+        }
+
+        // For AppException with 400 status, use the specific method
+        if ($e instanceof AppException && $e->getStatusCode() == 400) {
+            return self::error400($e->getMessage());
+        }
+
         return response()->json([
             'statusCode' => 500,
             'message' => ($message != '') ? $message : 'An error occurred while trying to perform this operation, Please try again later or contact support'
@@ -47,6 +65,11 @@ class Utilities
     public static function logStuff($message)
     {
         Log::stack(['project'])->info($message);
+    }
+
+    public static function JobLog($message)
+    {
+        Log::stack(['job'])->info($message);
     }
 
     public static function logSuccessMigration($message)
@@ -135,6 +158,30 @@ class Utilities
             'data' => $data,
             'token' => ''
         ], 200);
+    }
+
+    /**
+     * Handle 401 Payment Required errors
+     */
+    public static function error401(string $message)
+    {
+        return response()->json([
+            'statusCode' => 401,
+            'message' => $message,
+            'error' => $message
+        ], 401);
+    }
+
+    /**
+     * Handle 400
+     */
+    public static function error400(string $message)
+    {
+        return response()->json([
+            'statusCode' => 400,
+            'message' => $message,
+            'error' => $message
+        ], 400);
     }
 
     public static function error402($message)
@@ -232,11 +279,21 @@ class Utilities
         return $dates;
     }
 
-    public static function getDiscount($amount, $discount)
+    public static function getDiscount($amount, $discount, $percentage=true)
     {
-        if(($discount <= 0) || $discount > 100) return $amount;
-        if($discount == 100) return 0;
-        $discounted =  ($discount/100) * $amount;
+        $discounted = $amount;
+        if($percentage) {
+            if(($discount <= 0) || $discount > 100) {
+                self::logStuff("Getting discount of ".$discount." that is outside 0-100 for the amount: ".$amount);
+                // return ["amount" => $amount, "discountedAmount" => 0];
+                $discounted = 0;
+            }elseif($discount < 100) {
+                $discounted =  ($discount/100) * $amount;
+            }
+        }else{
+            $discounted = $discount;
+        }
+        // if($discount == 100) return 0;
         $discountedAmount = $amount - $discounted;
         return ["amount" => $discountedAmount, "discountedAmount" => $discounted];
     }
@@ -255,7 +312,8 @@ class Utilities
         if($percentage <= 0) {
             return 0;
         }
-        return ($percentage/100) * $amount;
+        
+        return round(($percentage/100) * $amount, 2);
     }
 
     public static function generateRandomNumber($length)

@@ -21,8 +21,12 @@ use app\Utilities;
 
 use app\Services\ClientPackageService;
 use app\Services\ClientInvestmentService;
+use app\Services\ClientBondService;
 use app\Services\FileService;
 use app\Services\CommissionService;
+use app\Services\DiscountService;
+
+use app\Enums\Measurement;
 
 /**
  * Order service class
@@ -40,8 +44,11 @@ class OrderService
         $appliedDiscounts = [];
         $discountedAmount = $data['amount'];
         if($data['packageType']==PackageType::NON_INVESTMENT->value && !$data['isInstallment']) {
-            $fullPaymentDiscount = Discount::fullPayment()->discount;
-            $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount);
+            $fullPaymentDiscountObj =  Discount::fullPayment();
+            $fullPaymentDiscount = $fullPaymentDiscountObj->discount;
+            $discountMeasurement = $fullPaymentDiscountObj->discount_measurement;
+            $isPercentage = $discountMeasurement == Measurement::PERCENTAGE->value;
+            $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount, $isPercentage);
             $discountedAmount = $discountArr['amount'];
             $appliedDiscounts[] = [
                 "name" => "Full Payment Discount", 
@@ -51,6 +58,20 @@ class OrderService
                 "discountedAmount" => $discountArr['discountedAmount']
             ];
         }
+        if($data['packageType']==PackageType::NON_INVESTMENT->value && $data['isInstallment']){
+            $discountService = new DiscountService;
+            $installment = $discountService->getInstallmentDuration($data['duration']);
+            $discountArr = Utilities::getDiscount($discountedAmount, $installment->discount);
+            $discountedAmount = $discountArr['amount'];
+            $appliedDiscounts[] = [
+                "name" => $data['duration']."Months Installment Payment Discount", 
+                "type"=>OrderDiscountType::INSTALLMENT_PAYMENT->value, 
+                "discount"=>$installment->discount,
+                "amount"=>$discountArr['amount'],
+                "discountedAmount" => $discountArr['discountedAmount']
+            ];
+        }
+
         if($promoCodeDiscount) {
             $discountArr = Utilities::getDiscount($discountedAmount, $promoCodeDiscount);
             $discountedAmount = $discountArr['amount'];
@@ -64,7 +85,9 @@ class OrderService
         }
         if(count($promos) > 0) {
             foreach($promos as $promo) {
-                $discountArr = Utilities::getDiscount($discountedAmount, $promo->discount);
+                $isPercentage = ($promo->discount) ? true : false;
+                $discount = ($promo->discount) ? $promo->discount : $promo->discount_amount;
+                $discountArr = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
                 $discountedAmount = $discountArr['amount'];
                 $appliedDiscounts[] = [
                     "name" => $promo->title." Promo", 
@@ -96,12 +119,13 @@ class OrderService
             $order->installment_count = $data['installmentCount'];
             $order->amount_per_installment = round($data['amountPayable']/$data['installmentCount']);
         }
-        if(isset($data['isInstallment'])) $order->installments_payed = 1;
+        if(isset($data['isInstallment']) && ($data['isInstallment'] == 1)) $order->installments_payed = 1;
         $order->payment_status_id = $data['paymentStatusId'];
         $order->order_date = $data['orderDate'];
         if(isset($data['paymentDueDate'])) $order->payment_due_date = $data['paymentDueDate'];
         if(isset($data['gracePeriodEndDate'])) $order->grace_period_end_date = $data['gracePeriodEndDate'];
         if(isset($data['paymentPeriodStatusId'])) $order->payment_period_status_id = $data['paymentPeriodStatusId'];
+        if(isset($data["type"])) $order->type = $data["type"];
 
         $order->save();
 
@@ -172,6 +196,11 @@ class OrderService
         }
     }
 
+    public function getTotalDiscount($order)
+    {
+        return $order->discounts()->sum('amount');
+    }
+
 
     public function completeOrder($order, $payment, $clientInvestment=null)
     {
@@ -182,97 +211,28 @@ class OrderService
         $fileService = new FileService;
         $clientInvestmentService = new ClientInvestmentService;
         $clientPackageService = new ClientPackageService;
-        // try{
-        //     // generate and save contract
-        //     Helpers::generateContract($order);
-        //     // dd('generate receipt');
-        //     $uploadedContract = "files/contract_{$order->id}.pdf";
-            
-        //     $response = Helpers::moveUploadedFileToCloud($uploadedContract, FileTypes::PDF->value, $order->client->id, 
-        //     FilePurpose::CONTRACT->value, "app\Models\Client", "client-contracts");
-            
-        //     if($response['success']) {
-        //         $contractFileId = $response['upload']['file']->id;
-        //         $contractFileObj = $response['upload']['file'];
-        //     }
-            
-        // }catch(\Exception $e) {
-        //     Utilities::logStuff("Error Occurred while attempting to generate and upload contract..".$e);
-        // }
-        // generate and save letter of happiness
-
-        // try{
-        //     // generate and save contract
-            
-        //     ($order->package->project->project_type_id == ProjectType::land()->id) ? Helpers::generateLetterOfHappiness($payment) : Helpers::generateHomesLetterOfHappiness($payment);
-        //     // dd('generate receipt');
-        //     $uploadedLetter = "files/letter_of_happiness_{$order->id}.pdf";
-            
-        //     $response = Helpers::moveUploadedFileToCloud($uploadedLetter, FileTypes::PDF->value, $order->client->id, 
-        //     FilePurpose::LETTER_OF_HAPPINESS->value, "app\Models\Client", "client-letter_of_happiness");
-        //     if($response['success']) {
-        //         $letterOfHappinessFileId = $response['upload']['file']->id;
-        //         $letterOfHappinessFileObj = $response['upload']['file'];
-        //     }
-            
-        // }catch(\Exception $e) {
-        //     Utilities::logStuff("Error Occurred while attempting to generate and upload letter of happiness..".$e);
-        // }
 
         // mark the order as complete
         $order->completed = true;
         $order->update();
 
 
-        // save the clientPackage and return it
-        $clientPackageService = new ClientPackageService;
         $files = [];
-        // if($contractFileId) $files['contractFileId'] = $contractFileId;
-        // if($letterOfHappinessFileId) $files['happinessLetterFileId'] = $letterOfHappinessFileId;
-        // dd($files);
-        if($order->package->type==PackageType::NON_INVESTMENT->value) {
-            $clientPackage = $clientPackageService->saveClientPackageOrder($order, $files);
-            $clientPackageService->uploadContract($order, $clientPackage);
-            $clientPackageService->uploadLetterOfHappiness($payment, $clientPackage);
+        $clientPackage = null;
+
+        switch($order?->package?->type) {
+            case PackageType::NON_INVESTMENT->value : 
+                $clientPackage = $clientPackageService->saveClientPackageOrder($order);
+                break;
+            case PackageType::INVESTMENT->value : 
+                $clientPackage = $clientPackageService->saveClientPackageInvestment($order->clientInvestment);
+                $clientInvestmentService->start($order->clientInvestment);
+                break;
+            case PackageType::BOND->value : 
+                $clientPackage = $clientPackageService->saveClientPackageBond($order->clientBond);
+                app(ClientBondService::class)->start($order->clientBond);
+                break;
         }
-
-        if($order->package->type==PackageType::INVESTMENT->value) {
-            // try{
-            //     // generate and save Memorandum of Agreement
-            //     Helpers::generateMemorandumAgreement($order);
-            //     // dd('generate receipt');
-            //     $uploadedMemorandum = "files/memorandum_agreement_{$order->id}.pdf";
-                
-            //     $response = Helpers::moveUploadedFileToCloud($uploadedMemorandum, FileTypes::PDF->value, $order->client->id, 
-            //     FilePurpose::MEMORANDUM_OF_AGREEMENT->value, "app\Models\Client", "client-agreement-memorandums");
-                
-            //     if($response['success']) {
-            //         $memorandumFileId = $response['upload']['file']->id;
-            //         $memorandumFileObj = $response['upload']['file'];
-            //         $clientInvestment = $clientInvestmentService->addMemorandumAgreement($memorandumFileId, $clientInvestment);
-            //     }
-                
-            // }catch(\Exception $e) {
-            //     Utilities::logStuff("Error Occurred while attempting to generate and upload Memorandum of agreement..".$e);
-            // }
-            // $investmentData['startDate'] = date("Y-m-d");
-            // $investmentData['endDate'] = 
-
-            //Upload MOU and send it as email
-            $clientInvestmentService->uploadMOU($order, $clientInvestment);
-
-            $clientPackage = $clientPackageService->saveClientPackageInvestment($clientInvestment);
-
-            // $fileMeta = ["belongsId"=>$clientPackage->id, "belongsType"=>"app\Models\ClientInvestment"];
-            // if($memorandumFileObj) $fileService->updateFileObj($fileMeta, $memorandumFileObj);
-
-            // Start the investment
-            $clientInvestmentService->start($clientInvestment);
-        }
-
-        // $fileMeta = ["belongsId"=>$clientPackage->id, "belongsType"=>"app\Models\ClientPackage"];
-        // if($contractFileObj) $fileService->updateFileObj($fileMeta, $contractFileObj);
-        // if($letterOfHappinessFileObj) $fileService->updateFileObj($fileMeta, $letterOfHappinessFileObj);
 
         //if its an upgrade order, 
         if($order->type == OrderType::UPGRADE->value) {

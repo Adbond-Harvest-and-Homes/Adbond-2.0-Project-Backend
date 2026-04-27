@@ -103,6 +103,18 @@ class PromoController extends Controller
             $promo = $this->promoService->getPromo($promoId);
             if(!$promo) return Utilities::error402("Promo not found");
 
+            if($promo->active == 1) { // do not allow discount to be changed for active promos
+                if(isset($data['discount'])) unset($data['discount']);
+                if(isset($data['discountAmount'])) unset($data['discountAmount']);
+            }else{
+                if(isset($data['discount']) && $data['discount']) {
+                    if(isset($data['discountAmount'])) unset($data['discountAmount']);
+                }
+                if(isset($data['discountAmount']) && $data['discountAmount']) {
+                    if(isset($data['discount'])) unset($data['discount']);
+                }
+            }
+
             $data = $request->validated();
 
             $promo = $this->promoService->update($data, $promo);

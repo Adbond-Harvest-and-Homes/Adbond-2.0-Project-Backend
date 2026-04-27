@@ -16,9 +16,10 @@ use app\Models\Client_package;
 use Illuminate\Support\Facades\Http;
 use app\Services\HybridStaffDrawService;
 use app\Services\UserService;
-usE app\Services\LoyaltyService;
+use app\Services\LoyaltyService;
 use app\Services\FileService;
 use app\Services\ClientService;
+use app\Services\OrderService;
 
 use app\Http\Resources\MonthlyWeekDaysResource; 
 use app\Http\Resources\InspectionDayMinResource;
@@ -32,6 +33,9 @@ use app\Http\Resources\OrderMinResource;
 use PDF;
 
 use app\Enums\ClientPackageOrigin;
+use app\Enums\PackageType;
+use app\Enums\ProjectType;
+use app\Enums\OrderType;
 
 use app\Utilities;
 
@@ -416,6 +420,7 @@ Class Helpers
                 Utilities::logStuff("Receipt could not be uploaded... ".$uploadRes['message']);
             }
         } else {
+            dd("receipt found..".$filePath);
             Utilities::logStuff("receipt generated cannot be found");
         }
         return ($success) ? ['success'=>$success, 'upload' => $uploadRes, 'path' => $filePath] : ['success' => $success];
@@ -531,12 +536,14 @@ Class Helpers
 
 
 
-    private static function prepareContract($purchase)
+    public static function prepareContract($purchase)
     {
         // $itemPrice = Helpers::item_price($purchase->packageItem);
+        $projectType = $purchase?->package?->project?->projectType?->name;
         $client = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->client : $purchase->client;
         $data['package'] = $purchase->package?->name;
         $data['project'] = $purchase?->package?->project?->name;
+        $data['use_type'] = ($projectType == ProjectType::AGRO->value) ? "AGRICULTURAL" : "RESIDENTIAL";
         $data['client'] =  ucfirst($purchase->client->full_name);
         $data['address'] = $client?->address;
         // $data['location'] = $purchase?->packageItem?->package?->project_location?->location?->name;
@@ -544,9 +551,9 @@ Class Helpers
         $state = $purchase?->package?->state.' State';
         $data['location'] = ($projectAddress) ? $projectAddress.', '.$state : $state;
         $data['state'] = $state;
-        $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount;
-        $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->installment == 1) ? true : false;
-        $data['installment_duration'] = $purchase?->package->installment_duration;
+        $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount_payable;
+        $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->is_installment == 1) ? true : false;
+        $data['installment_duration'] = $purchase?->installment_count;
         // if the units purchaseed is more than 1, multiply by units
         // if($purchase->units && $purchase->units > 1) $data['price'] = $data['price'] * $purchase->units; 
         $data['size'] = ($purchase?->package?->size && $purchase->units > 0) ? $purchase?->package?->size * $purchase->units : null;
@@ -574,15 +581,18 @@ Class Helpers
             'month' => date('F'),
             'year' => date('Y'),
             'project' => $data['project'],
-            'package' => $data['package'],
-            'client' => $data['client'],
+            'product_name' => $data['package'],
+            'name' => $data['client'],
             'state' => $data['state'],
             'address' => $data['address'],
-            'price' => (float)$data['price'],
+            'amount' => (float)$data['price'],
             'size' => (float)$data['size'],
             'location' => $data['location'],
             'installment_duration' => $data['installment_duration'],
-            'installment' => $data['installment']
+            'installment' => $data['installment'],
+            'payment_plan' => $data['installment'] ? "Installment" : "Full Payment",
+            'payment_terms' => $data['installment'] ? $data['installment_duration'] . 'Months Payment Duration' : "",
+            'use_type' => $data['use_type']
         ];
         $pdf = PDF::loadView('pdf/contract', $pdfData);
         // return $pdf->stream('contract.pdf');
@@ -689,17 +699,20 @@ Class Helpers
             if(isset($addressArr[1])) $address2 = $addressArr[1];
             if(isset($addressArr[2])) $address3 = $addressArr[2];
         }
-        $discount = 0;
-        if($payment?->purchase?->discounts && $payment?->purchase?->discounts->count() > 0) {
-            foreach($payment?->purchase->discounts as $orderDiscount) {
-                $discount += $orderDiscount->discount;
-            }
-        }
+        $discount = app(OrderService::class)->getTotalDiscount($payment?->purchase);
+
         $unitSize = $payment?->purchase?->package?->size;
         $size = ($unitSize != null && $payment?->purchase?->units != null && $payment?->purchase?->units > 0) ? $unitSize * $payment?->purchase?->units : $unitSize;
+        $purchaseBalance = $payment?->purchase?->balance ?? 0;
+        $amount = $payment?->amount ?? 0;
+        $totalPayed = $payment?->purchase?->amount_payed;
+        $balance = $purchaseBalance - $amount;
+        $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [
-            'image' => 'logo.jpg', 
+            'image' => 'logo.png', 
             'name' => ucfirst($payment?->client?->full_name),
+            'clientState' => $payment?->client?->state?->name ?? '',
+            'clientCountry' => $payment?->client?->country?->name ?? '',
             'receiptNo' => $payment->receipt_no,
             'address1' => $address1,
             'address2' => $address2,
@@ -711,11 +724,12 @@ Class Helpers
             'price' => $payment?->purchase?->package?->amount,
             'amount' => $payment->purchase->amount_payable,
             'currentAmount' => $payment->amount,
-            'amountPaid' => $payment->purchase->amount_payed,
+            'amountPaid' => $totalPayed,
             'units' => $payment?->purchase?->units,
             'size' => $size,
             'discount' => $discount,
-            'balance' => $payment?->purchase->balance,
+            'balance' => $balance,
+            'project_name_state' => $payment?->purchase?->package?->name . " " . $payment?->purchase?->package?->stateModel?->name
         ];
 
         // dd($pdfData);
@@ -830,7 +844,7 @@ Class Helpers
     //     $pdf->save('files/receipt'.$payment->receipt_no.'.pdf');
     // }
 
-    private static function formatAddress($address)
+    public static function formatAddress($address)
     {
         $res = [];
         $addressArr = explode(' ', $address);

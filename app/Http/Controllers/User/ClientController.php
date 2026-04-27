@@ -129,6 +129,21 @@ class ClientController extends Controller
         }
     }
 
+    public function delete($clientId)
+    {
+        if (!is_numeric($clientId) || !ctype_digit($clientId)) return Utilities::error402("Invalid parameter clientID");
+
+        $client = $this->clientService->getClient($clientId);
+
+        if(!$client) return Utilities::error402("Client not found");
+
+        if($client->assets->count() > 0) return Utilities::error402("This client already has assets, so he/she cannot be deleted");
+
+        $this->clientService->delete($client);
+
+        return Utilities::okay("Client Deleted Successfully");
+    }
+
 
     private function savePhoto($file, $client)
     {

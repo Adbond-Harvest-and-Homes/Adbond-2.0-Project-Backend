@@ -37,9 +37,14 @@ class Package extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function state()
+    public function stateModel()
     {
-        return $this->belongsTo("app\Models\State");
+        return $this->belongsTo(State::class, "state_id", "id");
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 
     public function brochure()
@@ -72,6 +77,11 @@ class Package extends Model
         return $this->hasMany(PackageBenefit::class);
     }
 
+    public function packageMedia()
+    {
+        return $this->hasMany(PackageMedia::class);
+    }
+
     public function media()
     {
         return $this->belongsToMany(File::class, "package_media", "package_id", "file_id", "id");
@@ -87,6 +97,19 @@ class Package extends Model
         return $this->morphMany(PromoProduct::class, 'product');
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /*
+        Gets the total number of units or slots(for the case of co-ownership bonds) that has been purchased for a package
+    */
+    public function purchasedUnits()
+    {
+        return $this->orders()->sum("units");
+    }
+
     /**
      * Get all promos for this package
      */
@@ -100,5 +123,48 @@ class Package extends Model
             'id',           // Local key on packages table...
             'promo_id'      // Local key on promo_products table...
         )->where('promo_products.product_type', '=', self::$type);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        self::updating(function (Package $package) {
+            //
+        });
+
+        self::deleting(function (Package $package) {
+            if($package->assets->count() > 0) {
+                foreach($package->assets as $asset) {
+                    $asset->delete();
+                }
+            }
+
+            if($package->packageMedia->count() > 0) {
+                foreach($package->packageMedia as $media) {
+                    $media->delete();
+                }
+            }
+
+            if($package->packagePhotos->count() > 0) {
+                foreach($package->packagePhotos as $photo) {
+                    $photo->delete();
+                }
+            }
+
+            if($package->packageBenefits()->count() > 0) {
+                foreach($package->packageBenefits as $benefit) {
+                    $benefit->delete();
+                }
+            }
+
+            if($package->promoProducts->count() > 0) {
+                foreach($package->promoProducts as $promoProduct) {
+                    $promoProduct->delete();
+                }
+            }
+
+            if($package->brochure) $package->brochure->delete();
+        });
     }
 }

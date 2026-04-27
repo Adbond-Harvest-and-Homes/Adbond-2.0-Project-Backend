@@ -30,6 +30,8 @@ use Database\Seeders\Benefits;
 use Database\Seeders\WalletSeeder;
 use Database\Seeders\BankAccounts;
 use Database\Seeders\AddRefererUserCode;
+use Database\Seeders\Ghana;
+use Database\Seeders\LoadPackageStates;
 
 class DatabaseSeeder extends Seeder
 {
@@ -50,8 +52,8 @@ class DatabaseSeeder extends Seeder
             new ProjectTypes,
             new Roles,
             new StaffTypes,
-            new States,
-            // new Users,
+            // new States,
+            new Users,
             // new Projects,
             // new Packages,
             // new Promos,
@@ -66,6 +68,8 @@ class DatabaseSeeder extends Seeder
             new Benefits,
             // new WalletSeeder,
             new BankAccounts,
+            // new Ghana,
+            new LoadPackageStates
             // new AddRefererUserCode
         ];
 

@@ -10,6 +10,9 @@ use app\Models\Payment;
 use app\Models\Discount;
 use app\Models\PaymentMode;
 use app\Models\PaymentGateway;
+use app\Models\File;
+
+use app\Jobs\SendPaymentEmail;
 
 use app\Mail\NewPayment;
 
@@ -39,6 +42,26 @@ class PaymentService
     public function getPurchasePayment($purchaseId, $purchaseType)
     {
         return Payment::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->first();
+    }
+
+    public function getPayments()
+    {
+        return Payment::all();
+    }
+
+    public function getClientPayments($clientId)
+    {
+        return Payment::where("client_id", $clientId)->get();
+    }
+
+    public function getMissingOrUnsentReceipts()
+    {
+        return Payment::whereNull("receipt_file_id")->orWhere("receipt_sent", 0)->get();
+    }
+
+    public function getPurchasePayments($purchaseId, $purchaseType, $confirmed=1)
+    {
+        return Payment::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->where("confirmed", $confirmed)->get();
     }
 
     public function offerPayments($with=[], $offset=0, $perPage=null)
@@ -92,7 +115,11 @@ class PaymentService
         }
         if(count($promos) > 0) {
             foreach($promos as $promo) {
-                $discountedAmount = Utilities::getDiscount($discountedAmount, $promo->discount);
+                $isPercentage = ($promo->discount) ? true : false;
+                $discount = ($promo->discount) ? $promo->discount : $promo->discount_amount;
+                // $discountedAmount = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
+                $discountArr = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
+                $discountedAmount = $discountArr['amount'];
                 $appliedDiscounts[] = [
                     "name" => $promo->title." Promo", 
                     "type"=>OrderDiscountType::PROMO->value, 
@@ -127,6 +154,7 @@ class PaymentService
         if(isset($data['paymentDate'])) $payment->payment_date = $data['paymentDate'];
         if(isset($data['receiptFileId'])) $payment->receipt_file_id = $data['receiptFileId'];
         if(isset($data['receiptNumber'])) $payment->receipt_no = $data['receiptNumber'];
+        if(isset($data['docsUploaded'])) $payment->docs_uploaded = 1;
         $payment->purpose = $data['purpose'];
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
         $payment->save();
@@ -145,9 +173,16 @@ class PaymentService
         if(isset($data['flagMessage'])) $payment->flag_message = $data['flagMessage'];
         if(isset($data['bankAccountId'])) $payment->bank_account_id = $data['bankAccountId'];
         if(isset($data['paymentDate'])) $payment->payment_date = $data['paymentDate'];
-        if(isset($data['receiptFileId'])) $payment->receipt_file_id = $data['receiptFileId'];
+        if(isset($data['receiptFileId'])) {
+            $payment->receipt_file_id = $data['receiptFileId'];
+            $payment->docs_uploaded = 1;
+        }
         if(isset($data['receiptNumber'])) $payment->receipt_no = $data['receiptNumber'];
         if(isset($data['userId'])) $payment->user_id = $data['userId'];
+
+        $payment->update();
+
+        return $payment;
     }
 
     public function implementCardPayment($data)
@@ -220,11 +255,13 @@ class PaymentService
         return $res;
     }
 
-    public function uploadReceipt($payment, $user)
+    public function uploadReceipt($payment, $user=null)
     {
         // generate receipt if the card payment was successful
         // dd($payment);
         try{
+            if(!$user) $user = $payment->client;
+            // dd('got here');
             $fileService = new FileService;
             Helpers::generateReceipt($payment->load('paymentMode'));
             // dd('generate receipt');
@@ -236,16 +273,18 @@ class PaymentService
                 $fileMeta = ["belongsId"=>$payment->id, "belongsType"=>"app\Models\Payment"];
                 $fileService->updateFileObj($fileMeta, $response['upload']['file']);
 
-                $this->update(['receiptFileId' => $response['upload']['file']->id], $payment);
+                
                 // dd("got here");
-                try{
-                    // Send Payment Mail
-                    Mail::to($payment->client->email)->send(new NewPayment($payment, $uploadedReceipt));
-                    unlink($response['path']);
-                }catch(\Exception $e) {
-                    Utilities::logStuff("Error Occurred while attempting to send Payment Email..".$e);
-                }
+                SendPaymentEmail::dispatch($payment, $uploadedReceipt);
+                // try{
+                //     // Send Payment Mail
+                //     Mail::to($payment->client->email)->send(new NewPayment($payment, $uploadedReceipt));
+                //     unlink($response['path']);
+                // }catch(\Exception $e) {
+                //     Utilities::logStuff("Error Occurred while attempting to send Payment Email..".$e);
+                // }
             }
+            return ($response['success']) ? $response['upload']['file'] : false;
         }catch(\Exception $e) {
             Utilities::logStuff("Error Occurred while attempting to generate and upload receipt..".$e);
         }
@@ -277,6 +316,23 @@ class PaymentService
         $payment->update();
 
         return $payment->update();
+    }
+
+
+    //update missing receipt_file_id
+    public function addReceiptFileIds()
+    {
+        Payment::whereNull("receipt_file_id")->orderBy('created_at', 'DESC')->chunk(500, function ($records) {
+        // Payment::orderBy('created_at', 'DESC')->chunk(500, function ($records) {
+            foreach ($records as $payment) {
+                $receiptFile = File::where("belongs_id", $payment->id)->where("belongs_type", Payment::$type)->where("original_filename", "LIKE", "%receipt%")->first();
+                if($receiptFile) {
+                    $payment->receipt_file_id = $receiptFile->id;
+                    $payment->update();
+                    Utilities::logStuff("updated payment receipt. payment Id: ".$payment->id);
+                }
+            }
+        });
     }
 
 }

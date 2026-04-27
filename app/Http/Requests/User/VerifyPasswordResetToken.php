@@ -23,7 +23,7 @@ class VerifyPasswordResetToken extends BaseRequest
     public function rules(): array
     {
         return [
-            "email" => "required|email|exists:users,email",
+            "email" => "required|email",
             "token" => "required"
         ];
     }

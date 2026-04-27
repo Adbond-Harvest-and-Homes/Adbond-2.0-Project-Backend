@@ -32,6 +32,11 @@ class FileService
         return File::all();
     }
 
+    public function getSpecificFile($belongsType, $belongsId, $purpose)
+    {
+        return File::where("belongs_type", $belongsType)->where("belongs_id", $belongsId)->where("purpose", $purpose)->first();
+    }
+
     public function save($file, $fileType, $user_id, $purpose, $user_type = null, $folder=null)
     {
         $uploadedFile = ($fileType=='image' || $fileType=='video') ? 

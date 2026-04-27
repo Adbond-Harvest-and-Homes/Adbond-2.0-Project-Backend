@@ -226,7 +226,7 @@ class SiteTourService
 
     public function bookedSchedules($with=[])
     {
-        return SiteTourBookedSchedule::with($with)->orderBy("booked_date", "ASC")->get();
+        return SiteTourBookedSchedule::with($with)->whereHas("schedule")->orderBy("booked_date", "ASC")->get();
     }
 
 
