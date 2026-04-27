@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,10 +24,10 @@ use app\Http\Controllers\Client\DiscountController as ClientDiscountController;
 use app\Http\Controllers\Client\FileController;
 use app\Http\Controllers\Client\BondController;
 use app\Http\Controllers\Client\PostController;
-
+use app\Http\Controllers\UtilityController;
 
 // Client Routes
-Route::group(['middleware' => ClientAuth::class, 'prefix' => '/client', 'namespace' => 'Client',], function () {
+Route::group(['middleware' => 'clientAuth', 'prefix' => '/client', 'namespace' => 'Client',], function () {
     Route::group(['prefix' => '/dashboard',], function () {
         Route::get('', [DashboardController::class, 'index']);
     });
@@ -53,8 +53,8 @@ Route::group(['middleware' => ClientAuth::class, 'prefix' => '/client', 'namespa
         Route::get('/get_project/all/{projectTypeId}', [ClientProjectController::class, 'projectType']);
     });
 
-     // Package Routes
-     Route::group(['prefix' => '/packages',], function () {
+    // Package Routes
+    Route::group(['prefix' => '/packages',], function () {
         Route::get('/{packageId}', [ClientPackageController::class, 'package']);
     });
 

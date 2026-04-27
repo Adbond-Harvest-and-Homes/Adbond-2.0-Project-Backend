@@ -27,14 +27,17 @@ use app\Http\Controllers\User\PromoController as UserPromoController;
 use app\Http\Controllers\User\PromoCodeController as UserPromoCodeController;
 use app\Http\Controllers\User\AssessmentQuestionController;
 use app\Http\Controllers\User\AssessmentQuestionOptionController;
+use app\Http\Controllers\User\AssessmentAttemptController;
 use app\Http\Controllers\User\AnalyticsController;
 use app\Http\Controllers\User\ReferralController;
 use app\Http\Controllers\User\UserBankAccountController;
 use app\Http\Controllers\User\NotificationController as UserNotificationController;
 use app\Http\Controllers\User\DiscountController;
+use app\Http\Controllers\VirtualTeamApplicationController;
+use app\Http\Controllers\UtilityController;
 
 //User/Admin/Staff Routes
-Route::group(['middleware' => UserAuth::class, 'prefix' => '/user', 'namespace' => 'User',], function () {
+Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'User',], function () {
     Route::get('/dashboard', [UserIndexController::class, "dashboard"]);
     Route::get('/dashboard/purchase_chart', [UserIndexController::class, "purchaseSummary"]);
 
@@ -50,7 +53,7 @@ Route::group(['middleware' => UserAuth::class, 'prefix' => '/user', 'namespace' 
     });
     Route::post('/upload_photo', [UserFileController::class, "savePhoto"]);
 
-    Route::group(['prefix' => '/file'], function() {
+    Route::group(['prefix' => '/file'], function () {
         Route::post('/delete', [UserFileController::class, "deleteFile"]);
     });
 
@@ -204,7 +207,7 @@ Route::group(['middleware' => UserAuth::class, 'prefix' => '/user', 'namespace' 
     Route::group(['prefix' => '/referrals'], function () {
         Route::get('/earnings', [ReferralController::class, "referralEarnings"]);
         Route::post('/redeem_commission', [ReferralController::class, "redeem"]);
-        Route::get('/redemptions', [ReferralController::class, "staffRedemptions"]); 
+        Route::get('/redemptions', [ReferralController::class, "staffRedemptions"]);
     });
 
     Route::group(['middleware' => HRAuth::class, 'prefix' => '/admin_referrals'], function () {
@@ -224,9 +227,9 @@ Route::group(['middleware' => UserAuth::class, 'prefix' => '/user', 'namespace' 
         Route::get('full_payment', [DiscountController::class, "fullPayment"]);
         Route::post('full_payment/update', [DiscountController::class, "updateFullPayment"]);
         Route::get('/installments', [DiscountController::class, "installments"]);
-        Route::post('/installments/update', [DiscountController::class, "updateInstallmentDiscounts"]); 
-        Route::post('/installments/add', [DiscountController::class, "addInstallmentDiscounts"]); 
-        Route::delete('/installments/{duration}', [DiscountController::class, "deleteInstallment"]); 
+        Route::post('/installments/update', [DiscountController::class, "updateInstallmentDiscounts"]);
+        Route::post('/installments/add', [DiscountController::class, "addInstallmentDiscounts"]);
+        Route::delete('/installments/{duration}', [DiscountController::class, "deleteInstallment"]);
     });
 
 
@@ -249,7 +252,7 @@ Route::group(['middleware' => UserAuth::class, 'prefix' => '/user', 'namespace' 
             Route::post('/withdrawal_requests/approve', [UserClientWalletController::class, "approveRequest"]);
             Route::post('/withdrawal_requests/reject', [UserClientWalletController::class, "rejectRequest"]);
         });
-        
+
         Route::group(['prefix' => '/transactions', 'namespace' => 'Client'], function () {
             Route::get('/{clientId}', [UserClientTransactionController::class, "transactions"]);
             Route::get('/show/{transactionId}', [UserClientTransactionController::class, "transaction"]);
@@ -289,7 +292,7 @@ Route::group(['middleware' => UserAuth::class, 'prefix' => '/user', 'namespace' 
         Route::get('/applications', [VirtualTeamApplicationController::class, "applications"]);
         Route::get('/application/{applicationId}', [VirtualTeamApplicationController::class, "application"]);
     });
-    
+
 
     Route::get('/roles', [UserUtilityController::class, "roles"]);
     Route::get('/staff_types', [UserUtilityController::class, "staffTypes"]);
