@@ -137,5 +137,5 @@ Route::group(['prefix' => '/v2',], function () {
     // Route::get('/contract-mail', [TestController::class, "sendContract"]);
 });
 
-require __DIR__ . 'user.php';
-require __DIR__ . 'client.php';
+require __DIR__ . '/user.php';
+require __DIR__ . '/client.php';
