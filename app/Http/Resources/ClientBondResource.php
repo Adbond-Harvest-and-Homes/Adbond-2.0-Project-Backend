@@ -36,6 +36,7 @@ class ClientBondResource extends JsonResource
             "timeline" => $this->net_rental_income_timeline,
             "assetAppreciation" => $this->asset_appreciation.($this->asset_appreciation_measurement == Measurement::PERCENTAGE->value) ? "%" : "",
             "assetAppreciationTimeline" => $this->asset_appreciation_timeline,
+            "status" => $this->status,
             "mou" => new FileResource($this->whenLoaded("mou")),
             "client" => new ClientResource($this->whenLoaded("client")),
             "package" => new PackageResource($this->whenLoaded("package")),

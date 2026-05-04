@@ -35,6 +35,7 @@ use app\Http\Controllers\User\NotificationController as UserNotificationControll
 use app\Http\Controllers\User\DiscountController;
 use app\Http\Controllers\VirtualTeamApplicationController;
 use app\Http\Controllers\UtilityController;
+use app\Http\Controllers\User\ClientBondController;
 
 //User/Admin/Staff Routes
 Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'User',], function () {
@@ -208,6 +209,13 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::get('/earnings', [ReferralController::class, "referralEarnings"]);
         Route::post('/redeem_commission', [ReferralController::class, "redeem"]);
         Route::get('/redemptions', [ReferralController::class, "staffRedemptions"]);
+    });
+
+    Route::group(['prefix' => '/bonds'], function () {
+        Route::get('', [ClientBondController::class, "bonds"]);
+        Route::get('/requests', [ClientBondController::class, "requests"]);
+        Route::post('/requests/approve/{id}', [ClientBondController::class, "approve"]);
+        Route::post('/requests/reject/{id}', [ClientBondController::class, "approve"]);
     });
 
     Route::group(['middleware' => 'hrAuth', 'prefix' => '/admin_referrals'], function () {

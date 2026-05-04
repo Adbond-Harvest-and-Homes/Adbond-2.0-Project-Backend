@@ -152,34 +152,29 @@ class ContractService
         $publicFile = public_path($file);
 
         if(file_exists($publicFile)) return $file;
+        $bond = $order->clientBond;
 
-        $data = Helpers::prepareContract($order);
-        if(!isset($data['project']) || $data['project']==null) $data['project'] = '';
-        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
-        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
-        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
-        if(!isset($data['state']) || $data['state']==null) $data['state'] = '';
-        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
-        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
-        if(!isset($data['installment_duration']) || $data['installment_duration']==null) $data['installment_duration'] = 12;
-        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        $projectAddress = $order?->package?->address;
+        $state = $order?->package?->state.' State';
         $pdfData = [
             'image' => public_path('images/logo.PNG'),
-            'day' => date('jS'),
-            'month' => date('F'),
-            'year' => date('Y'),
-            'project' => $data['project'],
-            'package' => $data['package'],
-            'client' => $data['client'],
-            'state' => $data['state'],
-            'address' => $data['address'],
-            'price' => (float)$data['price'],
-            'size' => (float)$data['size'],
-            'location' => $data['location'],
-            'installment_duration' => $data['installment_duration'],
-            'installment' => $data['installment']
+            'contract_day' => date('jS'),
+            'contract_month' => date('F'),
+            'contract_year' => date('Y'),
+            'bond_owner_name' => ucfirst($order->client->full_name),
+            'bond_owner_address' => $order->client?->address,
+            'project_name' => $order?->package?->project?->name,
+            'project_location' => ($projectAddress) ? $projectAddress.', '.$state : $state,
+            'purchase_price' => $order->amount_payable,
+            'payment_plan' => ($order->is_installment == 1) ? "Installments" : "Full Payment",
+            'is_installment' => $order->is_installment,
+            'contract_end_date' => $bond->end_date,
+            'outright_delivery_duration' => 6,
+            'bond_type' => $order->package->bond_ownership_type,
+            'monthly_payment' => $order->amount_payed,
+            'payment_duration' => $order->package->installment_duration
         ];
-        $pdf = PDF::loadView('pdf/memorandum_agreement', $pdfData);
+        $pdf = PDF::loadView('pdf/contract_bond', $pdfData);
         // return $pdf->stream('memorandum_agreement.pdf');
         // $file = "files/memorandum_agreement_{$order->id}.pdf";
         $pdf->save($publicFile);

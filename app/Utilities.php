@@ -134,6 +134,18 @@ class Utilities
         ], 200);
     }
 
+    public static function paginatedOk2($data, $meta=[])
+    {
+        $responseData = ['statusCode' => 200];
+        if(!empty($data) || $data != '') $responseData['data'] = $data;
+        return response()->json([
+            'statusCode' => 200,
+            'data' => $data,
+            'meta' => $meta
+            // 'token' => Utilities::refreshToken($this->guard)
+        ], 200);
+    }
+
     public static function paginatedOkay($data, $page, $perPage, $total)
     {
         $responseData = ['statusCode' => 200];

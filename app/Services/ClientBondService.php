@@ -5,6 +5,7 @@ namespace app\Services;
 use DateTime;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 use app\Exceptions\AppException;
 
@@ -18,6 +19,7 @@ use app\Enums\FileTypes;
 use app\Enums\BondOccurrenceMetric;
 use app\Enums\Measurement;
 use app\Enums\UserType;
+use app\Enums\ClientBondStatus;
 
 use app\Services\ContractService;
 use app\Services\WalletService;
@@ -29,6 +31,10 @@ use app\Helpers;
 class ClientBondService
 {
     public $clientId = null;
+    public $status = null;
+    public bool $paginated = false;
+    public $limit = null;
+    public int $page = 1;
 
     public function getByOrderId($orderId)
     {
@@ -42,9 +48,24 @@ class ClientBondService
 
     public function getBonds($with=[])
     {
-        return ClientBond::with($with)->when($this->clientId, function($query) {
+        $limit = $this->limit;
+        if($this->paginated) {
+            if(!$limit) $limit = env('PAGINATION_PER_PAGE', 10);
+
+            $perPage = min(100, max(1, $limit));
+        }
+
+        $query = ClientBond::with($with)->when($this->status, fn($q) => $q->where("status", $this->status))->when($this->clientId, function($query) {
             $query->where("client_id", $this->clientId);
-        })->orderBy("created_at", "DESC")->get();
+        })->orderBy("created_at", "DESC");
+
+        if (!$this->paginated && $this->limit) {
+            $query->limit($this->limit);
+        }
+
+        if($this->paginated) return $query->paginate($perPage, ['*'], 'page', $this->page);
+
+        return $query->get();
     }
 
     public function runningBonds()
@@ -69,6 +90,43 @@ class ClientBondService
         return ClientBondPayout::with($with)->where("id", $id)->when($this->clientId, function($query) {
             $query->where("client_id", $this->clientId);
         })->first();
+    }
+
+    public function clientBondSummary()
+    {
+        $cacheKey = "client_bond_summary_{$this->clientId}";
+
+        return Cache::remember($cacheKey, now()->addMinutes(60), function () {
+            $totalPayouts = ClientBondPayout::where("client_id", $this->clientId)->sum("payout_amount");
+            $this->status = ClientBondStatus::ACTIVE->value;
+            $clientBonds = $this->getBonds();
+
+            $ExpectedTotalPayouts = 0;
+            $nextPayout = null;
+            if($clientBonds->count() > 0) {
+                foreach($clientBonds as $bond) {
+                    if($nextPayout && $nextPayout > $bond->next_capital_payout) {
+                        $nextPayout = $bond->next_capital_payout;
+                    }
+                    $breakdown = $bond->calculateTotalPayout();
+                    $ExpectedTotalPayouts += $breakdown['total_rental_income'];
+                }
+            }
+            
+            $activeAssets = $clientBonds->count();
+
+            return [
+                "totalPayouts" => $totalPayouts,
+                "expectedTotalPayouts" => $ExpectedTotalPayouts,
+                "nextPayout" => $nextPayout,
+                "activeAssets" => $activeAssets
+            ];
+        });
+    }
+
+    public function clearClientBondSummaryCache(): void
+    {
+        Cache::forget("client_bond_summary_{$this->clientId}");
     }
 
     public function save($data)
@@ -212,11 +270,19 @@ class ClientBondService
         }
     }
 
+    public function updateStatus($bond, $status)
+    {
+        $bond->status = $status;
+        $bond->save();
+
+        return $bond;
+    }
+
     public function redeem($bond)
     {
         $this->checkBondEnded($bond);
-        DB::beginTransaction();
-        try{
+        // DB::beginTransaction();
+        // try{
             //account for parent bonds
             $parentBondIds = [];
             $loopBond = $bond;
@@ -243,14 +309,15 @@ class ClientBondService
             app(WalletService::class)->credit($wallet, $bond->current_capital, $source);
 
             $bond->redeemed = 1;
+            $bond->status = ClientBondStatus::LIQUIDATED->value;
 
             $bond->save();
 
-            DB::commit();
-        }catch(\Exception $e) {
-            DB::rollBack();
-            throw new AppException(402, "An Error Occurred while attempting to redeem Bond Investment");
-        }
+            // DB::commit();
+        // }catch(\Exception $e) {
+        //     // DB::rollBack();
+        //     throw new AppException(402, "An Error Occurred while attempting to redeem Bond Investment");
+        // }
     }
 
     public function renew($bond, $order)
@@ -282,6 +349,9 @@ class ClientBondService
 
         //delete old bond asset
         $bond->clientPackage->delete();
+
+        $bond->status = ClientBondStatus::RENEWAL->value;
+        $bond->save();
 
         return $renewedBond;
     }

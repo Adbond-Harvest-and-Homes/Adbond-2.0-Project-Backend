@@ -18,6 +18,11 @@ class SaveBondStage
             $clientBondService = new ClientBondService;
 
             $clientBond = $clientBondService->saveBond($context->order, $context->processedData);
+            $clientBondService->clientId = $clientBond->client_id;
+
+            // clear the cache for this client
+            $clientBondService->clearClientBondSummaryCache();
+            
             $context->bond = $clientBond;
         }
 

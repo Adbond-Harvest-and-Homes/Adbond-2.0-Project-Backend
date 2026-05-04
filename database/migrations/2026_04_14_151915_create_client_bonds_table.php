@@ -4,6 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+use app\Enums\ClientBondStatus;
+
 return new class extends Migration
 {
     /**
@@ -38,6 +40,7 @@ return new class extends Migration
             $table->boolean("docs_uploaded")->default(false);
             $table->boolean("mou_sent")->default(false);
             $table->boolean("redeemed")->nullable();
+            $table->string("status")->default(ClientBondStatus::PENDING->value);
             $table->timestamps();
         });
     }

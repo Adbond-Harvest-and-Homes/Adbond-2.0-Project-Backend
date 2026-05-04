@@ -11,6 +11,8 @@ use app\Jobs\ClientBondEnded;
 
 use app\Services\ClientBondService;
 
+use app\Enums\ClientBondStatus;
+
 class MonitorBonds extends Command
 {
     /**
@@ -50,6 +52,7 @@ class MonitorBonds extends Command
                 if (!$startDate->isFuture()) {
                     // Today or past
                     $notStartedBond->started = 1;
+                    $notStartedBond->status = ClientBondStatus::ACTIVE->value;
                     $notStartedBond->save();
                 }
 
@@ -75,6 +78,9 @@ class MonitorBonds extends Command
                     //add the payout to the wallet;
                     $bondPayout = app(ClientBondService::class)->addPayout($startedBond, $payout);
 
+                    app(ClientBondService::class)->clientId = $startedBond->client_id;
+                    app(ClientBondService::class)->clearClientBondSummaryCache();
+
                     // dispatch job to notify client that they have a new payout
                     BondPayout::dispatch($bondPayout->id);
 
@@ -89,6 +95,7 @@ class MonitorBonds extends Command
                     //bond has ended
 
                     $startedBond->ended = 1;
+                    $startedBond->status = ClientBondStatus::COMPLETED->value;
 
                     // dispatch job to notify client that their bond has ended
                     ClientBondEnded::dispatch($startedBond->id);

@@ -22,6 +22,8 @@ use app\Enums\AssetSwitchType;
 use app\Enums\Weekday;
 use app\Enums\PromoProductType;
 use app\Enums\NotificationType;
+use app\Enums\ClientBondStatus;
+use app\Enums\ClientBondRequestType;
 
 //bonds
 use app\Enums\Measurement;
@@ -203,5 +205,15 @@ class EnumClass
     public static function bondTimeMetrics()
     {
         return array_column(BondTimeMetric::cases(), 'value');
+    }
+
+    public static function clientBondStatuses()
+    {
+        return array_column(ClientBondStatus::cases(), 'value');
+    }
+
+    public static function clientBondRequestTypes()
+    {
+        return array_column(ClientBondRequestType::cases(), 'value');
     }
 }
