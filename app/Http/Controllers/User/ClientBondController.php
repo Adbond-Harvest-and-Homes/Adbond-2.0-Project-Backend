@@ -10,6 +10,7 @@ use app\Http\Controllers\Controller;
 use app\Exceptions\AppException;
 
 use app\Http\Requests\User\RejectBondRequest;
+use app\Http\Requests\User\UploadBondDocuments;
 
 use app\Http\Resources\ClientBondResource;
 use app\Http\Resources\ClientBondRequestResource;
@@ -17,10 +18,14 @@ use app\Http\Resources\ClientBondRequestResource;
 use app\Services\ClientBondService;
 use app\Services\ClientBondRequestService;
 use app\Services\OrderService;
+use app\Services\FileService;
 
 use app\Enums\ClientBondRequestType;
 use app\Enums\ClientBondStatus;
 use app\Enums\OrderType;
+use app\Enums\FilePurpose;
+
+use app\Models\User;
 
 use app\Utilities;
 
@@ -29,9 +34,23 @@ class ClientBondController extends Controller
     public function __construct(protected ClientBondService $bondService, 
                                     protected ClientBondRequestService $requestService,
                                     protected NotificationService $notificationService,
-                                    protected OrderService $orderService
+                                    protected OrderService $orderService,
+                                    protected FileService $fileService
                                 )
     {
+    }
+
+    public function summary()
+    {
+        $summary = $this->bondService->getSummary();
+
+        return Utilities::ok([
+            "pendingRequests" => $summary->total_pending_requests,
+            "activeInvestments" => $summary->active_investments,
+            "totalRenewals" => $summary->total_renewals,
+            "totalRenewalsThisMonth" => $summary->total_renewals_this_month,
+            "totalAmountLiquidated" => $summary->total_amount_liquidated
+        ]);
     }
 
     public function bonds(Request $request)
@@ -149,5 +168,47 @@ class ClientBondController extends Controller
             return Utilities::error($e, "An Error Occurred while attempting to reject this request");
         }
 
+    }
+
+    public function uploadDocuments(UploadBondDocuments $request, int $id)
+    {
+        DB::beginTransaction();
+        try{
+            $bond = $this->bondService->getBond($id);
+            if(!$bond) return Utilities::error402("Bond not found");
+
+            $data = $request->validated();
+            $docs = [];
+            $errors = [];
+            foreach($data['documents'] as $doc) {
+                $fileType = Utilities::getFileType($doc['file']->getMimeType());
+                $fileRes = $this->fileService->save($doc['file'], $fileType, Auth::user()->id, FilePurpose::CLIENT_BOND_DOC->value, User::$userType, 'client-bond-docs');
+                if($fileRes['status'] == 200) {
+                    $doc['fileId'] = $fileRes['file']->id;
+                    $docs[] = $doc;
+                }else{
+                    $errors[] = $fileRes['message'];
+                }
+            }
+
+            if(count($docs) > 0) {
+                $this->bondService->saveDocuments($bond, $docs);
+                
+                if(count($errors) > 0) {
+                    DB::commit();
+                    return Utilities::ok("partially uploaded, some documents failed to upload");
+                }
+
+                DB::commit();
+                return Utilities::okay("Uploaded successfully");
+            }
+
+            DB::rollBack();
+            return Utilities::error402("an error occurred..".$errors[0]);
+
+        }catch(\Exception $e){
+            DB::rollBack();
+            return Utilities::error($e, "An Error Occurred while attempting to upload documents");
+        }
     }
 }

@@ -11,6 +11,9 @@ use app\Exceptions\AppException;
 
 use app\Models\ClientBond;
 use app\Models\ClientBondPayout;
+use app\Models\ClientBondDocument;
+use app\Models\ClientBondSummary;
+use app\Models\ClientBondRequestsDetail;
 
 use app\Mail\MOU;
 
@@ -35,6 +38,11 @@ class ClientBondService
     public bool $paginated = false;
     public $limit = null;
     public int $page = 1;
+
+    public function getSummary()
+    {
+        return ClientBondSummary::first();
+    }
 
     public function getByOrderId($orderId)
     {
@@ -416,6 +424,17 @@ class ClientBondService
             }
         }catch(\Exception $e) {
             Utilities::logStuff("Error Occurred while attempting to generate and upload MOU..".$e);
+        }
+    }
+
+    public function saveDocuments(ClientBond $bond, array $docs)
+    {
+        foreach($docs as $docArr) {
+            $bondDoc = new ClientBondDocument;
+            $bondDoc->client_bond_id = $bond->id;
+            $bondDoc->document_type_id = $docArr['docTypeId'];
+            $bondDoc->file_id = $docArr['fileId'];
+            $bondDoc->save();
         }
     }
 }

@@ -12,6 +12,7 @@ use app\Http\Resources\ClientResource;
 use app\Http\Resources\ClientSummaryResource;
 
 use app\Http\Requests\User\UpdateClient;
+use app\Http\Requests\User\AddClient;
 
 use app\Services\ClientService;
 use app\Services\FileService;
@@ -88,6 +89,19 @@ class ClientController extends Controller
         if(!$client) return Utilities::error402("Client not found");
 
         return Utilities::ok(new ClientResource($client));
+    }
+
+    public function AddClient(AddClient $request)
+    {
+        try{
+            $data = $request->validated();
+
+            $client = $this->clientService->save($data);
+
+            return Utilities::ok(new ClientResource($client));
+        }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
     }
 
     public function update(UpdateClient $request, $clientId)

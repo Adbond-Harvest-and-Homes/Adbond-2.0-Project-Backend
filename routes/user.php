@@ -36,9 +36,18 @@ use app\Http\Controllers\User\DiscountController;
 use app\Http\Controllers\VirtualTeamApplicationController;
 use app\Http\Controllers\UtilityController;
 use app\Http\Controllers\User\ClientBondController;
+use app\Http\Controllers\User\DocumentTypeController;
 
 //User/Admin/Staff Routes
 Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'User',], function () {
+    Route::group(['prefix' => '/document_types'], function () {
+        Route::get('', [DocumentTypeController::class, "docTypes"]);
+        Route::post('', [DocumentTypeController::class, "save"]);
+        Route::patch('/{id}', [DocumentTypeController::class, "update"]);
+        Route::get('/{id}', [DocumentTypeController::class, "docTypes"]);
+    });
+
+
     Route::get('/dashboard', [UserIndexController::class, "dashboard"]);
     Route::get('/dashboard/purchase_chart', [UserIndexController::class, "purchaseSummary"]);
 
@@ -212,10 +221,12 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     });
 
     Route::group(['prefix' => '/bonds'], function () {
+        Route::get('/summary', [ClientBondController::class, "summary"]);
         Route::get('', [ClientBondController::class, "bonds"]);
         Route::get('/requests', [ClientBondController::class, "requests"]);
         Route::post('/requests/approve/{id}', [ClientBondController::class, "approve"]);
         Route::post('/requests/reject/{id}', [ClientBondController::class, "approve"]);
+        Route::post('/upload_/{id}', [ClientBondController::class, "uploadDocuments"]);
     });
 
     Route::group(['middleware' => 'hrAuth', 'prefix' => '/admin_referrals'], function () {
