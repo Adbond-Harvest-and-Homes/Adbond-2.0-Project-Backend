@@ -104,7 +104,7 @@ class ClientController extends Controller
         }
     }
 
-    public function update(UpdateClient $request, $clientId)
+    public function update(UpdateClient $request, int $clientId)
     {
         try{
             DB::beginTransaction();

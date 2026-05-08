@@ -255,6 +255,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     // Client
     Route::group(['prefix' => '/clients'], function () {
         Route::get('', [UserClientController::class, "index"]);
+        Route::post('/add', [UserClientController::class, "addClient"]);
         Route::get('/export', [UserClientController::class, "export"]);
         Route::get('/{clientId}', [UserClientController::class, "show"]);
         Route::post('/{clientId}', [UserClientController::class, "update"]);
