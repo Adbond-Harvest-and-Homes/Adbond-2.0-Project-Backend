@@ -5,7 +5,7 @@ namespace app\Domain\Payments\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-use app\Jobs\GenerateBondMOU;
+use app\Jobs\GenerateBondMou;
 
 use app\Domain\Payments\Events\BondActivated;
 
