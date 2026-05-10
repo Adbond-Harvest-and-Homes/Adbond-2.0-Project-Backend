@@ -5,7 +5,7 @@ namespace app\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-use App\Http\Resources\ClientBondResource;
+use app\Http\Resources\ClientBondResource;
 
 class ClientBondRequestResource extends JsonResource
 {
