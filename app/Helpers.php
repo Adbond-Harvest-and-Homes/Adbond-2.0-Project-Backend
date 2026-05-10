@@ -420,7 +420,7 @@ Class Helpers
                 Utilities::logStuff("Receipt could not be uploaded... ".$uploadRes['message']);
             }
         } else {
-            dd("receipt found..".$filePath);
+            // dd("receipt found..".$filePath);
             Utilities::logStuff("receipt generated cannot be found");
         }
         return ($success) ? ['success'=>$success, 'upload' => $uploadRes, 'path' => $filePath] : ['success' => $success];

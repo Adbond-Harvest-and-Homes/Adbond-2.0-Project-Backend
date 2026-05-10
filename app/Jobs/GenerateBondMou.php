@@ -80,7 +80,7 @@ class GenerateBondMou implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Utilities::jobLog("Send MOU Mail Job failed permanently: " . $exception->getMessage());
+        Utilities::jobLog("Send Bond MOU Mail Job failed permanently: " . $exception->getMessage());
         $this->removeMouFile();
     }
 
