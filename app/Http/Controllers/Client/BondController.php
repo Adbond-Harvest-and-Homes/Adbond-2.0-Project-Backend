@@ -85,7 +85,7 @@ class BondController extends Controller
     {
         DB::beginTransaction();
         try{
-            $bond = $this->bondService->getBond($request->validated("bondId"));
+            $bond = $this->bondService->getBond($request->validated("id"));
             if(!$bond) return Utilities::error402("Bond not found");
 
             if($bond->client_id != Auth::guard("client")->user()->id) return Utilities::error402("You cannot renew a bond you do not own!");
