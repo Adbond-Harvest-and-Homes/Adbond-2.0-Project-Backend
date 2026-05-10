@@ -13,6 +13,6 @@ class ClientBondRequest extends Model
 
     public function bond()
     {
-        return $this->belongsTo(ClientBond::class);
+        return $this->belongsTo(ClientBond::class, "client_bond_id", "id");
     }
 }

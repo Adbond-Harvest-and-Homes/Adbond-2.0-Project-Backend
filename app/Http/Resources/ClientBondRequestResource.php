@@ -16,7 +16,7 @@ class ClientBondRequestResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $this->bond->load("package");
+        // $this->bond->load("package");
         return [
             "id" => $this->id,
             "type" => $this->type,
