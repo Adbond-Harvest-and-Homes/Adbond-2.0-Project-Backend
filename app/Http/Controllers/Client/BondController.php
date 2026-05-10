@@ -51,6 +51,7 @@ class BondController extends Controller
 
     public function redeem(RedeemBond $request)
     {
+        DB::beginTransaction();
         try{
             $bond = $this->bondService->getBond($request->validated("id"));
             if(!$bond) return Utilities::error402("Bond not found");
@@ -72,8 +73,11 @@ class BondController extends Controller
             // Register a notification for this request
             $this->notificationService->save($bondRequest, NotificationType::BOND_LIQUIDATION_REQ->value,  Auth::guard("client")->user());
 
+            DB::commit();
+
             return Utilities::okay("Bond Liquidation request has been made Successfully");
         }catch(AppException $e){
+            DB::rollBack();
             throw $e;
         }catch(\Exception $e){
             DB::rollBack();
