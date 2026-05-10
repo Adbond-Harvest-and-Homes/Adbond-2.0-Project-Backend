@@ -9,6 +9,8 @@ class ClientBondRequest extends Model
 {
     use HasFactory;
 
+    public static $type = "app\Models\ClientBondRequest";
+
     public function bond()
     {
         return $this->belongsTo(ClientBond::class);
