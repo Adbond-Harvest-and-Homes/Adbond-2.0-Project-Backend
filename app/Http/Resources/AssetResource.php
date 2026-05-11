@@ -8,6 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use app\Http\Resources\PackageResource;
 use app\Http\Resources\FileResource;
 use app\Http\Resources\ClientBriefResource;
+use app\Http\Resources\ClientBondResource;
 
 use app\Enums\ClientPackageOrigin;
 
@@ -24,6 +25,7 @@ class AssetResource extends JsonResource
     {
         return [
             "id" => $this->id,
+            "type" => $this->origin,
             "client" => new ClientBriefResource($this->whenLoaded("client")),
             "package" => $this->package->name,
             "media" => FileResource::collection($this->package->media),
@@ -54,6 +56,9 @@ class AssetResource extends JsonResource
             "onOffer" => $this->onOffer(),
             "doaUploaded" => ($this->doa()) ? true : false,
             "files" => FileResource::collection($this->files),
+            "bond" => $this->when($this->origin == ClientPackageOrigin::BOND->value, function() { 
+                return ($this?->purchase?->clientBond) ? new ClientBondResource($this->purchase->clientBond) : null;
+            }),
             // "returns" => $this->investmentReturns()
         ];
     }
