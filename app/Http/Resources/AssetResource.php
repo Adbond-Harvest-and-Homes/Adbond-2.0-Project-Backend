@@ -57,7 +57,7 @@ class AssetResource extends JsonResource
             "doaUploaded" => ($this->doa()) ? true : false,
             "files" => FileResource::collection($this->files),
             "bond" => $this->when($this->origin == ClientPackageOrigin::BOND->value, function() { 
-                return ($this?->purchase?->clientBond) ? new ClientBondResource($this->purchase->clientBond) : null;
+                return ($this?->purchase) ? new ClientBondResource($this->purchase) : null;
             }),
             // "returns" => $this->investmentReturns()
         ];
