@@ -96,6 +96,7 @@ class ClientController extends Controller
         try{
             $data = $request->validated();
 
+            $data['emailVerifiedAt'] = now();
             $client = $this->clientService->save($data);
 
             return Utilities::ok(new ClientResource($client));
