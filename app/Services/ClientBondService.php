@@ -307,7 +307,7 @@ class ClientBondService
 
             $allBondIds = array_merge([$bond->id], $parentBondIds);
 
-            $total = ClientBondPayout::whereIn('bond_id', $allBondIds)->sum('payout_amount');
+            $total = ClientBondPayout::whereIn('client_bond_id', $allBondIds)->sum('payout_amount');
 
             $client = $bond->client;
             $wallet = $client->wallet;
