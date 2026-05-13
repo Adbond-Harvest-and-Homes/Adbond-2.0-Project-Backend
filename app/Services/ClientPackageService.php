@@ -91,6 +91,15 @@ class ClientPackageService
         return $clientPackage;
     }
 
+    public function saveClientPackageForOrder($order)
+    {
+        return match ($order->package?->type) {
+            PackageType::INVESTMENT->value => $this->saveClientPackageInvestment($order->clientInvestment),
+            PackageType::BOND->value => $this->saveClientPackageBond($order->clientBond),
+            default => $this->saveClientPackageOrder($order),
+        };
+    }
+
     public function saveClientPackageOrder($order, $files=[], $clientPackage=null) {
         $data['clientId'] = $order->client->id;
         $data['packageId'] = $order->package_id;

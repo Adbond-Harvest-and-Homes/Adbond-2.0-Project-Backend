@@ -65,22 +65,7 @@ class PaymentConfirmationContext extends PaymentContext
 
             $this->order = $payment->purchase;
 
-            $asset = null;
-            switch($this->order?->package?->type) {
-                case PackageType::NON_INVESTMENT->value :
-                    $asset = $this->order?->clientPackage; 
-                    if(!$asset && $this->order) $asset = app(ClientPackageService::class)->saveClientPackageOrder($this->order);
-                    break;
-                case PackageType::INVESTMENT->value :
-                    $asset = $this->order?->clientInvestment?->clientPackage; 
-                    if(!$asset && $this->order?->clientInvestment) $asset = app(ClientPackageService::class)->saveClientPackageInvestment($this->order->clientInvestment);
-                    break;
-                case PackageType::BOND->value :
-                    $asset = $this->order?->clientBond?->clientPackage; 
-                    if(!$asset && $this->order?->clientBond) $asset = app(ClientPackageService::class)->saveClientPackageBond($this->order->clientBond);
-                    break;
-            }
-            if(!$asset) throw new AppException(402, "Asset not found..".$this->order?->package?->type);
+            $asset = $this->order?->actual_asset;
 
             $this->order->refresh();
             $this->asset = $asset;

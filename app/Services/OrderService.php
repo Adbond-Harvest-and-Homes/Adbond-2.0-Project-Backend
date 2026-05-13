@@ -218,20 +218,12 @@ class OrderService
 
 
         $files = [];
-        $clientPackage = null;
+        $clientPackage = $clientPackageService->saveClientPackageForOrder($order);
 
-        switch($order?->package?->type) {
-            case PackageType::NON_INVESTMENT->value : 
-                $clientPackage = $clientPackageService->saveClientPackageOrder($order);
-                break;
-            case PackageType::INVESTMENT->value : 
-                $clientPackage = $clientPackageService->saveClientPackageInvestment($order->clientInvestment);
-                $clientInvestmentService->start($order->clientInvestment);
-                break;
-            case PackageType::BOND->value : 
-                $clientPackage = $clientPackageService->saveClientPackageBond($order->clientBond);
-                app(ClientBondService::class)->start($order->clientBond);
-                break;
+        if ($order->package->type == PackageType::INVESTMENT->value) {
+            $clientInvestmentService->start($order->clientInvestment);
+        } elseif ($order->package->type == PackageType::BOND->value) {
+            app(ClientBondService::class)->start($order->clientBond);
         }
 
         //if its an upgrade order, 

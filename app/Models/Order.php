@@ -72,6 +72,19 @@ class Order extends Model
         return $this->hasOne(ClientBond::class);
     }
 
+    /**
+     * Get the actual client package asset linked to this order
+     * Handles different package types (Investment, Bond, etc.)
+     */
+    public function getActualAssetAttribute(): ?ClientPackage
+    {
+        return match ($this->package?->type) {
+            \app\Enums\PackageType::INVESTMENT->value => $this->clientInvestment?->clientPackage,
+            \app\Enums\PackageType::BOND->value => $this->clientBond?->clientPackage,
+            default => $this->clientPackage
+        };
+    }
+
     public function upgrade()
     {
         return $this->belongsTo(AssetUpgrade::class, "upgrade_id", "id");

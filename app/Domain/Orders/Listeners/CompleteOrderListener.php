@@ -9,6 +9,10 @@ use app\Domain\Orders\Events\OrderCompleted;
 
 use app\Services\ClientPackageService;
 
+use app\Enums\PackageType;
+
+use app\Utilities;
+
 class CompleteOrderListener
 {
     /**
@@ -26,30 +30,36 @@ class CompleteOrderListener
     {
         $order = $event->order;
 
-            $asset = $order->clientPackage;
-            // Confirm that the order is actually completed, i.e the balance is zero
-            if($order->totalPaymentAmount() < $order->amount_payable) {
-                // payments is incomplete
-                $order->completed = 0;
-                $order->completedEvent = true;
-                $order->saveQuietly();
+        $asset = $order->actual_asset;
 
-                if($asset && ($asset->purchase_complete == 1 || $asset->purchase_completed_at)) {
-                    $asset->purchase_complete = 0;
-                    $asset->purchase_completed_at = null;
-                    $asset->save();
-                }
-                return;
-            }
+        // Confirm that the order is actually completed, i.e the balance is zero
+        if ($order->totalPaymentAmount() < $order->amount_payable) {
+            // payments is incomplete
+            $order->completed = 0;
+            $order->completedEvent = true;
+            $order->saveQuietly();
 
-            // confirm that the asset exists and it has also been completed and marked as completed
-            if(!$asset) $asset = app(ClientPackageService::class)->saveClientPackageOrder($order);
-            if($asset->purchase_complete == 0 || $asset->purchase_completed) {
-                $asset->purchase_complete = 1;
-                $asset->purchase_completed_at = now();
+            if ($asset && ($asset->purchase_complete == 1 || $asset->purchase_completed_at)) {
+                $asset->purchase_complete = 0;
+                $asset->purchase_completed_at = null;
                 $asset->save();
             }
+            return;
+        }
 
-            // implement referral
+        // confirm that the asset exists and it has also been completed and marked as completed
+        if (!$asset) $asset = app(ClientPackageService::class)->saveClientPackageForOrder($order);
+        if (!$asset) {
+            Utilities::logStuff("Was not able to create asset for this order with Id: " . $order->id);
+            Utilities::logStuff($order);
+            return;
+        }
+        if ($asset->purchase_complete == 0 || $asset->purchase_completed) {
+            $asset->purchase_complete = 1;
+            $asset->purchase_completed_at = now();
+            $asset->save();
+        }
+
+        // implement referral
     }
 }

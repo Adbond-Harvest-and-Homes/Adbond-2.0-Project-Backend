@@ -172,10 +172,11 @@ class AssetResource extends JsonResource
     private function status()
     {
         $status = "pending";
-        if($this->origin == ClientPackageOrigin::INVESTMENT->value) {
-            if($this->purchase->order->completed == 1) $status = "completed";
-        }else{
+        $orderOfferOrigins = [ClientPackageOrigin::ORDER->value, ClientPackageOrigin::OFFER->value];
+        if(in_array($this->origin, $orderOfferOrigins)) {
             if($this->purchase->completed == 1) $status = "completed";
+        }else{
+            if($this->purchase->order->completed == 1) $status = "completed";
         }
         return $status;
     }

@@ -76,6 +76,11 @@ class ClientBondService
         return $query->get();
     }
 
+    public function getMissingOrUnsentContracts()
+    {
+        return ClientBond::whereNull("mou_file_id")->orWhere("mou_sent", 0)->get();
+    }
+
     public function runningBonds()
     {
         return ClientBond::where("started", 1)->where("ended", 0)->orderBy("created_at", "DESC")->get();
