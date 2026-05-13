@@ -312,7 +312,8 @@ class ClientBondService
             $client = $bond->client;
             $wallet = $client->wallet;
             if(!$wallet) {
-                throw new AppException(402, "Serious error.. contact the admin");
+                $wallet = app(WalletService::class)->create($client->id);
+                if(!$wallet) throw new AppException(402, "Serious error.. contact the admin");
             }
 
             if($wallet->locked_amount < $total) throw new AppException(402, "Calculation error.. contact admin");
