@@ -15,6 +15,7 @@ use app\Models\ClientBondPayout;
 use app\Models\ClientBondDocument;
 use app\Models\ClientBondSummary;
 use app\Models\ClientBondRequestsDetail;
+use app\Models\ClientBondPayoutSummary;
 
 use app\Mail\MOU;
 
@@ -104,6 +105,11 @@ class ClientBondService
         return ClientBondPayout::with($with)->where("id", $id)->when($this->clientId, function($query) {
             $query->where("client_id", $this->clientId);
         })->first();
+    }
+
+    public function getClientPayoutSummary(int $clientId)
+    {
+        return ClientBondPayoutSummary::where("client_id", $clientId)->first();
     }
 
     public function clientBondSummary()

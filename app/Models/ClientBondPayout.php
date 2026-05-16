@@ -13,4 +13,9 @@ class ClientBondPayout extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function bond()
+    {
+        return $this->belongsTo(ClientBond::class, "client_bond_id", "id");
+    }
 }

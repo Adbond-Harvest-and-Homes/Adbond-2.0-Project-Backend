@@ -13,7 +13,9 @@ use app\Exceptions\AppException;
 
 use app\Http\Requests\Client\RedeemBond;
 use app\Http\Requests\Client\RenewBond;
+
 use app\Http\Resources\ClientBondResource;
+use app\Http\Resources\ClientBondPayoutResource;
 
 use app\Services\ClientBondService;
 use app\Services\ClientBondRequestService;
@@ -45,6 +47,25 @@ class BondController extends Controller
 
         return Utilities::ok([
             "bonds" => ClientBondResource::collection($bonds),
+            "summary" => $summary
+        ]);
+    }
+
+    public function payouts()
+    {
+        $this->bondService->clientId = Auth::guard("client")->user()->id;
+        $payouts = $this->bondService->getBondPayouts(['bond.media']);
+        $payoutSummary = $this->bondService->getClientPayoutSummary(Auth::guard("client")->user()->id);
+        $summary = [
+            "totalEarned" => ($payoutSummary) ? $payoutSummary->total_payouts : null,
+            "expectedAnnualIncome" => ($payoutSummary) ? $payoutSummary->expected_annual_payout : null,
+            "nextPayout" => ($payoutSummary) ? $payoutSummary->next_payout_date?->format('jS M, Y') : null,
+            "activeAssets" => ($payoutSummary) ? $payoutSummary->active_bond_count : null
+        ];
+
+
+        return Utilities::ok([
+            "payouts" => ClientBondPayoutResource::collection($payouts),
             "summary" => $summary
         ]);
     }

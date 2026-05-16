@@ -117,6 +117,7 @@ Route::group(['middleware' => 'clientAuth', 'prefix' => '/client', 'namespace' =
     //Bonds
     Route::group(['prefix' => '/bonds',], function () {
         Route::get('', [BondController::class, 'bonds']);
+        Route::get('/payouts', [BondController::class, 'payouts']);
         Route::post('/redeem', [BondController::class, 'redeem']);
         Route::post('/renew', [BondController::class, 'renew']);
     });
