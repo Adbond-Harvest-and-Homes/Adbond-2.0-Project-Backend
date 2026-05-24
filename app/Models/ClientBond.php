@@ -33,7 +33,7 @@ class ClientBond extends Model
 
     public function parentBond()
     {
-        return $this->belongsTo(ClientBond::class);
+        return $this->belongsTo(ClientBond::class, "parent_bond_id", "id");
     }
 
     public function clientPackage()

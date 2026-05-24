@@ -22,8 +22,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Example: Run a job hourly
-        \Log::info('Scheduling CheckInvestmentReturns Job');
+        // \Log::info('Scheduling CheckInvestmentReturns Job');
         $schedule->job(new CheckInvestmentReturns)->hourly();
+        $schedule->command('app:monitor-bonds')->daily();
     }
 
     /**

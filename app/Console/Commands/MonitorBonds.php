@@ -85,8 +85,11 @@ class MonitorBonds extends Command
                     BondPayout::dispatch($bondPayout->id);
 
                     // calculate the next payout date
-                    $nextCapitalPayoutDuration = $this->convertTimelineToDuration($startedBond->net_rental_income_timeline);
-                    $startedBond->next_capital_payout = (new DateTime($startedBond->next_capital_payout))->modify('+'.$nextCapitalPayoutDuration)->format('Y-m-d');
+                    $nextCapitalPayoutDuration = app(ClientBondService::class)->convertTimelineToDuration($startedBond->net_rental_income_timeline);
+                    // $startedBond->next_capital_payout = (new DateTime($startedBond->next_capital_payout))->modify('+'.$nextCapitalPayoutDuration)->format('Y-m-d');
+                    $startedBond->next_capital_payout = Carbon::parse($startedBond->next_capital_payout)
+                                                            ->modify('+' . $nextCapitalPayoutDuration) // e.g. "+1 month" ✅
+                                                            ->format('Y-m-d');
                 }
 
                 //check if bond has ended
