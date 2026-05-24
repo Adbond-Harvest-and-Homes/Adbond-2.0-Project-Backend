@@ -31,6 +31,7 @@ class ClientBriefResource extends JsonResource
             'phoneNumber' => $this->phone_number,
             'address' => $this->address,
             'gender' => $this->gender,
+            'kycStatus' => $this->verifyKYC($this),
             'dob' => $this->dob,
             'country' => ($this->country) ? $this->country->name : null,
             'maritalStatus' => $this->marital_status,

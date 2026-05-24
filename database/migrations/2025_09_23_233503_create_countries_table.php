@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string("name");
             $table->string("code");
             $table->string("phone_code");
+            $table->string("flag")->nullable();
+            $table->string("currency")->nullable();
             $table->timestamps();
         });
         Artisan::call('db:seed', array('--class' => 'Countries'));

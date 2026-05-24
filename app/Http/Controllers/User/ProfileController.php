@@ -4,17 +4,21 @@ namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 use app\Http\Requests\SetPassword;
 use app\Http\Requests\User\SetPassword as UserSetPassword;
 use app\Http\Requests\User\UpdateProfile;
+use app\Http\Requests\User\ChangePassword;
+
 use app\Http\Resources\UserBriefResource;
 
 use app\Models\User;
 
 use app\Services\UserProfileService;
+use app\Services\UserService;
 use app\Services\FileService;
 
 use app\Enums\FilePurpose;
@@ -25,10 +29,12 @@ class ProfileController extends Controller
     private static $userType = "app\Models\User";
     private $userProfileService;
     private $fileService;
+    private $userService;
 
     public function __construct()
     {
         $this->userProfileService = new UserProfileService;
+        $this->userService = new UserService;
         $this->fileService = new FileService;
     }
 
@@ -45,7 +51,29 @@ class ProfileController extends Controller
             $this->userProfileService->setPassword(Auth::user(), $data['password']);
             return Utilities::okay("Password set Successfully");
         }catch(\Exception $e){
-            return Utilities::error($e, 'An error occured while trying to process the request, Please try again later or contact support');
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
+    }
+
+    public function changePassword(ChangePassword $request)
+    {
+        try{
+            $data = $request->validated();
+            $user = $this->userService->getUser(Auth::user()->id);
+            
+            if(!$user) return Utilities::error402("User not found");
+
+            // Compare the current password with the hashed password
+            if(!Hash::check($data['currentPassword'], $user->password)) {
+                return Utilities::error402("Current password is incorrect");
+            }
+
+            // Update to new password
+            $this->userProfileService->changePassword($data['newPassword'], $user);
+            
+            return Utilities::okay("Password changed successfully");
+        }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }
 

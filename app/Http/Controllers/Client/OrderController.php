@@ -39,7 +39,7 @@ class OrderController extends Controller
     {
         try{
             $data = $request->validated();
-            // dd($data);
+
             $package = $this->packageService->package($data['packageId']);
             if(!$package) return Utilities::error402("Package was not found");
 
@@ -53,18 +53,37 @@ class OrderController extends Controller
 
             if($package->available_units < $data['units']) return Utilities::error402("Available Units is not up to ".$data['units']);
 
-            $promoCodeDiscount = (isset($data['promoCode'])) ? $this->promoCodeService->validatePromoCode($data['code'], $package)['discount'] : null;
+            $promoCodeDiscount = null;
+            if(isset($data['promoCode'])) {
+                $res = $this->promoCodeService->validatePromoCode($data['promoCode'], $package);
+                if(!$res['valid']) return Utilities::error402("This Promo code is not valid");
+                $promoCodeDiscount = $res['discount'];
+            }
+
+            // $promoCodeDiscount = (isset($data['promoCode'])) ? $this->promoCodeService->validatePromoCode($data['promoCode'], $package)['discount'] : null;
             $promos = $this->promoService->getPromos($package, Auth::guard('client')->user());
             $processingData = ["amount" => ($package->amount * $data['units']), "isInstallment" => $data['isInstallment'], "packageType" => $package->type];
+            if($data['isInstallment']) $processingData['duration'] = $data['installmentCount'];
             $amountDetail = $this->orderService->getPayable($processingData, $promos, $promoCodeDiscount);
 
             $processingId  = (isset($data['processingId'])) ? $data['processingId'] : Utilities::getOrderProcessingId();
             
             $data['amountDetail'] = $amountDetail;
-            $data['amountPayable'] = ($data['isInstallment']) ? (round($amountDetail['amount']/$data['installmentCount'], 2)) : $amountDetail['amount'];
+
+            // if($data['isInstallment']) {
+            //     // if its installment payment, ensure that the client is not paying less than the minimum
+            //     $minPayable = round($amountDetail['amount']/$data['installmentCount'], 2);
+            //     if($data['amount'] < $minPayable) return Utilities::error402("You cannot pay less than ".$minPayable);
+            //     if($data['amount'] > $amountDetail['amount']) return Utilities::error402("you cannot pay more than ".$amountDetail['amount']);
+            // }
+
+            $data['amountPayable'] = ($data['isInstallment']) ? $data['amount'] : $amountDetail['amount'];
             // Cache this data to be used to complete the order processing
             if(isset($data['processingId'])) Cache::forget('order_processing_' . $processingId);
             Cache::put('order_processing_' . $processingId, $data, now()->addHours(12));
+
+            $processedData = Cache::get('order_processing_' . $processingId);
+            Utilities::logStuff($processedData);
 
             return Utilities::ok([
                 "processingId" => $processingId,

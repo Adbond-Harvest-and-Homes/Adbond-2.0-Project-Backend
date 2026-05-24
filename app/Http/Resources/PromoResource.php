@@ -22,6 +22,7 @@ class PromoResource extends JsonResource
             "id" => $this->id,
             "title" => $this->title,
             "discount" => $this->discount,
+            "discountAmount" => $this->discount_amount,
             "start" => $this->start,
             "end" => $this->end,
             "active" => ($this->active == 1) ? true : false,

@@ -5,21 +5,33 @@ namespace app\Services;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 
+use app\Exceptions\AppException;
+
 use app\Models\Package;
 use app\Models\PackageSize;
 use app\Models\PackageMedia;
 
 use app\Enums\ProjectFilter;
 use app\Enums\PackageType;
-
+use app\Enums\BondOwnershipType;
+use app\Enums\Measurement;
+use app\Enums\BondOccurrenceMetric;
+use app\Enums\BondTimeMetric;
+use app\Enums\ProjectType;
 
 use app\Exports\PackageExport;
+
+use app\Services\CountryService;
+use app\Services\ProjectService;
 
 class PackageService
 {
     public $count = false;
     public $projectId = null;
     public $active = null;
+    public $countryId = null;
+    public $stateId = null;
+    public $type;
 
     public $all = null;
 
@@ -29,11 +41,24 @@ class PackageService
         $package = $this->getByName($data['name']);
         if(!$package) {
             $package = new Package;
+            $countryService = new CountryService;
+
             $package->name = $data['name'];
             $package->project_id = $data['projectId'];
             $package->user_id = $data['userId'];
 
-            $package->state = $data['state'];
+            if(isset($data['stateId'])) {
+                $state = $countryService->getState($data['stateId']);
+
+                $package->state_id = $data['stateId'];
+                $package->state = $state->name;
+                $package->country_id = $state->country->id;
+            }else{
+                $state = $countryService->addState($data['countryId'], $data['state']);
+                $package->country_id = $data['countryId'];
+                $package->state_id = $state->id;
+            }
+
             if(isset( $data['address'])) $package->address = $data['address'];
             if(isset($data['size'])) $package->size = $data['size'];
             $package->amount = $data['amount'];
@@ -59,6 +84,53 @@ class PackageService
                 $package->redemption_options = $data['redemptionOptions'];
                 $package->redemption_package_id = $data['redemptionPackageId'];
             }
+
+            //bond
+            if(isset($data['type']) && $data['type'] == PackageType::BOND->value) {
+                $project = app(ProjectService::class)->project($data['projectId']);
+                if($project && $project?->projectType?->name != ProjectType::HOMES->value) throw new AppException(402, "bonds only apply to Homes");
+
+                if(!isset($data['bondSlots']) && $data['bondOwnershipType'] == BondOwnershipType::CO_OWNERSHIP->value) throw new AppException(402, "Bond Slots is required for co-ownership");
+
+                if(isset($data['bondSlots'])) {
+                    $package->bond_slots = $data['bondSlots'];
+                    $package->bond_available_slots = $data['bondSlots'] * $data['units'];
+
+                    $package->bond_slots_amount = round($package->amount/$data['bondSlots'], 2);
+                }
+
+                $package->bond_ownership_type = (isset($data['bondOwnershipType'])) ? $data['bondOwnershipType'] : BondOwnershipType::SINGLE->value;
+
+                // Count Down
+                if(!isset($data['bondCountDown'])) throw new AppException(402, "Bond Count Down is required for bond package");
+                $package->bond_count_down = $data['bondCountDown'];
+
+                $package->bond_count_down_metric = (isset($data['bondCountDownMetric'])) ? $data['bondCountDownMetric'] : BondTimeMetric::DAYS->value;
+
+                // Investment Duration
+                if(!isset($data['bondInvestmentDuration'])) throw new AppException(402, "Bond Investment Duration is required for bond package");
+                $package->bond_investment_duration = $data['bondInvestmentDuration'];
+
+                $package->bond_investment_duration_metric = (isset($data['bondInvestmentDurationMetric'])) ? $data['bondInvestmentDurationMetric'] : BondTimeMetric::YEARS->value;
+
+                // rental Income
+                if(!isset($data['bondNetRentalIncome'])) throw new AppException(402, "Bond Rental Income is required for bond package");
+                $package->bond_net_rental_income = $data['bondNetRentalIncome'];
+
+                $package->bond_net_rental_income_measurement = (isset($data['bondNetRentalIncomeMeasurement'])) ? $data['bondNetRentalIncomeMeasurement'] : (($data['bondNetRentalIncome'] <= 100) ? Measurement::PERCENTAGE->value : Measurement::FIXED);
+
+                $package->bond_net_rental_income_timeline = (isset($data['bondNetRentalIncomeTimeline'])) ? $data['bondNetRentalIncomeTimeline'] : BondOccurrenceMetric::YEARLY->value;
+
+
+                // Capital Appreciation
+                if(!isset($data['bondAssetAppreciation'])) throw new AppException(402, "Bond Rental Income is required for bond package");
+                $package->bond_asset_appreciation = $data['bondAssetAppreciation'];
+
+                $package->bond_asset_appreciation_measurement = (isset($data['bondAssetAppreciationMeasurement'])) ? $data['bondAssetAppreciationMeasurement'] : (($data['bondAssetAppreciation'] <= 100) ? Measurement::PERCENTAGE->value : Measurement::FIXED);
+
+                $package->bond_asset_appreciation_timeline = (isset($data['bondAssetAppreciationTimeline'])) ? $data['bondAssetAppreciationTimeline'] : BondOccurrenceMetric::YEARLY->value;
+            }
+
             $package->save();
 
             if(isset($data['benefits'])) $package->benefits()->attach($data['benefits']);
@@ -83,9 +155,17 @@ class PackageService
 
     public function update($data, $package)
     {
+        $countryService = new CountryService;
+
         if(isset($data['name'])) $package->name = $data['name'];
         if(isset( $data['projectId'])) $package->project_id = $data['projectId'];
-        if(isset( $data['stateId'])) $package->state_id = $data['stateId'];
+        if(isset( $data['stateId'])) {
+            $state = $countryService->getState($data['stateId']);
+
+            $package->state_id = $data['stateId'];
+            $package->state = $state->name;
+            $package->country_id = $state->country->id;
+        }
         if(isset( $data['address'])) $package->address = $data['address'];
         if(isset( $data['size'])) $package->size = $data['size'];
         if(isset( $data['amount'])) $package->amount = $data['amount'];
@@ -109,7 +189,43 @@ class PackageService
         if(isset($data['redemptionOptions'])) $package->redemption_options = json_encode($data['redemptionOptions']);
         if(isset($data['redemptionPackageId'])) $package->redemption_package_id = $data['redemptionPackageId'];
 
-        $package->update();
+
+        //bonds
+        if((isset($data['type']) && $data['type'] == PackageType::BOND->value) || $package->type == PackageType::BOND->value) {
+            $ownershipType = (isset($data['bondOwnershipType'])) ? $data['bondOwnershipType'] : $package->bond_ownership_type;
+            $bondSlots = (isset($data['bondSlots'])) ? $data['bondSlots'] : $package->bond_slots;
+            $units = (isset($data['units'])) ? $data['units'] : $package->units;
+            
+            if($package?->project?->projectType?->name != ProjectType::HOMES->value) throw new AppException(402, "bonds only apply to Homes");
+            if( $ownershipType == BondOwnershipType::CO_OWNERSHIP->value && !$bondSlots) throw new AppException(402, "Bond Slots is required for co-ownership");
+
+            if($package->assets->count() == 0) {
+                if($bondSlots) $package->bond_slots = $bondSlots;
+                $package->bond_available_slots = $bondSlots * $units;
+                $package->bond_slots_amount = round($package->amount/$bondSlots, 2);
+            }
+            if($ownershipType) $package->bond_ownership_type = $ownershipType;
+
+            // Count Down
+            if(isset($data['bondCountDown'])) $package->bond_count_down = $data['bondCountDown'];
+            if(isset($data['bondCountDownMetric'])) $package->bond_count_down_metric = $data['bondCountDownMetric'];
+
+            // Investment Duration
+            if(isset($data['bondInvestmentDuration'])) $package->bond_investment_duration = $data['bondInvestmentDuration'];
+            if(isset($data['bondInvestmentDurationMetric'])) $package->bond_investment_duration_metric = $data['bondInvestmentDurationMetric'];
+
+            // rental Income
+            if(isset($data['bondNetRentalIncome'])) $package->bond_net_rental_income = $data['bondNetRentalIncome'];
+            if(isset($data['bondNetRentalIncomeMeasurement'])) $package->bond_net_rental_income_measurement = $data['bondNetRentalIncomeMeasurement'];
+            if(isset($data['bondNetRentalIncomeTimeline'])) $package->bond_net_rental_income_timeline = $data['bondNetRentalIncomeTimeline'];
+
+            // Capital Appreciation
+            if(!isset($data['bondAssetAppreciation'])) $package->bond_asset_appreciation = $data['bondAssetAppreciation'];
+            if(isset($data['bondAssetAppreciationMeasurement'])) $package->bond_asset_appreciation_measurement = $data['bondAssetAppreciationMeasurement'];
+            if(isset($data['bondAssetAppreciationTimeline'])) $package->bond_asset_appreciation_timeline = $data['bondAssetAppreciationTimeline'];
+        }
+
+        $package->save();
 
         if(isset($data['benefits'])) $package->benefits()->sync($data['benefits']);
         if(isset($data['packageMediaIds'])) $package->media()->attach($data['packageMediaIds']);
@@ -124,12 +240,22 @@ class PackageService
         return $package;
     }
 
-    public function deductUnits($units, $package)
+    public function deductUnits($package, $units=null)
     {
-        $package->units = $package->units - $units;
-        if($package->units < 0) $package->units = 0;
-        $package->update();
-        return $package;
+        // make deductions in package units or slots
+        if($package && $package->type == PackageType::BOND->value && $package->bond_ownership_type == BondOwnershipType::CO_OWNERSHIP->value) {
+            $totalSlots = $package->bond_slots * $package->units;
+            $purchasedSlots = $package->purchasedUnits();
+            $package->bond_available_slots = $totalSlots - $purchasedSlots;
+        }else{
+            $purchasedUnits = $package->purchasedUnits();
+            $package->available_units = $package->units - $purchasedUnits;
+        }
+        $package->save();
+        // $package->units = $package->units - $units;
+        // if($package->units < 0) $package->units = 0;
+        // $package->update();
+        // return $package;
     }
 
     public function markAsBackInStock($package)
@@ -173,6 +299,9 @@ class PackageService
         $query = Package::with($with);
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if($this->active != null) $query->where("active", $this->active);
+        if($this->countryId) $query->where("country_id", $this->countryId);
+        if($this->stateId) $query->where("state_id", $this->stateId);
+        if($this->type) $query->where("type", $this->type);
         if($this->count) return $query->count();
 
         if($perPage==null) return $query->orderBy("created_at", "DESC")->get(); // $perPage=env('PAGINATION_PER_PAGE');
@@ -185,7 +314,10 @@ class PackageService
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if($this->count) return $query->count();
 
-        if($perPage==null) $perPage=env('PAGINATION_PER_PAGE');
+        // if($perPage==null) $perPage=env('PAGINATION_PER_PAGE');
+        // return $query->offset($offset)->limit($perPage)->orderBy("created_at", "DESC")->get();
+
+        if($perPage == null) return $query->orderBy("created_at", "DESC")->get();
         return $query->offset($offset)->limit($perPage)->orderBy("created_at", "DESC")->get();
     }
 

@@ -9,6 +9,7 @@ use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\CreateUser;
 use app\Http\Requests\User\UpdateUser;
+use app\Http\Requests\User\ChangePassword;
 
 use app\Http\Resources\UserResource;
 
@@ -16,18 +17,23 @@ use app\Mail\NewStaff;
 
 use app\Services\UserService;
 use app\Services\UserActivityLogService;
+use app\Services\UserProfileService;
 
 use app\Utilities;
+
+use app\Models\Role;
 
 class StaffController extends Controller
 {
     private $userService;
     private $userActivityLogService;
+    private $userProfileService;
 
     public function __construct()
     {
         $this->userService = new UserService;
         $this->userActivityLogService = new UserActivityLogService;
+        $this->userProfileService = new UserProfileService;
     }
 
     public function save(CreateUser $request)
@@ -90,6 +96,7 @@ class StaffController extends Controller
         if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId);
+        if(!$user) return Utilities::error402("User not found");
 
         return Utilities::ok(new UserResource($user));
     }
@@ -99,5 +106,19 @@ class StaffController extends Controller
         $userLogs = $this->userActivityLogService->getLogs();
 
         return Utilities::ok($userLogs);
+    }
+
+    public function delete($userId)
+    {
+        if(Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");
+
+        if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
+
+        $user = $this->userService->getUser($userId);
+        if(!$user) return Utilities::error402("User not found");
+
+        $this->userService->delete($user);
+
+        return Utilities::okay("Staff has been removed successfully");
     }
 }

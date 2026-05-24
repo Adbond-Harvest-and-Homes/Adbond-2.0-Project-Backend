@@ -29,6 +29,7 @@ class PrepareOrder extends BaseRequest
             "packageId" => "required|integer|exists:packages,id",
             "isInstallment" => "required|boolean",
             "installmentCount" => "required_if:isInstallment,true",
+            "amount" => "required_if:isInstallment,true|numeric",
             "units" => "required|integer",
             "promoCode" => "nullable|string|exists:promo_codes,code",
             "processingId" => "nullable",
