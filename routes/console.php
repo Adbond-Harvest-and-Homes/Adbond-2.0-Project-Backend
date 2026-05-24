@@ -20,3 +20,8 @@ Schedule::call(function () {
     $cronJobController->checkInvestmentReturns();
 })->daily();
 Schedule::command('payment:add-receipt-file-ids')->everyMinute();
+
+Schedule::job(new CheckInvestmentReturns)->hourly();
+Schedule::command('app:monitor-bonds')
+    ->everyMinute()
+    ->appendOutputTo(storage_path('logs/monitor-bonds.log'));
