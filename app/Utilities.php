@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace app;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
