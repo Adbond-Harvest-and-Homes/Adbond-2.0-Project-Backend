@@ -25,7 +25,7 @@ class BondPayout implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(private integer $bondPayoutId)
+    public function __construct(private int $bondPayoutId)
     {
         $this->bondPayout = app(ClientBondService::class)->getBondPayout($bondPayoutId);
     }

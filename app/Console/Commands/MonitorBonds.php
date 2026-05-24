@@ -83,6 +83,10 @@ class MonitorBonds extends Command
 
                     //add the payout to the wallet;
                     $bondPayout = app(ClientBondService::class)->addPayout($startedBond, $payout);
+                    if (!$bondPayout) {
+                        Utilities::WorkerLog("addPayout returned null for bond ID: " . $startedBond->id);
+                        continue; // skip to next bond
+                    }
 
                     app(ClientBondService::class)->clientId = $startedBond->client_id;
                     app(ClientBondService::class)->clearClientBondSummaryCache();
