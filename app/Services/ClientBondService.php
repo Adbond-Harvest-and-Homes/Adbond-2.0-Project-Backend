@@ -266,6 +266,7 @@ class ClientBondService
         DB::beginTransaction();
         try{
             $bondPayout = new ClientBondPayout;
+            $bondPayout->capital = $bond->current_capital;
             $bondPayout->client_id = $bond->client_id;
             $bondPayout->client_bond_id = $bond->id;
             $bondPayout->payout_amount = $payout;
