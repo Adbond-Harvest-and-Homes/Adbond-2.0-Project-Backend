@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
         // Example: Run a job hourly
         // \Log::info('Scheduling CheckInvestmentReturns Job');
         $schedule->job(new CheckInvestmentReturns)->hourly();
-        $schedule->command('app:monitor-bonds')->daily();
+        $schedule->command('app:monitor-bonds')->everyMinute();
     }
 
     /**
