@@ -69,6 +69,7 @@ class MonitorBonds extends Command
         //for bonds that has started but not ended
 
         $startedBonds = app(ClientBondService::class)->runningBonds();
+        Utilities::logStuff("Monitoring bonds");
         if($startedBonds->count() > 0) {
             Utilities::WorkerLog("Found Running bonds");
 
