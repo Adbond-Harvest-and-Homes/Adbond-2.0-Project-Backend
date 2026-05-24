@@ -72,6 +72,11 @@ class Utilities
         Log::stack(['job'])->info($message);
     }
 
+    public static function WorkerLog($message)
+    {
+        Log::stack(['worker'])->info($message);
+    }
+
     public static function logSuccessMigration($message)
     {
         Log::stack(['success_migration'])->info($message);

@@ -13,6 +13,8 @@ use app\Services\ClientBondService;
 
 use app\Enums\ClientBondStatus;
 
+use app\Utilities;
+
 class MonitorBonds extends Command
 {
     /**
@@ -68,8 +70,11 @@ class MonitorBonds extends Command
 
         $startedBonds = app(ClientBondService::class)->runningBonds();
         if($startedBonds->count() > 0) {
+            Utilities::WorkerLog("Found Running bonds");
+
             foreach($startedBonds as $startedBond) {
                 $payoutDate = Carbon::parse($startedBond->next_capital_payout);
+                Utilities::WorkerLog("next payout date: ".$payoutDate);
 
                 if (!$payoutDate->isFuture()) {
                     // Today or past
