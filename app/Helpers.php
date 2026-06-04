@@ -706,7 +706,7 @@ Class Helpers
         $purchaseBalance = $payment?->purchase?->balance ?? 0;
         $amount = $payment?->amount ?? 0;
         $totalPayed = $payment?->purchase?->amount_payed;
-        $balance = $purchaseBalance - $amount;
+        $balance = $purchaseBalance;
         $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [
             'image' => 'logo.png', 

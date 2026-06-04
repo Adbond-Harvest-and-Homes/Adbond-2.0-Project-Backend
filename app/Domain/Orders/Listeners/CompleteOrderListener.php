@@ -33,7 +33,7 @@ class CompleteOrderListener
         $asset = $order->actual_asset;
 
         // Confirm that the order is actually completed, i.e the balance is zero
-        if ($order->totalPaymentAmount() < $order->amount_payable) {
+        if ($order->balance > 0 || $order->totalPaymentAmount() < $order->amount_payable) {
             // payments is incomplete
             $order->completed = 0;
             $order->completedEvent = true;

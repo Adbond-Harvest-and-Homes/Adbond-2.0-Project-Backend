@@ -41,7 +41,8 @@ class ProcessPaymentStage implements PaymentStage
         );
 
         if ($response['success'] && !$response['paymentError']) {
-            $context->requestData['paymentStatusId'] = ($context->order->is_installment == 1) 
+            $isInstallment = ($context->order?->is_installment ?? $context->processedData['isInstallment'] ?? 0) == 1;
+            $context->requestData['paymentStatusId'] = $isInstallment 
                 ? PaymentStatus::deposit()->id 
                 : PaymentStatus::complete()->id;
         } else {

@@ -125,6 +125,7 @@ class Order extends Model
             $order->balance = $order->amount_payable - $order->amount_payed;
             if($order->balance < 0) $order->balance = 0;
             $order->payment_status_id = ($order->balance <= 0) ? PaymentStatus::complete()->id : PaymentStatus::deposit()->id;
+            $order->completed = ($order->balance <= 0) ? 1 : 0;
         });
 
         self::updated(function (Order $order) {

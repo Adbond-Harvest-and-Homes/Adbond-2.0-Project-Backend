@@ -98,8 +98,15 @@ class PaymentController extends Controller
             $payment = $this->paymentService->reject($payment, $request->validated("message"));
 
             if($payment->purchase_type == Order::$type && $payment->purchase->is_installment == 1) {
-                $installmentsPayed = $payment->purchase->installments_payed - 1;
-                $this->orderService->update(['installmentsPayed' => $installmentsPayed], $payment->purchase);
+                $isFirstPayment = !\app\Models\Payment::where('purchase_id', $payment->purchase_id)
+                    ->where('purchase_type', $payment->purchase_type)
+                    ->where('id', '<', $payment->id)
+                    ->exists();
+
+                if ($isFirstPayment) {
+                    $installmentsPayed = max(0, $payment->purchase->installments_payed - 1);
+                    $this->orderService->update(['installmentsPayed' => $installmentsPayed], $payment->purchase);
+                }
             }
 
             return Utilities::ok([
