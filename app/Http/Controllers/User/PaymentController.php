@@ -140,11 +140,6 @@ class PaymentController extends Controller
         try{
             $payment = $this->paymentService->getPayment($request->validated("paymentId"));
             if(!$payment) return Utilities::error402("Payment not found");
-
-            if($payment->purchase_type == Order::$type) {
-                $order = $payment->purchase;
-                $this->clientPackageService->uploadContract($order, $order->clientPackage, false, $payment);
-            }
             
             $oldReceiptFile = $payment->paymentReceipt;
 
