@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
@@ -18,11 +19,14 @@ use app\Utilities;
 
 class UserBankAccountController extends Controller
 {
+    private $userActivityLogService;
+
     private $bankAccountService;
     private $userService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->bankAccountService = new BankAccountService;
         $this->userService = new UserService;
     }
@@ -34,6 +38,13 @@ class UserBankAccountController extends Controller
 
             $data['userId'] = Auth::user()->id;
             $bankAccount = $this->bankAccountService->save($data, false);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added User Bank Account");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new UserBankAccountResource($bankAccount));
         }catch(\Exception $e){

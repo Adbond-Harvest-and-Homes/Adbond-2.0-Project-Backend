@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User\Client;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
@@ -23,10 +24,13 @@ use app\Utilities;
 
 class WalletController extends Controller
 {
+    private $userActivityLogService;
+
     private $walletService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->walletService = new WalletService;
     }
 
@@ -45,6 +49,13 @@ class WalletController extends Controller
             $wallet = $this->walletService->wallet($wallet->id, ['bankAccounts']);
 
             DB::commit();
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Linked Bank Account");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new WalletResource($wallet));
         }catch(\Exception $e){
             DB::rollBack();
@@ -133,6 +144,13 @@ class WalletController extends Controller
             $withdrawalRequest = $this->walletService->approveWithdrawalRequest($withdrawalRequest, Auth::user()->id);
 
             DB::commit();
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Approved Withdrawal Request");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Request has been approved", new WalletWithdrawalRequestResource($withdrawalRequest));
     
         }catch(\Exception $e){
@@ -149,6 +167,13 @@ class WalletController extends Controller
             if(!$withdrawalRequest) return Utilities::error402("Withdrawal Request not found");
 
             $withdrawalRequest = $this->walletService->rejectWithdrawalRequest($withdrawalRequest, $data['message'], Auth::user()->id);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Withdrawal Request");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Request has been rejected", new WalletWithdrawalRequestResource($withdrawalRequest));
         }catch(\Exception $e){

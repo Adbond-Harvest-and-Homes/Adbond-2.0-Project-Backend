@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use app\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +44,8 @@ use app\Utilities;
 
 class PaymentController extends Controller
 {
+    private $userActivityLogService;
+
     private $paymentService;
     private $orderService;
     private $commissionService;
@@ -52,6 +55,7 @@ class PaymentController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->paymentService = new PaymentService;
         $this->orderService = new OrderService;
         $this->commissionService = new CommissionService;
@@ -75,6 +79,13 @@ class PaymentController extends Controller
             Event::dispatch(new PaymentProcessed($context));
 
             DB::commit();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Confirmed Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok([
                 "message" => "payment has been Confirmed",
@@ -109,6 +120,13 @@ class PaymentController extends Controller
                 }
             }
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok([
                 "message" => "payment has been Rejected",
                 "payment" => new PaymentResource($payment)
@@ -125,6 +143,13 @@ class PaymentController extends Controller
             if(!$payment) return Utilities::error402("Payment not found");
 
             $payment = $this->paymentService->flag($payment, $request->validated("message"));
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Flagged Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok([
                 "message" => "payment has been Flagged",
@@ -146,6 +171,13 @@ class PaymentController extends Controller
             $file = $this->paymentService->uploadReceipt($payment);
             if($file) $this->paymentService->update(['receiptFileId' => $file->id], $payment);
             if($oldReceiptFile) $oldReceiptFile->delete();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Generated Payment Receipt");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Payment Receipt Generated Successfully");
         } catch(\Exception $e){

@@ -16,7 +16,9 @@ return new class extends Migration
             CREATE VIEW staff_total_earnings AS
             SELECT 
                 user_id,
-                SUM(commission_after_tax) AS total_earnings
+                SUM(commission_after_tax) AS total_earnings,
+                SUM(CASE WHEN type = 'direct' THEN commission_after_tax ELSE 0 END) AS total_direct_earnings,
+                SUM(CASE WHEN type = 'indirect' THEN commission_after_tax ELSE 0 END) AS total_indirect_earnings
             FROM staff_commission_earnings
             GROUP BY user_id
         ");

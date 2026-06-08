@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
+use app\Services\UserActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,8 @@ use app\Utilities;
 
 class ProfileController extends Controller
 {
+    private $userActivityLogService;
+
     private static $userType = "app\Models\User";
     private $userProfileService;
     private $fileService;
@@ -33,6 +36,7 @@ class ProfileController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->userProfileService = new UserProfileService;
         $this->userService = new UserService;
         $this->fileService = new FileService;
@@ -49,6 +53,13 @@ class ProfileController extends Controller
             if(Auth::user()->password_set) return Utilities::error402("Password has already been set");
             $data = $request->validated();
             $this->userProfileService->setPassword(Auth::user(), $data['password']);
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Set Profile Password");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Password set Successfully");
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -71,6 +82,13 @@ class ProfileController extends Controller
             // Update to new password
             $this->userProfileService->changePassword($data['newPassword'], $user);
             
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Changed Profile Password");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Password changed successfully");
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -99,6 +117,13 @@ class ProfileController extends Controller
             if($oldPhotoId) $this->fileService->deleteFile($oldPhotoId);
 
             DB::commit();
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Profile Information");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new UserBriefResource($user));
         }catch(\Exception $e){
             DB::rollBack();

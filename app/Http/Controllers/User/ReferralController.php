@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
@@ -19,10 +20,13 @@ use app\Utilities;
 
 class ReferralController extends Controller
 {
+    private $userActivityLogService;
+
     private $commissionService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->commissionService = new CommissionService;
     }
 
@@ -85,6 +89,13 @@ class ReferralController extends Controller
 
             $this->commissionService->redeemCommission($data);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Redeemed Referral Commission");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Redemption Request Successful");
             
         }catch(\Exception $e){
@@ -98,6 +109,13 @@ class ReferralController extends Controller
             $redemption = $this->commissionService->commissionRedemption($request->validated('redemptionId'));
 
             $this->commissionService->completeRedemption($redemption);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Completed Referral Redemption Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Referral Earning Redemption Completed");
 

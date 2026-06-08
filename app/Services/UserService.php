@@ -9,6 +9,7 @@ use app\Models\User;
 use app\Models\Role;
 // use app\Models\Staff_type;
 use app\Models\Client;
+use app\Models\UserClientSalesSummaryView;
 
 // use app\Services\StaffTypeService;
 
@@ -131,6 +132,40 @@ class UserService
         return User::where('referer_code', $code)->first();
     }
 
+    public function getUserByStaffRefererCode($code)
+    {
+        return User::where('staff_referer_code', $code)->first();
+    }
+
+    public function getMyTeam($userId, $returnIds=false)
+    {
+        $team = User::with(['clients'])->where('registered_by', $userId);
+
+        if($returnIds) return $team->pluck('id')->toArray();
+
+        return $team->get();
+    }
+
+    public function getMyTeamSales($userId)
+    {
+        $teamIds = $this->getMyTeam($userId, true);
+        $totalSales = UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('total_sales');
+        $salesCount = UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('sales_count');
+        $totalClients = UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('total_clients');
+
+        return [
+            'total_sales' => $totalSales,
+            'sales_count' => $salesCount,
+            'total_clients' => $totalClients
+        ];
+    }
+
+    public function getMyTeamSalesCount($userId)
+    {
+        $teamIds = $this->getMyTeam($userId, true);
+        return UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('sales_count');
+    }
+
     // public function usersByMonth($year, $start, $end=null)
     // {
     //     $staffTypes = $this->staffTypeService->getStaff_types();
@@ -171,7 +206,7 @@ class UserService
         return User::select(DB::raw("SUM(commission) as total"))->get();
     }
 
-    public function save($data, $user_id)
+    public function save($data, $user_id=null)
     {
         $user = new User;
         if(isset($data['title'])) $user->title = $data['title'];
@@ -187,8 +222,8 @@ class UserService
         if(isset($data['countryId'])) $user->country_id = $data['country_id'];
         if(isset($data['postalCode'])) $user->postal_code = $data['postal_code'];
         if(isset($data['maritalStatus'])) $user->marital_status = $data['marital_status'];
-        $user->registered_by = $user_id;
-        $user->referer_code = Utilities::generateRefererCode(UserType::USER->value);
+        if($user_id != null) $user->registered_by = $user_id;
+        // $user->referer_code = Utilities::generateRefererCode(UserType::USER->value);
         if(isset($data['photoId'])) $user->photo_id = $data['photoId']; 
         if(isset($data['gender'])) $user->gender = $data['gender']; 
         if(isset($data['departmentId'])) $user->department_id = $data['departmentId']; 
@@ -205,20 +240,20 @@ class UserService
         if(isset($data['lastname'])) $user->lastname = $data['lastname'];
         if(isset($data['email'])) $user->email = $data['email'];
         if(isset($data['roleId'])) $user->role_id = $data['roleId'];
-        if(isset($data['staff_type_id'])) $user->staff_type_id = $data['staff_type_id'];
-        if(isset($data['phone_number'])) $user->phone_number = $data['phone_number'];
+        if(isset($data['staffTypeId'])) $user->staff_type_id = $data['staffTypeId'];
+        if(isset($data['phoneNumber'])) $user->phone_number = $data['phoneNumber'];
         if(isset($data['address'])) $user->address = $data['address'];
-        if(isset($data['country_id'])) $user->country_id = $data['country_id'];
-        if(isset($data['postal_code'])) $user->postal_code = $data['postal_code'];
-        if(isset($data['marital_status'])) $user->marital_status = $data['marital_status'];
-        if(isset($data['file_id'])) $user->photo_id = $data['file_id']; 
+        if(isset($data['countryId'])) $user->country_id = $data['countryId'];
+        if(isset($data['postalCode'])) $user->postal_code = $data['postalCode'];
+        if(isset($data['maritalStatus'])) $user->marital_status = $data['maritalStatus'];
+        if(isset($data['fileId'])) $user->photo_id = $data['fileId']; 
         if(isset($data['gender'])) $user->gender = $data['gender']; 
-        if(isset($data['department_id'])) $user->department_id = $data['department_id']; 
-        if(isset($data['position_id'])) $user->position_id = $data['position_id']; 
-        if(isset($data['hybrid_staff_draw_id'])) $user->hybrid_staff_draw_id = $data['hybrid_staff_draw_id']; 
-        if(isset($data['account_number'])) $user->account_number = $data['account_number'];
-        if(isset($data['account_name'])) $user->account_name = $data['account_name'];
-        if(isset($data['bank_id'])) $user->bank_id = $data['bank_id'];
+        if(isset($data['departmentId'])) $user->department_id = $data['departmentId']; 
+        if(isset($data['positionId'])) $user->position_id = $data['positionId']; 
+        if(isset($data['hybridStaffDrawId'])) $user->hybrid_staff_draw_id = $data['hybridStaffDrawId']; 
+        if(isset($data['accountNumber'])) $user->account_number = $data['accountNumber'];
+        if(isset($data['accountName'])) $user->account_name = $data['accountName'];
+        if(isset($data['bankId'])) $user->bank_id = $data['bankId'];
         $user->update();
         return $user;
     }

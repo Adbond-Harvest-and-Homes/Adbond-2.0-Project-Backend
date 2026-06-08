@@ -29,7 +29,8 @@ class CreateUser extends BaseRequest
             "phoneNumber" => "string|max:15|min:11",
             "staffTypeId" => "required|integer|exists:staff_types,id",
             "roleId" => "required|integer|exists:roles,id",
-            "dateJoined" => "nullable|date|before:today"
+            "dateJoined" => "nullable|date|before:today",
+            "referalCode" => "nullable|string|exists:users,staff_referer_code"
         ];
     }
 }

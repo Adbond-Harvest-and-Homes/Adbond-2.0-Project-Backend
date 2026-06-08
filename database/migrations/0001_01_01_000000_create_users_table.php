@@ -34,6 +34,7 @@ return new class extends Migration
             $table->foreignId('department_id')->nullable();
             $table->foreignId('position_id')->nullable();
             $table->string('referer_code')->nullable();
+            $table->string('staff_referer_code')->nullable();
             $table->tinyInteger('activated')->default(1);
             $table->bigInteger('registered_by')->nullable();
             $table->double('commission', 15, 2)->default(0);

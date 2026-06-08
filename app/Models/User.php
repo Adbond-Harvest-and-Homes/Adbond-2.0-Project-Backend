@@ -10,6 +10,9 @@ use Laravel\Sanctum\HasApiTokens;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
+use app\Enums\RefererCodePrefix;
+use app\Utilities;
+
 class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -101,7 +104,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(User::class, "registered_by", "id");
     }
 
-    public function clientReferrals(): MorphMany
+    public function clients(): MorphMany
     {
         return $this->morphMany(Client::class, 'referer');
     }
@@ -214,5 +217,36 @@ class User extends Authenticatable implements JWTSubject
             foreach($this->dislikedComments() as $comment) $ids[] = $comment->id;
         }
         return $ids;
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            $prefix = RefererCodePrefix::USER->value;
+            
+            if (empty($user->referer_code)) {
+                do {
+                    $suffix = Utilities::generateRandomString(8);
+                    $code = $prefix . $suffix;
+                    $exists = self::where('referer_code', $code)->exists();
+                } while ($exists);
+                
+                $user->referer_code = $code;
+                $user->staff_referer_code = $suffix;
+            } else {
+                if (str_starts_with($user->referer_code, $prefix)) {
+                    $suffix = substr($user->referer_code, strlen($prefix));
+                } else {
+                    $suffix = trim($user->referer_code);
+                    $user->referer_code = $prefix . $suffix;
+                }
+                
+                if (empty($user->staff_referer_code)) {
+                    $user->staff_referer_code = $suffix;
+                }
+            }
+        });
     }
 }

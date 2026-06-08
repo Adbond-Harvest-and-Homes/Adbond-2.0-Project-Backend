@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Resources\TransactionResource;
@@ -17,10 +19,13 @@ use app\Utilities;
 
 class TransactionController extends Controller
 {
+    private $userActivityLogService;
+
     private $transactionService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->transactionService = new TransactionService;
     }
 

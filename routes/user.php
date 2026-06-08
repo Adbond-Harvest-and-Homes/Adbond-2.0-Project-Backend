@@ -40,6 +40,9 @@ use app\Http\Controllers\User\DocumentTypeController;
 
 //User/Admin/Staff Routes
 Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'User',], function () {
+
+    Route::get('/team', [StaffController::class, "myTeam"]);
+
     Route::group(['prefix' => '/document_types'], function () {
         Route::get('', [DocumentTypeController::class, "docTypes"]);
         Route::post('', [DocumentTypeController::class, "save"]);
@@ -71,6 +74,10 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     Route::group(['middleware' => 'superAdminAuth', 'prefix' => '/staffs'], function () {
         Route::get('/reset/{userId}', [StaffController::class, "reset"]);
         Route::post('/remove/{userId}', [StaffController::class, "delete"]);
+    });
+
+    Route::group(['middleware' => ['hrAuth',], 'prefix' => '/staffs'], function () {
+        Route::get('/activities', [StaffController::class, "activities"]);
     });
 
     Route::group(['prefix' => '/staffs'], function () {

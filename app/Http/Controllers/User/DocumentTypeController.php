@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\AddDocType;
@@ -15,15 +17,25 @@ use app\Utilities;
 
 class DocumentTypeController extends Controller
 {
+    private $userActivityLogService;
+
     public function __construct(protected DocumentTypeService $docTypeService)
     {
+        $this->userActivityLogService = new UserActivityLogService;
     }
 
     public function save(AddDocType $request)
     {
         $docType = $this->docTypeService->save($request->validated("name"));
 
-        return Utilities::ok(new DocumentTypeResource($docType));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Saved Document Type");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new DocumentTypeResource($docType));
     }
 
     public function update(AddDocType $request, $id)
@@ -36,7 +48,14 @@ class DocumentTypeController extends Controller
 
         $docType = $this->docTypeService->update($request->validated("name"), $docType);
 
-        return Utilities::ok(new DocumentTypeResource($docType));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Document Type");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new DocumentTypeResource($docType));
     }
 
     public function docTypes()

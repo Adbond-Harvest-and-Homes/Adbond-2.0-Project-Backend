@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\SaveAssessmentQuestionOption;
@@ -16,10 +18,13 @@ use app\Utilities;
 
 class AssessmentQuestionOptionController extends Controller
 {
+    private $userActivityLogService;
+
     private $optionService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->optionService = new AssessmentQuestionOptionService;
     }
 
@@ -29,6 +34,13 @@ class AssessmentQuestionOptionController extends Controller
             $data = $request->validated();
 
             $this->optionService->saveQuestionOptions($data['options'], $data['questionId']);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Saved Assessment Question Option");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Question Option(s) Added Successfully");
         }catch(\Exception $e){
@@ -47,7 +59,14 @@ class AssessmentQuestionOptionController extends Controller
 
         $this->optionService->update($data, $option);
 
-        return Utilities::okay("Option Updated Successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Assessment Question Option");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Option Updated Successfully");
     }
 
     public function delete($optionId)
@@ -59,6 +78,13 @@ class AssessmentQuestionOptionController extends Controller
 
         $this->optionService->delete($option);
 
-        return Utilities::okay("Option Deleted Successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Assessment Question Option");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Option Deleted Successfully");
     }
 }

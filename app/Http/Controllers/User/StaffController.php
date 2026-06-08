@@ -16,6 +16,7 @@ use app\Http\Resources\UserResource;
 use app\Mail\NewStaff;
 
 use app\Services\UserService;
+use app\Services\CommissionService;
 use app\Services\UserActivityLogService;
 use app\Services\UserProfileService;
 
@@ -29,7 +30,7 @@ class StaffController extends Controller
     private $userActivityLogService;
     private $userProfileService;
 
-    public function __construct()
+    public function __construct(protected CommissionService $commissionService)
     {
         $this->userService = new UserService;
         $this->userActivityLogService = new UserActivityLogService;
@@ -41,12 +42,25 @@ class StaffController extends Controller
         try{
             $data = $request->validated();
             $data['password'] = '12345';
-            $user = $this->userService->save($data, Auth::user()->id);
+            $registeredBy = null;
+            if(isset($data['referalCode'])) {
+                $user = $this->userService->getUserByStaffRefererCode($data['referalCode']);
+                if(!$user) return Utilities::error402("Invalid Referer Code");
+                $registeredBy = $user->id;
+            }
+            $user = $this->userService->save($data, $registeredBy);
 
             try{
                 Mail::to($user->email)->send(new NewStaff($user, $data['password']));
             }catch(\Exception $e){
                 Utilities::logStuff($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+            }
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added Staff");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
             }
 
             return Utilities::ok(new UserResource($user));
@@ -66,6 +80,13 @@ class StaffController extends Controller
             $data = $request->validated();
             $user = $this->userService->update($data, $user);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Staff");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new UserResource($user));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -81,7 +102,14 @@ class StaffController extends Controller
 
         $this->userService->reset($user);
 
-        return Utilities::okay("Staff Password has been reset");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Reset Staff Password");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Staff Password has been reset");
     }
 
     public function users()
@@ -99,6 +127,27 @@ class StaffController extends Controller
         if(!$user) return Utilities::error402("User not found");
 
         return Utilities::ok(new UserResource($user));
+    }
+
+    public function myTeam()
+    {
+        // dd(Auth::user()->id);
+        $team = $this->userService->getMyTeam(Auth::user()->id);
+        // dd($team);
+        $sales = $this->userService->getMyTeamSales(Auth::user()->id);
+
+        $meta = [
+            'totalSales' => $sales['total_sales'],
+            'totalSalesCount' => $sales['sales_count'],
+            'teamTotal' => $team->count(),
+            'totalTeamCommission' => $this->commissionService->getTotalStaffIndirectEarnings(Auth::user()->id),
+            // 'totalClients' => $sales['total_clients']
+        ];
+
+        return Utilities::ok([
+            "team" => UserResource::collection($team),
+            "meta" => $meta
+        ]);
     }
 
     public function activities()
@@ -119,6 +168,13 @@ class StaffController extends Controller
 
         $this->userService->delete($user);
 
-        return Utilities::okay("Staff has been removed successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Staff");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Staff has been removed successfully");
     }
 }

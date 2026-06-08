@@ -99,6 +99,13 @@ class ClientController extends Controller
             $data['emailVerifiedAt'] = now();
             $client = $this->clientService->save($data);
 
+            
+            try {
+                $this->activityLogService->log(Auth::user(), "Added Client");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new ClientResource($client));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -156,7 +163,14 @@ class ClientController extends Controller
 
         $this->clientService->delete($client);
 
-        return Utilities::okay("Client Deleted Successfully");
+        
+            try {
+                $this->activityLogService->log(Auth::user(), "Deleted Client");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Client Deleted Successfully");
     }
 
 
@@ -183,6 +197,13 @@ class ClientController extends Controller
 
             // $clients = [$clients];
             // $clients = collect($clients);
+
+            
+            try {
+                $this->activityLogService->log(Auth::user(), "Exported Clients list");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return $this->clientService->exportToPDF($clients);
 

@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
@@ -32,6 +33,8 @@ use app\Utilities;
 
 class ClientBondController extends Controller
 {
+    private $userActivityLogService;
+
     public function __construct(protected ClientBondService $bondService, 
                                     protected ClientBondRequestService $requestService,
                                     protected NotificationService $notificationService,
@@ -39,6 +42,7 @@ class ClientBondController extends Controller
                                     protected FileService $fileService
                                 )
     {
+        $this->userActivityLogService = new UserActivityLogService;
     }
 
     public function summary()
@@ -137,6 +141,13 @@ class ClientBondController extends Controller
 
             DB::commit();
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Approved Client Bond");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Request Approved Successfully");
         }catch(AppException $e) {
             DB::rollBack();
@@ -162,6 +173,13 @@ class ClientBondController extends Controller
             $this->bondService->updateStatus($bond, ClientBondStatus::COMPLETED->value);
 
             DB::commit();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Client Bond");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Request has been rejected");
         } catch(\Exception $e) {
@@ -201,7 +219,14 @@ class ClientBondController extends Controller
                 }
 
                 DB::commit();
-                return Utilities::okay("Uploaded successfully");
+                
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Uploaded Client Bond Documents");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Uploaded successfully");
             }
 
             DB::rollBack();

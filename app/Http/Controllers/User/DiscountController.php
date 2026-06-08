@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\UpdateDiscount;
@@ -18,10 +20,13 @@ use app\Utilities;
 
 class DiscountController extends Controller
 {
+    private $userActivityLogService;
+
     protected $discountService;
 
     public function __construct(DiscountService $discountService)
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->discountService = $discountService;
     }
 
@@ -40,7 +45,14 @@ class DiscountController extends Controller
         $type = DiscountType::FULL_PAYMENT->value;
         $fullPayment = $this->discountService->updateDiscount($type, $data);
 
-        return Utilities::ok(
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Full Payment Discount");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(
             ["discount" => $fullPayment->discount]
         );
     }
@@ -61,7 +73,14 @@ class DiscountController extends Controller
 
         $installments = $this->discountService->getInstallmentDurations();
 
-        return Utilities::ok(InstallmentDiscountResource::collection($installments));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Installment Discounts");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(InstallmentDiscountResource::collection($installments));
     }
 
     public function addInstallmentDiscounts(UpdateInstallmentDiscount $request)
@@ -72,7 +91,14 @@ class DiscountController extends Controller
 
         $installments = $this->discountService->getInstallmentDurations();
 
-        return Utilities::ok(InstallmentDiscountResource::collection($installments));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added Installment Discounts");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(InstallmentDiscountResource::collection($installments));
     }
 
     public function deleteInstallment($duration)
@@ -82,7 +108,14 @@ class DiscountController extends Controller
 
         $this->discountService->delete($installment);
 
-        return Utilities::okay("Installment Duration deleted successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Installment Discount");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Installment Duration deleted successfully");
     }
     
 }
