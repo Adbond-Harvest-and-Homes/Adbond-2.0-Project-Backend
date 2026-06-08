@@ -264,8 +264,8 @@ Class Helpers
         // Select staffs for draw
         $idArr = $userService->selectStaffsForDraw($openDraw);
 
-        //Select the lates fullStaff as a fall back for if there is no virtual staff to be selected from
-        $staff = $userService->latestFullStaff();
+        //Select the lates PhysicalStaff as a fall back for if there is no virtual staff to be selected from
+        $staff = $userService->latestPhysicalStaff();
         // Use the full Staff's id as default incase no virtual staff exists in the DB
         $selectedId = $staff?->id;
         if(!empty($idArr)) {

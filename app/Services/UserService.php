@@ -106,9 +106,9 @@ class UserService
         return User::where('role_id', '!=', Role::SuperAdmin()->id)->orderBy('commission', 'desc')->get();
     }
 
-    public function latestFullStaff()
+    public function latestPhysicalStaff()
     {
-        return User::where('staff_type_id', Staff_type::FullStaff()->id)->orderBy('created_at', 'desc')->first();
+        return User::where('staff_type_id', Staff_type::PhysicalStaff()->id)->orderBy('created_at', 'desc')->first();
     }
 
     public function getUsersByRoleId($role_id)

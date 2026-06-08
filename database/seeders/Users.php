@@ -54,7 +54,7 @@ class Users extends Seeder
                 $userObj->referer_code = $user['referer_code'];
                 $userObj->phone_number = $user['phone_number'];
                 $userObj->activated = $user['activated'];
-                $userObj->staff_type_id = StaffType::FullStaff()?->id;
+                $userObj->staff_type_id = StaffType::PhysicalStaff()?->id;
                 $userObj->email_verified_at = now();
                 $userObj->save();
             }
