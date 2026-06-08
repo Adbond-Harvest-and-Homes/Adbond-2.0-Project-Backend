@@ -27,7 +27,7 @@ class RefererCodes extends Seeder
                 }else{
                     $suffix = trim($user->referer_code);
                     // Add the prefix to it, if it doesn't have it
-                    // $user->referer_code = $prefix.$user->referer_code;
+                    $user->referer_code = $prefix.$user->referer_code;
                 }
 
                  // assign the stripped out remainder to staff_referer_code
