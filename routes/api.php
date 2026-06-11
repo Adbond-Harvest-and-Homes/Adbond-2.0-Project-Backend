@@ -43,7 +43,7 @@ use app\Http\Controllers\MigrationOrderPaymentsController;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 Route::group(['prefix' => '/v2',], function () {
-    Route::get('/password', function() {
+    Route::get('/password', function () {
         dd(bcrypt('Dapo007.'));
     });
 
@@ -81,7 +81,7 @@ Route::group(['prefix' => '/v2',], function () {
         Route::post('/submit', [AssessmentAttemptController::class, "submit"]);
     });
 
-    
+
 
     /*
         Public Routes Begins here
@@ -117,12 +117,14 @@ Route::group(['prefix' => '/v2',], function () {
     });
 
     //Utitlity Routes
-    Route::group(['prefix' => '/'], function () {    
+    Route::group(['prefix' => '/'], function () {
         Route::get('benefits', [UtilityController::class, 'benefits']);
         Route::get('banks', [UtilityController::class, 'banks']);
         Route::get('identifications', [UtilityController::class, 'identifications']);
         Route::get('countries', [UtilityController::class, 'countries']);
         Route::get('states/{countryId}', [UtilityController::class, 'states']);
+        Route::get('departments', [UtilityController::class, 'departments']);
+        Route::get('employment_types', [UtilityController::class, 'employmentTypes']);
     });
 
 
@@ -130,7 +132,7 @@ Route::group(['prefix' => '/v2',], function () {
         Client Routes Begins Here
     */
 
-    
+
 
     // Route::get('test/benefit', [TestController::class, 'benefit']);
 

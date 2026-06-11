@@ -21,8 +21,10 @@ use app\Services\UserActivityLogService;
 use app\Services\UserProfileService;
 
 use app\Utilities;
+use app\EnumClass;
 
 use app\Models\Role;
+use app\Models\StaffType;
 
 class StaffController extends Controller
 {
@@ -39,24 +41,24 @@ class StaffController extends Controller
 
     public function save(CreateUser $request)
     {
-        try{
+        try {
             $data = $request->validated();
             $data['password'] = '12345';
             $registeredBy = null;
-            if(isset($data['referalCode'])) {
+            if (isset($data['referalCode'])) {
                 $user = $this->userService->getUserByStaffRefererCode($data['referalCode']);
-                if(!$user) return Utilities::error402("Invalid Referer Code");
+                if (!$user) return Utilities::error402("Invalid Referer Code");
                 $registeredBy = $user->id;
             }
             $user = $this->userService->save($data, $registeredBy);
 
-            try{
+            try {
                 Mail::to($user->email)->send(new NewStaff($user, $data['password']));
-            }catch(\Exception $e){
+            } catch (\Exception $e) {
                 Utilities::logStuff($e, 'An error occurred while trying to process the request, Please try again later or contact support');
             }
 
-            
+
             try {
                 $this->userActivityLogService->log(Auth::user(), "Added Staff");
             } catch (\Exception $e) {
@@ -64,23 +66,23 @@ class StaffController extends Controller
             }
 
             return Utilities::ok(new UserResource($user));
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }
 
     public function update(UpdateUser $request, $userId)
     {
-        try{
+        try {
             if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
 
             $user = $this->userService->getUser($userId);
-            if(!$user) return Utilities::error402("User not found");
+            if (!$user) return Utilities::error402("User not found");
 
             $data = $request->validated();
             $user = $this->userService->update($data, $user);
 
-            
+
             try {
                 $this->userActivityLogService->log(Auth::user(), "Updated Staff");
             } catch (\Exception $e) {
@@ -88,7 +90,7 @@ class StaffController extends Controller
             }
 
             return Utilities::ok(new UserResource($user));
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }
@@ -98,18 +100,18 @@ class StaffController extends Controller
         if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId);
-        if(!$user) return Utilities::error402("User not found");
+        if (!$user) return Utilities::error402("User not found");
 
         $this->userService->reset($user);
 
-        
-            try {
-                $this->userActivityLogService->log(Auth::user(), "Reset Staff Password");
-            } catch (\Exception $e) {
-                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
-            }
 
-            return Utilities::okay("Staff Password has been reset");
+        try {
+            $this->userActivityLogService->log(Auth::user(), "Reset Staff Password");
+        } catch (\Exception $e) {
+            Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+        }
+
+        return Utilities::okay("Staff Password has been reset");
     }
 
     public function users()
@@ -119,21 +121,26 @@ class StaffController extends Controller
         return Utilities::ok(UserResource::collection($users));
     }
 
-    public function user($userId)
+    public function user(int $userId)
     {
         if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
 
-        $user = $this->userService->getUser($userId);
-        if(!$user) return Utilities::error402("User not found");
+        $user = $this->userService->getUser($userId, ['histories']);
+        if (!$user) return Utilities::error402("User not found");
 
         return Utilities::ok(new UserResource($user));
     }
 
-    public function myTeam()
+    public function myTeam(Request $request)
     {
-        // dd(Auth::user()->id);
+        $staffType = ($request->query('staffType')) ?? null;
+        if ($staffType != null) {
+            if (!in_array($staffType, EnumClass::staffTypes())) return Utilities::error402("Invalid staff type");
+            $this->userService->staffType = $staffType;
+        }
+        $this->userService->searchString = ($request->query('searchString')) ?? null;
+
         $team = $this->userService->getMyTeam(Auth::user()->id);
-        // dd($team);
         $sales = $this->userService->getMyTeamSales(Auth::user()->id);
 
         $meta = [
@@ -150,6 +157,25 @@ class StaffController extends Controller
         ]);
     }
 
+    public function myTeamMember(int $staffId)
+    {
+        if (!is_numeric($staffId)) return Utilities::error402("Invalid parameter staffId");
+
+        $user = $this->userService->getUser($staffId, [
+            'clients',
+            'sales',
+            'lastActivity',
+            'commissionEarnings',
+            'clientTransactions.client',
+            'clientTransactions.purchase.package.project.projectType'
+        ]);
+        if (!$user) return Utilities::error402("User not found");
+
+        if ($user?->registerer?->id != Auth::user()->id) return Utilities::error402("You are not authorized to perform this operation");
+
+        return Utilities::ok(new UserResource($user));
+    }
+
     public function activities()
     {
         $userLogs = $this->userActivityLogService->getLogs();
@@ -159,22 +185,22 @@ class StaffController extends Controller
 
     public function delete($userId)
     {
-        if(Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");
+        if (Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");
 
         if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId);
-        if(!$user) return Utilities::error402("User not found");
+        if (!$user) return Utilities::error402("User not found");
 
         $this->userService->delete($user);
 
-        
-            try {
-                $this->userActivityLogService->log(Auth::user(), "Deleted Staff");
-            } catch (\Exception $e) {
-                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
-            }
 
-            return Utilities::okay("Staff has been removed successfully");
+        try {
+            $this->userActivityLogService->log(Auth::user(), "Deleted Staff");
+        } catch (\Exception $e) {
+            Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+        }
+
+        return Utilities::okay("Staff has been removed successfully");
     }
 }

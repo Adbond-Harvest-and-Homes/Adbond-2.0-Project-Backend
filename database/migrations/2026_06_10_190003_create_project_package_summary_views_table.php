@@ -12,6 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement("DROP VIEW IF EXISTS project_packages_summary_view");
         DB::statement("CREATE VIEW project_packages_summary_view AS
             SELECT 
                 MIN(project_types.id) AS project_type_id,

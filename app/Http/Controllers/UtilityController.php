@@ -12,9 +12,13 @@ use app\Http\Resources\ResellOrderResource;
 use app\Http\Resources\ClientIdentificationResource;
 use app\Http\Resources\CountryResource;
 use app\Http\Resources\StateResource;
+use app\Http\Resources\DepartmentResource;
+use app\Http\Resources\EmploymentTypeResource;
 
 use app\Services\UtilityService;
 use app\Services\CountryService;
+use app\Services\DepartmentService;
+use app\Services\EmploymentTypeService;
 use app\Utilities;
 
 class UtilityController extends Controller
@@ -22,7 +26,7 @@ class UtilityController extends Controller
     private $utilityService;
     protected $countryService;
 
-    public function __construct()
+    public function __construct(protected DepartmentService $departmentService, protected EmploymentTypeService $employmentTypeService)
     {
         $this->utilityService = new UtilityService;
         $this->countryService = new CountryService;
@@ -80,5 +84,19 @@ class UtilityController extends Controller
         $states = $this->countryService->getStates($countryId);
 
         return Utilities::ok(StateResource::collection($states));
+    }
+
+    public function departments()
+    {
+        $departments = $this->departmentService->getDepartments();
+
+        return Utilities::ok(DepartmentResource::collection($departments));
+    }
+
+    public function employmentTypes()
+    {
+        $types = $this->employmentTypeService->getTypes();
+
+        return Utilities::ok(EmploymentTypeResource::collection($types));
     }
 }

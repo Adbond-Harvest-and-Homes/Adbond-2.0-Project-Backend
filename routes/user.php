@@ -37,11 +37,15 @@ use app\Http\Controllers\VirtualTeamApplicationController;
 use app\Http\Controllers\UtilityController;
 use app\Http\Controllers\User\ClientBondController;
 use app\Http\Controllers\User\DocumentTypeController;
+use app\Http\Controllers\User\JobAdvertController;
 
 //User/Admin/Staff Routes
 Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'User',], function () {
 
-    Route::get('/team', [StaffController::class, "myTeam"]);
+    Route::group(['prefix' => '/team'], function () {
+        Route::get('', [StaffController::class, "myTeam"]);
+        Route::get('/{staffId}', [StaffController::class, "myTeamMember"]);
+    });
 
     Route::group(['prefix' => '/document_types'], function () {
         Route::get('', [DocumentTypeController::class, "docTypes"]);
@@ -242,6 +246,14 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::post('/redemptions/complete_payment', [ReferralController::class, "completePayment"]);
         Route::get('/redemptions/{staffId}', [ReferralController::class, "staffRedemptions"]);
         Route::get('/redemptions', [ReferralController::class, "commissionRedemptions"]);
+    });
+
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/job_adverts'], function () {
+        Route::get('', [JobAdvertController::class, "index"]);
+        Route::post('', [JobAdvertController::class, "save"]);
+        Route::post('/{id}', [JobAdvertController::class, "update"]);
+        Route::delete('/{id}', [JobAdvertController::class, "delete"]);
+        Route::get('/{id}', [JobAdvertController::class, "show"]);
     });
 
     Route::group(['middleware' => 'userAuth', 'prefix' => '/notifications'], function () {

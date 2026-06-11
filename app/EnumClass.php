@@ -35,12 +35,17 @@ class EnumClass
 {
     public static function employmentStatuses()
     {
-        return array_column(EmploymentStatus::cases(), 'value');  
+        return array_column(EmploymentStatus::cases(), 'value');
+    }
+
+    public static function staffTypes()
+    {
+        return array_column(StaffTypes::cases(), 'value');
     }
 
     public static function maritalStatus()
     {
-        return array_column(MaritalStatus::cases(), 'value');  
+        return array_column(MaritalStatus::cases(), 'value');
     }
 
     public static function kycStatus()
@@ -129,7 +134,7 @@ class EnumClass
             InvestmentRedemptionOption::PROFIT_ONLY->value,
             InvestmentRedemptionOption::PROPERTY->value
         ];
-    } 
+    }
 
     public static function offerApprovalStatuses()
     {

@@ -4,6 +4,8 @@ namespace app;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Illuminate\Foundation\Http\FormRequest;
 
 use app\Models\HybridStaffDraw;
 use app\Models\User;
@@ -21,7 +23,7 @@ use app\Services\FileService;
 use app\Services\ClientService;
 use app\Services\OrderService;
 
-use app\Http\Resources\MonthlyWeekDaysResource; 
+use app\Http\Resources\MonthlyWeekDaysResource;
 use app\Http\Resources\InspectionDayMinResource;
 use app\Http\Resources\VirtualStaffAssessmentResource;
 use app\Http\Resources\OfferMinResource;
@@ -39,7 +41,7 @@ use app\Enums\OrderType;
 
 use app\Utilities;
 
-Class Helpers
+class Helpers
 {
     public static $purchaseOrigin = ClientPackageOrigin::ORDER->value;
 
@@ -54,9 +56,9 @@ Class Helpers
     public static function ClientPackageOnOffer($clientPackageOffers)
     {
         $onOffer = false;
-        if($clientPackageOffers->count() > 0) {
-            foreach($clientPackageOffers as $offer) {
-                if($offer->approved != -1) $onOffer = true;
+        if ($clientPackageOffers->count() > 0) {
+            foreach ($clientPackageOffers as $offer) {
+                if ($offer->approved != -1) $onOffer = true;
             }
         }
         return $onOffer;
@@ -70,30 +72,30 @@ Class Helpers
         $category = $packageItem->package?->projectLocation?->project?->category;
 
         $promos = [];
-        if($package && $package->promoProducts->count() > 0) {
-            foreach($packageItem->package->promoProducts as $promoProduct) {
-                if($promoProduct->promo && $promoProduct->promo->active == 1) {
+        if ($package && $package->promoProducts->count() > 0) {
+            foreach ($packageItem->package->promoProducts as $promoProduct) {
+                if ($promoProduct->promo && $promoProduct->promo->active == 1) {
                     $promos[] =  $promoProduct->promo;
                 }
             }
         }
-        if($projectLocation && $projectLocation->promoProducts->count() > 0) {
-            foreach($projectLocation->promoProducts as $promoProduct) {
-                if($promoProduct->promo && $promoProduct->promo->active == 1) {
+        if ($projectLocation && $projectLocation->promoProducts->count() > 0) {
+            foreach ($projectLocation->promoProducts as $promoProduct) {
+                if ($promoProduct->promo && $promoProduct->promo->active == 1) {
                     $promos[] =  $promoProduct->promo;
                 }
             }
         }
-        if($project && $project->promoProducts->count() > 0) {
-            foreach($project->promoProducts as $promoProduct) {
-                if($promoProduct->promo && $promoProduct->promo->active == 1) {
+        if ($project && $project->promoProducts->count() > 0) {
+            foreach ($project->promoProducts as $promoProduct) {
+                if ($promoProduct->promo && $promoProduct->promo->active == 1) {
                     $promos[] =  $promoProduct->promo;
                 }
             }
         }
-        if($category && $category->promoProducts->count() > 0) {
-            foreach($category->promoProducts as $promoProduct) {
-                if($promoProduct->promo && $promoProduct->promo->active == 1) {
+        if ($category && $category->promoProducts->count() > 0) {
+            foreach ($category->promoProducts as $promoProduct) {
+                if ($promoProduct->promo && $promoProduct->promo->active == 1) {
                     $promos[] =  $promoProduct->promo;
                 }
             }
@@ -108,72 +110,72 @@ Class Helpers
         $category = $package?->projectLocation?->project?->category;
 
         $promos = [];
-        if($package->promoProducts && $package->promoProducts->count() > 0) {
-            foreach($package->promoProducts as $promoProduct) {
+        if ($package->promoProducts && $package->promoProducts->count() > 0) {
+            foreach ($package->promoProducts as $promoProduct) {
                 $promos[] =  $promoProduct->promo;
             }
         }
-        if($projectLocation && $projectLocation->promoProducts->count() > 0) {
-            foreach($projectLocation->promoProducts as $promoProduct) {
+        if ($projectLocation && $projectLocation->promoProducts->count() > 0) {
+            foreach ($projectLocation->promoProducts as $promoProduct) {
                 $promos[] =  $promoProduct->promo;
             }
         }
-        if($project && $project->promoProducts->count() > 0) {
-            foreach($project->promoProducts as $promoProduct) {
+        if ($project && $project->promoProducts->count() > 0) {
+            foreach ($project->promoProducts as $promoProduct) {
                 $promos[] =  $promoProduct->promo;
             }
         }
-        if($category && $category->promoProducts->count() > 0) {
-            foreach($category->promoProducts as $promoProduct) {
+        if ($category && $category->promoProducts->count() > 0) {
+            foreach ($category->promoProducts as $promoProduct) {
                 $promos[] =  $promoProduct->promo;
             }
         }
         return $promos;
     }
 
-    public static function item_price($packageItem, $client_id=null)
+    public static function item_price($packageItem, $client_id = null)
     {
         $installmentDiscounts = 0;
         $fullPaymentDiscounts = 0;
         $installmentDiscount = 0;
         $fullPaymentDiscount = 0;
         $onPromo = false;
-        if($packageItem->discount > 0) {
-           $fullPaymentDiscounts = $packageItem->discount; 
+        if ($packageItem->discount > 0) {
+            $fullPaymentDiscounts = $packageItem->discount;
         }
         // Get the promos attached to packageItem package
         $promos = self::active_promos($packageItem);
-        if(count($promos) > 0) {
+        if (count($promos) > 0) {
             $onPromo = true;
-            foreach($promos as $promo) {
+            foreach ($promos as $promo) {
                 $fullPaymentDiscounts += $promo->discount;
                 $installmentDiscounts += $promo->discount;
             }
         }
 
-        if($client_id != null) {
+        if ($client_id != null) {
             //Check for loyalty discount
             $loyaltyService = new LoyaltyService;
             $loyalty = $loyaltyService->unredeemedClientLoyalty($client_id);
-            if($loyalty) {
+            if ($loyalty) {
                 $company = Company_info::company();
                 $fullPaymentDiscounts += $company->loyalty_discount;
-                $installmentDiscounts += $company->loyalty_discount; 
+                $installmentDiscounts += $company->loyalty_discount;
             }
         }
 
-        if($fullPaymentDiscounts > 0) {
-            $fullPaymentDiscount = ($fullPaymentDiscounts/100) * $packageItem->price;
+        if ($fullPaymentDiscounts > 0) {
+            $fullPaymentDiscount = ($fullPaymentDiscounts / 100) * $packageItem->price;
         }
-        if($installmentDiscounts > 0) {
-            $installmentDiscount = ($installmentDiscounts/100) * $packageItem->price;
+        if ($installmentDiscounts > 0) {
+            $installmentDiscount = ($installmentDiscounts / 100) * $packageItem->price;
         }
         $fullPaymentAmount = $packageItem->price - $fullPaymentDiscount;
         $installmentAmount = $packageItem->price - $installmentDiscount;
-        return ["fullPaymentAmount" => $fullPaymentAmount, "installmentAmount"=>$installmentAmount, "onPromo"=>$onPromo];
+        return ["fullPaymentAmount" => $fullPaymentAmount, "installmentAmount" => $installmentAmount, "onPromo" => $onPromo];
     }
 
-    public static function amount_payable($packageItem, $units=1)
+    public static function amount_payable($packageItem, $units = 1)
     {
         $amount = self::item_price($packageItem);
         // Log::stack(['project'])->info('Units：'.$units);
@@ -185,10 +187,10 @@ Class Helpers
     public static function packageSoldOut($package)
     {
         $soldOut = true;
-        if($package->items->count() > 0) {
-           foreach($package->items as $item) {
-               if($item->available_units > 0) $soldOut = false;
-           } 
+        if ($package->items->count() > 0) {
+            foreach ($package->items as $item) {
+                if ($item->available_units > 0) $soldOut = false;
+            }
         }
         return $soldOut;
     }
@@ -196,7 +198,7 @@ Class Helpers
     public static function kycCompleted($client)
     {
         $completed = true;
-        if(
+        if (
             // $client->photo_id == '' || $client->photo_id == null ||
             $client->gender == '' || $client->gender == null ||
             $client->marital_status == '' || $client->marital_status == null ||
@@ -218,7 +220,7 @@ Class Helpers
     public static function kycStarted($client)
     {
         $started = false;
-        if(
+        if (
             // $client->photo_id == '' || $client->photo_id == null ||
             ($client->gender != '' && $client->gender != null) ||
             ($client->marital_status != '' || $client->marital_status != null) ||
@@ -242,14 +244,14 @@ Class Helpers
         $clientService = new ClientService;
 
         $client = $clientService->getClient($clientId);
-        if($client) $client = $clientService->update(["kycStatus" => $status], $client);
+        if ($client) $client = $clientService->update(["kycStatus" => $status], $client);
         return $client;
     }
 
     public static function clientPackageUnits($clientPackage)
     {
         $units = $clientPackage->order?->units;
-        if($clientPackage->purchase_type==Client_package::$offerPurchase) {
+        if ($clientPackage->purchase_type == Client_package::$offerPurchase) {
             $units = self::clientPackageUnits($clientPackage->offer->clientPackage);
         }
         return $units;
@@ -268,15 +270,15 @@ Class Helpers
         $staff = $userService->latestPhysicalStaff();
         // Use the full Staff's id as default incase no virtual staff exists in the DB
         $selectedId = $staff?->id;
-        if(!empty($idArr)) {
+        if (!empty($idArr)) {
             // if there was ids to be drawn
             // Randomely select an id
             $selectedId = $idArr[array_rand($idArr)];
             $selectedUser = $userService->getUser($selectedId);
             $openDraw = ($openDraw) ? $hybridStaffDrawService->IncreaseSelected($openDraw) : $hybridStaffDrawService->openDraw(count($idArr));
-            
+
             // Update the selected user to reflect that he/she has been selected
-            $userService->update(['hybrid_staff_draw_id'=>$openDraw->id], $selectedUser);
+            $userService->update(['hybrid_staff_draw_id' => $openDraw->id], $selectedUser);
         }
         return $selectedId;
     }
@@ -296,15 +298,15 @@ Class Helpers
     //     }
     // }
 
-    public static function generateReceiptNo($purchaseId, $clientId, $processingId=null)
+    public static function generateReceiptNo($purchaseId, $clientId, $processingId = null)
     {
         $i = 0;
-        do{
-            if(!$processingId || $i > 0) $processingId = Utilities::generateRandomNumber(5);
-            $receiptNo = $purchaseId.$processingId.$clientId;
+        do {
+            if (!$processingId || $i > 0) $processingId = Utilities::generateRandomNumber(5);
+            $receiptNo = $purchaseId . $processingId . $clientId;
             $exists = Payment::where("receipt_no", $receiptNo)->first();
             $i++;
-        }while($exists);
+        } while ($exists);
         return $receiptNo;
     }
 
@@ -313,20 +315,20 @@ Class Helpers
         $start = false;
         $count = 1;
         $receiptNo = 00;
-        do{
-            if(!$start) {
-                $receiptNo = $payment->offer_id.$payment->id;
+        do {
+            if (!$start) {
+                $receiptNo = $payment->offer_id . $payment->id;
                 $start = true;
-            }else{
+            } else {
                 $zeros = '';
-                for($i=0; $i<$count; $i++) {
+                for ($i = 0; $i < $count; $i++) {
                     $zeros += '0';
                 }
-                $receiptNo = (int)$payment->purchase_id.$zeros.$payment->id;
+                $receiptNo = (int)$payment->purchase_id . $zeros . $payment->id;
                 $count++;
             }
             $exists = SalesOfferPayment::where('receipt_no', $receiptNo)->first();
-        }while($exists);
+        } while ($exists);
         return $receiptNo;
     }
 
@@ -339,23 +341,23 @@ Class Helpers
         return $age;
     }
 
-    
+
 
     public static function optimizePhoto($url)
     {
-        return 'https://res.cloudinary.com/demo/image/fetch/f_auto/'.$url;
+        return 'https://res.cloudinary.com/demo/image/fetch/f_auto/' . $url;
     }
 
     public static function eventInvite($event)
     {
         // $defaultTimeZone = date_default_timezone_get();
         //date_default_timezone_set("Africa/Lagos");
-        if(!empty($event) && isset($event['name']) && isset($event['start']) && isset($event['venue']) && isset($event['description']) && isset($event['organizer_email'])) {
-            $startTime = strtotime('-1 hour',strtotime($event['start']));
-            $endTime = (isset($event['end'])) ? strtotime('-1 hour',strtotime($event['end'])) : null;
+        if (!empty($event) && isset($event['name']) && isset($event['start']) && isset($event['venue']) && isset($event['description']) && isset($event['organizer_email'])) {
+            $startTime = strtotime('-1 hour', strtotime($event['start']));
+            $endTime = (isset($event['end'])) ? strtotime('-1 hour', strtotime($event['end'])) : null;
             // dd(date('H:i', $event['event_start']));
             $name = $event['name'];
-            $location = $event['venue']; 
+            $location = $event['venue'];
             $start = date('Ymd', $startTime) . 'T' . date('His', $startTime) . 'Z';
             $end = ($endTime) ? date('Ymd', $endTime) . 'T' . date('His', $endTime) . 'Z' : null;
             $description = $event['description'];
@@ -369,10 +371,10 @@ Class Helpers
             // $ical .= "TZID:Africa/Lagos";
             // $ical .= "END:VTIMEZONE";
             $ical .= "BEGIN:VEVENT\n";
-            $ical .= "UID:".date('Ymd').'T'.date('His')."-".rand()."-learnphp.co\n"; // required by Outlok
-            $ical .= "DTSTAMP:".date('Ymd').'T'.date('His')."\n"; // required by Outlook
-            $ical .= "DTSTART:{$start}\n"; 
-            if($end) $ical .= "DTEND:{$end}\n";
+            $ical .= "UID:" . date('Ymd') . 'T' . date('His') . "-" . rand() . "-learnphp.co\n"; // required by Outlok
+            $ical .= "DTSTAMP:" . date('Ymd') . 'T' . date('His') . "\n"; // required by Outlook
+            $ical .= "DTSTART:{$start}\n";
+            if ($end) $ical .= "DTEND:{$end}\n";
             $ical .= "LOCATION:{$location}\n";
             $ical .= "SUMMARY:{$name}\n";
             $ical .= "ORGANIZER;CN=ADBOND:MAILTO:{$event['organizer_email']}\n";
@@ -402,7 +404,7 @@ Class Helpers
 
     public static function getPaystackCommission($amount)
     {
-        return (env('PAYSTACK_COMMISSION', 1.5)/100) * $amount;
+        return (env('PAYSTACK_COMMISSION', 1.5) / 100) * $amount;
     }
 
     public static function moveUploadedFileToCloud($filePath, $fileType, $userId, $purpose, $userType, $folder)
@@ -413,17 +415,17 @@ Class Helpers
         $uploadRes = null;
         if (file_exists($filePath)) {
             $uploadRes = $fileService->save($filePath, $fileType, $userId, $purpose, $userType, $folder);
-            if($uploadRes['status'] == 200) {
+            if ($uploadRes['status'] == 200) {
                 $success = true;
                 // unlink($filePath);
-            }else{
-                Utilities::logStuff("Receipt could not be uploaded... ".$uploadRes['message']);
+            } else {
+                Utilities::logStuff("Receipt could not be uploaded... " . $uploadRes['message']);
             }
         } else {
             // dd("receipt found..".$filePath);
             Utilities::logStuff("receipt generated cannot be found");
         }
-        return ($success) ? ['success'=>$success, 'upload' => $uploadRes, 'path' => $filePath] : ['success' => $success];
+        return ($success) ? ['success' => $success, 'upload' => $uploadRes, 'path' => $filePath] : ['success' => $success];
     }
 
     /*
@@ -487,9 +489,9 @@ Class Helpers
 
     */
 
-    public static function request($url, $headers=[], $post=[])
+    public static function request($url, $headers = [], $post = [])
     {
-        return (count($post)==0) ? Http::withHeaders($headers)->get($url)->json() : Http::withHeaders($headers)->post($url, $post)->json();
+        return (count($post) == 0) ? Http::withHeaders($headers)->get($url)->json() : Http::withHeaders($headers)->post($url, $post)->json();
         // dd($res);
     }
 
@@ -497,12 +499,12 @@ Class Helpers
     {
         // dd(file_exists("files/WEB CONTRACT SAMPLE.doc"));
         // dd(is_readable("files/WEB CONTRACT SAMPLE.doc"));
-        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
-        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
-        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
-        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
-        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
-        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        if (!isset($data['package']) || $data['package'] == null) $data['package'] = '';
+        if (!isset($data['client']) || $data['client'] == null) $data['client'] = '';
+        if (!isset($data['address']) || $data['address'] == null) $data['address'] = '';
+        if (!isset($data['size']) || $data['size'] == null) $data['size'] = '';
+        if (!isset($data['price']) || $data['price'] == null) $data['price'] = '';
+        $data['location'] = (!isset($data['location']) || $data['location'] == null) ? '' : $data['location'];
         // $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor("files/WEB CONTRACT SAMPLE TEMPLATE.docx");
         // $templateProcessor->setValue('day', date('jS'));
         // $templateProcessor->setValue('month', date('F'));
@@ -540,7 +542,7 @@ Class Helpers
     {
         // $itemPrice = Helpers::item_price($purchase->packageItem);
         $projectType = $purchase?->package?->project?->projectType?->name;
-        $client = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->client : $purchase->client;
+        $client = (self::$purchaseOrigin == ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->client : $purchase->client;
         $data['package'] = $purchase->package?->name;
         $data['project'] = $purchase?->package?->project?->name;
         $data['use_type'] = ($projectType == ProjectType::AGRO->value) ? "AGRICULTURAL" : "RESIDENTIAL";
@@ -548,10 +550,10 @@ Class Helpers
         $data['address'] = $client?->address;
         // $data['location'] = $purchase?->packageItem?->package?->project_location?->location?->name;
         $projectAddress = $purchase?->package?->address;
-        $state = $purchase?->package?->state.' State';
-        $data['location'] = ($projectAddress) ? $projectAddress.', '.$state : $state;
+        $state = $purchase?->package?->state . ' State';
+        $data['location'] = ($projectAddress) ? $projectAddress . ', ' . $state : $state;
         $data['state'] = $state;
-        $data['price'] = (self::$purchaseOrigin==ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount_payable;
+        $data['price'] = (self::$purchaseOrigin == ClientPackageOrigin::OFFER->value) ? $purchase?->acceptedBid?->price : $purchase->amount_payable;
         $data['installment'] = (self::$purchaseOrigin != ClientPackageOrigin::OFFER->value && $purchase->is_installment == 1) ? true : false;
         $data['installment_duration'] = $purchase?->installment_count;
         // if the units purchaseed is more than 1, multiply by units
@@ -563,18 +565,18 @@ Class Helpers
         // dd($data);
     }
 
-    public static function generateContract($order, $preparedData=null)
+    public static function generateContract($order, $preparedData = null)
     {
         $data = ($preparedData) ? $preparedData : self::prepareContract($order);
-        if(!isset($data['project']) || $data['project']==null) $data['project'] = '';
-        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
-        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
-        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
-        if(!isset($data['state']) || $data['state']==null) $data['state'] = '';
-        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
-        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
-        if(!isset($data['installment_duration']) || $data['installment_duration']==null) $data['installment_duration'] = 12;
-        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        if (!isset($data['project']) || $data['project'] == null) $data['project'] = '';
+        if (!isset($data['package']) || $data['package'] == null) $data['package'] = '';
+        if (!isset($data['client']) || $data['client'] == null) $data['client'] = '';
+        if (!isset($data['address']) || $data['address'] == null) $data['address'] = '';
+        if (!isset($data['state']) || $data['state'] == null) $data['state'] = '';
+        if (!isset($data['size']) || $data['size'] == null) $data['size'] = '';
+        if (!isset($data['price']) || $data['price'] == null) $data['price'] = '';
+        if (!isset($data['installment_duration']) || $data['installment_duration'] == null) $data['installment_duration'] = 12;
+        $data['location'] = (!isset($data['location']) || $data['location'] == null) ? '' : $data['location'];
         $pdfData = [
             'image' => public_path('images/logo.PNG'),
             'day' => date('jS'),
@@ -602,7 +604,7 @@ Class Helpers
         return $file;
     }
 
-    public static function generateLetterOfHappiness($payment, $isPayment=true)
+    public static function generateLetterOfHappiness($payment, $isPayment = true)
     {
         $date = ($isPayment) ? $payment->payment_date : now();
         $addressArr = [];
@@ -633,7 +635,7 @@ Class Helpers
         // dd('done');
     }
 
-    public static function generateHomesLetterOfHappiness($payment, $isPayment=true)
+    public static function generateHomesLetterOfHappiness($payment, $isPayment = true)
     {
         $addressArr = [];
         $addressArr = self::formatAddress($payment?->client?->address);
@@ -656,15 +658,15 @@ Class Helpers
     public static function generateMemorandumAgreement($order)
     {
         $data = self::prepareContract($order);
-        if(!isset($data['project']) || $data['project']==null) $data['project'] = '';
-        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
-        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
-        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
-        if(!isset($data['state']) || $data['state']==null) $data['state'] = '';
-        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
-        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
-        if(!isset($data['installment_duration']) || $data['installment_duration']==null) $data['installment_duration'] = 12;
-        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        if (!isset($data['project']) || $data['project'] == null) $data['project'] = '';
+        if (!isset($data['package']) || $data['package'] == null) $data['package'] = '';
+        if (!isset($data['client']) || $data['client'] == null) $data['client'] = '';
+        if (!isset($data['address']) || $data['address'] == null) $data['address'] = '';
+        if (!isset($data['state']) || $data['state'] == null) $data['state'] = '';
+        if (!isset($data['size']) || $data['size'] == null) $data['size'] = '';
+        if (!isset($data['price']) || $data['price'] == null) $data['price'] = '';
+        if (!isset($data['installment_duration']) || $data['installment_duration'] == null) $data['installment_duration'] = 12;
+        $data['location'] = (!isset($data['location']) || $data['location'] == null) ? '' : $data['location'];
         $pdfData = [
             'image' => public_path('images/logo.PNG'),
             'day' => date('jS'),
@@ -694,10 +696,10 @@ Class Helpers
         $address2 = '';
         $address3 = '';
         $addressArr = self::formatAddress($payment?->client?->address);
-        if(count($addressArr) > 0) {
-            if(isset($addressArr[0])) $address1 = $addressArr[0];
-            if(isset($addressArr[1])) $address2 = $addressArr[1];
-            if(isset($addressArr[2])) $address3 = $addressArr[2];
+        if (count($addressArr) > 0) {
+            if (isset($addressArr[0])) $address1 = $addressArr[0];
+            if (isset($addressArr[1])) $address2 = $addressArr[1];
+            if (isset($addressArr[2])) $address3 = $addressArr[2];
         }
         $discount = app(OrderService::class)->getTotalDiscount($payment?->purchase);
 
@@ -709,7 +711,7 @@ Class Helpers
         $balance = $purchaseBalance;
         $balance = ($balance >= 0) ? $balance : 0;
         $pdfData = [
-            'image' => 'logo.png', 
+            'image' => 'logo.png',
             'name' => ucfirst($payment?->client?->full_name),
             'clientState' => $payment?->client?->state?->name ?? '',
             'clientCountry' => $payment?->client?->country?->name ?? '',
@@ -737,8 +739,8 @@ Class Helpers
 
         $pdf->setOptions(array('isRemoteEnabled' => true));
         // return $pdf->stream('receipt.pdf');
-        $pdf->save('files/receipt'.$payment->receipt_no.'.pdf');
-        return 'files/receipt'.$payment->receipt_no.'.pdf';
+        $pdf->save('files/receipt' . $payment->receipt_no . '.pdf');
+        return 'files/receipt' . $payment->receipt_no . '.pdf';
         // dd('done');
     }
 
@@ -851,12 +853,12 @@ Class Helpers
         $cutOff = 2;
         $reset = 0;
         $string = '';
-        for($i=0; $i < count($addressArr); $i++) {
+        for ($i = 0; $i < count($addressArr); $i++) {
             $string .= $addressArr[$i];
-            if($reset < $cutOff) {
+            if ($reset < $cutOff) {
                 $string .= ' ';
             }
-            if($reset >= $cutOff || $i == count($addressArr)) {
+            if ($reset >= $cutOff || $i == count($addressArr)) {
                 $string .= ',';
                 $res[] = $string;
                 $string = '';
@@ -874,10 +876,7 @@ Class Helpers
         return implode("-", $titleArr);
     }
 
-    public static function curl($url, $options=[], $posts=[])
-    {
-
-    }
+    public static function curl($url, $options = [], $posts = []) {}
 
     /**
      * Get the first few words or paragraph from an HTML string (plain text only)
@@ -910,9 +909,16 @@ Class Helpers
 
         return $preview;
     }
+
+    public static function formatCamelToSnake(string $string): string
+    {
+        return Str::snake($string);
+    }
+
+    public static function formatRequestToSnake(FormRequest $request): array
+    {
+        return collect($request->validated())->mapWithKeys(function ($value, $key) {
+            return [Str::snake($key) => $value];
+        })->all();
+    }
 }
-
-
-
-
-?>

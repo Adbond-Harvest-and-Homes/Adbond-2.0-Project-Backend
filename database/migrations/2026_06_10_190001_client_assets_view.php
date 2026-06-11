@@ -11,8 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('offers')) {
+            Schema::create('offers', function (Blueprint $table) {
+                $table->id();
+                $table->double('units')->nullable();
+                $table->double('price')->nullable();
+            });
+        }
+
+        DB::statement("DROP VIEW IF EXISTS client_assets_view");
         DB::statement("
-            CREATE OR REPLACE VIEW client_assets_view AS
+            CREATE VIEW client_assets_view AS
             SELECT 
                 clients.id AS client_id,
                 clients.firstname AS firstname,

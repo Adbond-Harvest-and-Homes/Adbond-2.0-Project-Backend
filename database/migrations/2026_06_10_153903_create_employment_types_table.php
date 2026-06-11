@@ -4,8 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-use app\Models\ProjectType;
-
 return new class extends Migration
 {
     /**
@@ -13,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $defaultId = ProjectType::land()?->id ?? 1;
-        Schema::table('posts', function (Blueprint $table) use ($defaultId) {
-            $table->foreignId("project_type_id")->default($defaultId)->after("content");
+        Schema::create('employment_types', function (Blueprint $table) {
+            $table->id();
+            $table->string("name");
+            $table->timestamps();
         });
     }
 
@@ -24,8 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('posts', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('employment_types');
     }
 };

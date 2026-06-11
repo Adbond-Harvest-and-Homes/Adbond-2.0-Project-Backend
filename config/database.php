@@ -67,7 +67,7 @@ return [
                                                 SESSION wait_timeout = 28800, 
                                                 SESSION interactive_timeout = 28800,
                                                 SESSION net_read_timeout = 120,
-                                                SESSION net_write_timeout = 120' 
+                                                SESSION net_write_timeout = 120'
             ]) : [
                 PDO::ATTR_TIMEOUT => 60,
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -183,7 +183,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
         ],
 
         'default' => [
