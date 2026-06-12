@@ -118,6 +118,8 @@ class StaffController extends Controller
     public function users(Request $request)
     {
         $this->userService->count = ['clients'];
+        $this->userService->searchString = ($request->query('searchString')) ?? null;
+
         $staffType = ($request->query('staffType')) ?? null;
         if ($staffType != null) {
             if (!in_array($staffType, EnumClass::staffTypes())) return Utilities::error402("Invalid staff type");

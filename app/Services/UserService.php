@@ -66,6 +66,9 @@ class UserService
                 $hasDownline = filter_var($this->hasDownline, FILTER_VALIDATE_BOOLEAN);
                 return $hasDownline ? $query->has('staffReferrals') : $query->doesntHave('staffReferrals');
             })
+            ->when($this->searchString != null, function ($query) {
+                return $query->where('firstname', 'like', '%' . $this->searchString . '%')->orWhere('lastname', 'like', '%' . $this->searchString . '%');
+            })
             ->orderBy("firstname", "asc")->orderBy("lastname", "asc")->get();
     }
 
