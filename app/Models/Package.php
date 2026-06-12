@@ -39,7 +39,12 @@ class Package extends Model
 
     public function stateModel()
     {
-        return $this->belongsTo(State::class, "state_id", "id");
+        return $this->belongsTo(State::class, "state", "name");
+    }
+
+    public function setStateIdAttribute($value)
+    {
+        // Ignored to avoid database insertion/update errors as state_id has been dropped.
     }
 
     public function country()

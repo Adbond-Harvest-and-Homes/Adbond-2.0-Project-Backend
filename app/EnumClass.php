@@ -2,6 +2,7 @@
 
 namespace app;
 
+use app\Enums\Roles;
 use app\Enums\EmploymentStatus;
 use app\Enums\MaritalStatus;
 use app\Enums\KYCStatus;
@@ -41,6 +42,11 @@ class EnumClass
     public static function staffTypes()
     {
         return array_column(StaffTypes::cases(), 'value');
+    }
+
+    public static function roles()
+    {
+        return array_column(roles::cases(), 'value');
     }
 
     public static function maritalStatus()

@@ -9,6 +9,10 @@ class Project extends Model
 {
     use HasFactory;
 
+    protected $attributes = [
+        'state' => 'Lagos',
+    ];
+
     public static $type = "app\Models\Project";
 
     // public function getCreatedAtAttribute($value)
@@ -45,9 +49,9 @@ class Project extends Model
             State::class,
             Package::class,
             'project_id', // Foreign key on packages table
-            'id',         // Local key on states table
+            'name',       // Foreign key on states table (name column)
             'id',         // Local key on projects table
-            'state_id'    // Foreign key on packages table pointing to states
+            'state'       // Local key on packages table (state column)
         )->distinct();
     }
 

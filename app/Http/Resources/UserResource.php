@@ -52,6 +52,7 @@ class UserResource extends JsonResource
                 return $this->lastActivity->created_at->diffForHumans();
             }),
             'registeredBy' => new UserBriefResource($this->whenLoaded('registerer')),
+            'clientsCount' => $this->whenCounted('clients'),
             'clients' => ClientBriefResource::collection($this->whenLoaded('clients')),
             'salesAmount' => $this->whenLoaded('sales', function () {
                 return $this->sales->sum('amount_payable');

@@ -300,7 +300,14 @@ class PackageService
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if($this->active != null) $query->where("active", $this->active);
         if($this->countryId) $query->where("country_id", $this->countryId);
-        if($this->stateId) $query->where("state_id", $this->stateId);
+        if($this->stateId) {
+            $stateObj = \app\Models\State::find($this->stateId);
+            if($stateObj) {
+                $query->where("state", $stateObj->name);
+            } else {
+                $query->whereRaw("1 = 0");
+            }
+        }
         if($this->type) $query->where("type", $this->type);
         if($this->count) return $query->count();
 

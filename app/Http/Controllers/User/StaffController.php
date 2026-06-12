@@ -23,8 +23,9 @@ use app\Services\UserProfileService;
 use app\Utilities;
 use app\EnumClass;
 
+use app\Enums\Roles;
+
 use app\Models\Role;
-use app\Models\StaffType;
 
 class StaffController extends Controller
 {
@@ -114,11 +115,39 @@ class StaffController extends Controller
         return Utilities::okay("Staff Password has been reset");
     }
 
-    public function users()
+    public function users(Request $request)
     {
+        $this->userService->count = ['clients'];
+        $staffType = ($request->query('staffType')) ?? null;
+        if ($staffType != null) {
+            if (!in_array($staffType, EnumClass::staffTypes())) return Utilities::error402("Invalid staff type");
+            $this->userService->staffType = $staffType;
+        }
+
+        $hasDownline = $request->query('hasDownline');
+        if ($hasDownline !== null) {
+            $this->userService->hasDownline = $hasDownline;
+        }
+
+        $role = $request->query('role');
+        if ($role !== null) {
+            if (!in_array($role, EnumClass::roles())) return Utilities::error402("Invalid staff role");
+            $this->userService->role = $role;
+        }
+
         $users = $this->userService->getUsers(Auth::user());
 
-        return Utilities::ok(UserResource::collection($users));
+        $response = [
+            "users" => UserResource::collection($users)
+        ];
+
+        $metaRoles = [Roles::HUMAN_RESOURCE->value, Roles::SUPER_ADMIN->value, Roles::ADMIN->value];
+        if (in_array(Auth::user()->role->name, $metaRoles)) {
+            $meta = $this->userService->getStaffTypesCount();
+            $response["meta"] = $meta;
+        }
+
+        return Utilities::ok($response);
     }
 
     public function user(int $userId)

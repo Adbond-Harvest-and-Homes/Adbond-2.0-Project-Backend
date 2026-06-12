@@ -10,6 +10,7 @@ use app\Models\Role;
 use app\Models\StaffType;
 use app\Models\Client;
 use app\Models\UserClientSalesSummaryView;
+use app\Models\StaffTypeUserSummary;
 
 // use app\Services\StaffTypeService;
 
@@ -31,7 +32,10 @@ class UserService
     private $staffTypeService;
 
     public $staffType = null;
+    public $role = null;
+    public $hasDownline = null;
     public $searchString = null;
+    public $count = [];
 
     public function __construct()
     {
@@ -48,10 +52,21 @@ class UserService
         return User::with($with)->where("email", $email)->first();
     }
 
-    public function getUsers($user)
+    public function getUsers(User $user, $with = [])
     {
-        if ($user->role_id != Role::SuperAdmin()->id) return User::where("role_id", "!=", Role::SuperAdmin()->id)->get();
-        return User::all();
+        $staffTypeId = ($this->staffType != null) ? app(StaffTypeService::class)->getStaffTypeByName($this->staffType)->id : null;
+
+        $query = User::with($with)->withCount($this->count);
+        if ($user->role_id != Role::SuperAdmin()->id) $query->where("role_id", "!=", Role::SuperAdmin()->id);
+        if ($user->staff_type_id == StaffType::HybridStaff()->id || $user->staff_type_id == StaffType::VirtualStaff()->id) $query->where('registered_by', $user->id);
+
+        return $query->when($staffTypeId != null, fn($query) => $query->where('staff_type_id', $staffTypeId))
+            ->when($this->role != null, fn($query) => $query->whereHas('role', fn($q) => $q->where('name', $this->role)))
+            ->when($this->hasDownline !== null, function ($query) {
+                $hasDownline = filter_var($this->hasDownline, FILTER_VALIDATE_BOOLEAN);
+                return $hasDownline ? $query->has('staffReferrals') : $query->doesntHave('staffReferrals');
+            })
+            ->orderBy("firstname", "asc")->orderBy("lastname", "asc")->get();
     }
 
     public function get_admins()
@@ -218,6 +233,11 @@ class UserService
     public function totalUsersCommissions()
     {
         return User::select(DB::raw("SUM(commission) as total"))->get();
+    }
+
+    public function getStaffTypesCount()
+    {
+        return StaffTypeUserSummary::all()->keyBy('staff_type_name')->toArray();
     }
 
     public function save($data, $user_id = null)
