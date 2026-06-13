@@ -254,6 +254,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::post('/{id}', [JobAdvertController::class, "update"]);
         Route::delete('/{id}', [JobAdvertController::class, "delete"]);
         Route::get('/{id}', [JobAdvertController::class, "show"]);
+        Route::patch('/toggle_open/{id}', [JobAdvertController::class, "toggleIsOpen"]);
     });
 
     Route::group(['middleware' => 'userAuth', 'prefix' => '/notifications'], function () {

@@ -26,7 +26,7 @@ class JobAdvertResource extends JsonResource
             "slots" => $this->slots,
             "deadline" => $this->deadline,
             "description" => $this->description,
-            "isOpen" => $this->is_open,
+            "isOpen" => $this->is_open == 1,
             "openedOn" => $this->opened_on,
         ];
         /*

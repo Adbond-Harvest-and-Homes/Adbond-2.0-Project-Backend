@@ -3,15 +3,16 @@
 namespace app\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+use app\Http\Requests\BaseRequest;
 
-class UpdateJobAdvert extends FormRequest
+class UpdateJobAdvert extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +23,13 @@ class UpdateJobAdvert extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "title" => "nullable|string|min:3|max:255",
+            "departmentId" => "nullable|exists:departments,id",
+            "employmentTypeId" => "nullable|exists:employment_types,id",
+            "location" => "nullable|string|max:255",
+            "slots" => "nullable|integer|min:1",
+            "deadline" => "nullable|date",
+            "description" => "nullable|string",
         ];
     }
 }

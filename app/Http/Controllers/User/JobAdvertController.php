@@ -23,7 +23,7 @@ class JobAdvertController extends Controller
 
     public function index(Request $request)
     {
-        $this->service->isOpen = $request->query('isOpen', 1);
+        $this->service->isOpen = $request->query('isOpen') ?? null;
         $this->service->departmentId = $request->query('departmentId', null);
         $this->service->employmentTypeId = $request->query('employmentTypeId', null);
 
@@ -43,7 +43,7 @@ class JobAdvertController extends Controller
 
     public function save(CreateJobAdvert $request)
     {
-        $data = Helpers::formatRequestToSnake($request->validated());
+        $data = Helpers::formatRequestToSnake($request);
         // $data = collect($request->validated())->mapWithKeys(function ($value, $key) {
         //     return [Str::snake($key) => $value];
         // })->all();
@@ -60,6 +60,18 @@ class JobAdvertController extends Controller
         // })->all();
         $advert = $this->service->update($id, $data);
         return Utilities::ok(new JobAdvertResource($advert));
+    }
+
+    public function toggleIsOpen(int $id)
+    {
+        try {
+            $advert = $this->service->toggleOpen($id);
+            return Utilities::ok(new JobAdvertResource($advert));
+        } catch (AppException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return Utilities::error($e, "An Error Occurred while attempting to toggle Advert Open");
+        }
     }
 
     public function delete(int $id)
