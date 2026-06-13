@@ -8,6 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use app\Http\Resources\PackageResource;
 use app\Http\Resources\FileResource;
 use app\Http\Resources\ClientBriefResource;
+use app\Http\Resources\ClientBondResource;
 
 use app\Enums\ClientPackageOrigin;
 
@@ -24,6 +25,7 @@ class AssetResource extends JsonResource
     {
         return [
             "id" => $this->id,
+            "type" => $this->origin,
             "client" => new ClientBriefResource($this->whenLoaded("client")),
             "package" => $this->package->name,
             "media" => FileResource::collection($this->package->media),
@@ -54,6 +56,9 @@ class AssetResource extends JsonResource
             "onOffer" => $this->onOffer(),
             "doaUploaded" => ($this->doa()) ? true : false,
             "files" => FileResource::collection($this->files),
+            "bond" => $this->when($this->origin == ClientPackageOrigin::BOND->value, function() { 
+                return ($this?->purchase) ? new ClientBondResource($this->purchase) : null;
+            }),
             // "returns" => $this->investmentReturns()
         ];
     }
@@ -81,11 +86,11 @@ class AssetResource extends JsonResource
 
     private function amountPaid()
     {
-        if($this->purchase_complete==0) {
+        // if($this->purchase_complete==0) {
             if($this->origin == ClientPackageOrigin::INVESTMENT->value) return $this->purchase->order->amount_payed;
             return $this->purchase?->amount_payed;
-        }
-        return $this->amount;
+        // }
+        // return $this->amount;
     }
 
     private function balance()
@@ -167,10 +172,11 @@ class AssetResource extends JsonResource
     private function status()
     {
         $status = "pending";
-        if($this->origin == ClientPackageOrigin::INVESTMENT->value) {
-            if($this->purchase->order->completed == 1) $status = "completed";
-        }else{
+        $orderOfferOrigins = [ClientPackageOrigin::ORDER->value, ClientPackageOrigin::OFFER->value];
+        if(in_array($this->origin, $orderOfferOrigins)) {
             if($this->purchase->completed == 1) $status = "completed";
+        }else{
+            if($this->purchase->order->completed == 1) $status = "completed";
         }
         return $status;
     }

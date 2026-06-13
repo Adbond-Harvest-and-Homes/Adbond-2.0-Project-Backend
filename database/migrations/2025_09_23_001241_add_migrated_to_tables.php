@@ -15,11 +15,16 @@ return new class extends Migration
         Schema::table('tables', function (Blueprint $table) {
             // Get all table names in the current database
             // $tables = DB::connection()->getDoctrineSchemaManager()->listTableNames();
-            $dbName = DB::getDatabaseName();
-            $tables = DB::table('information_schema.tables')
-            ->where('table_schema', $dbName)
-            ->where('table_type', 'BASE TABLE') // ✅ only base tables
-            ->pluck('table_name');
+            if (DB::connection()->getDriverName() === 'sqlite') {
+                $tables = collect(DB::select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"))
+                    ->pluck('name');
+            } else {
+                $dbName = DB::getDatabaseName();
+                $tables = DB::table('information_schema.tables')
+                ->where('table_schema', $dbName)
+                ->where('table_type', 'BASE TABLE') // ✅ only base tables
+                ->pluck('table_name');
+            }
 
             foreach ($tables as $table) {
                 // Skip Laravel's migrations table to avoid breaking

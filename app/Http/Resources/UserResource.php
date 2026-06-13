@@ -10,6 +10,9 @@ use app\Http\Resources\ClientBriefResource;
 use app\Http\Resources\StaffTypeResource;
 use app\Http\Resources\RoleResource;
 use app\Http\Resources\FileResource;
+use app\Http\Resources\OrderResource;
+use app\Http\Resources\PaymentResource;
+use app\Http\Resources\UserHistoryResource;
 
 use app\Models\Role;
 
@@ -35,7 +38,8 @@ class UserResource extends JsonResource
             'profilePhoto' => new FileResource($this->photo),
             'role' => new RoleResource($this->role),
             'staffType' => new StaffTypeResource($this->staffType),
-            'referer_code' => $this->referer_code,
+            'refererCode' => $this->referer_code,
+            'staffRefererCode' => $this->staff_referer_code,
             'phoneNumber' => $this->phone_number,
             'address' => $this->address,
             'gender' => $this->gender,
@@ -43,16 +47,30 @@ class UserResource extends JsonResource
             // 'country' => ($this->country) ? $this->country->name : null,
             'address' => $this->address,
             'maritalStatus' => $this->marital_status,
-            'registeredBy' => new UserBriefResource($this->registerer),
-            // 'clients' => ClientBriefResource::collection($this->clients),
-            // 'sales' => OrderSalesResource::collection($this->sales),
+            "downlines" => $this->staffReferrals->count(),
+            "lastActivityDate" => $this->whenLoaded('lastActivity', function () {
+                return $this->lastActivity->created_at->diffForHumans();
+            }),
+            'registeredBy' => new UserBriefResource($this->whenLoaded('registerer')),
+            'clientsCount' => $this->whenCounted('clients'),
+            'clients' => ClientBriefResource::collection($this->whenLoaded('clients')),
+            'salesAmount' => $this->whenLoaded('sales', function () {
+                return $this->sales->sum('amount_payable');
+            }),
+            'histories' => UserHistoryResource::collection($this->whenLoaded('histories')),
+            'conversionRate' => $this->conversion_rate,
+            'clientTransactions' => PaymentResource::collection($this->whenLoaded("clientTransactions")),
+            'sales' => OrderResource::collection($this->whenLoaded("clientOrders")),
             // 'commission' => $this->commission(),
             // 'commission_before_tax' => $this->beforeTax(),
-            'commission_balance' => $this->commission_balance,
-            'date_joined' => $this->date_joined,
+            "totalCommissionEarned" => $this->whenLoaded('commissionEarnings', function () {
+                return $this->commissionEarnings()->sum("commission_after_tax");
+            }),
+            'commissionBalance' => $this->commission_balance,
+            'dateJoined' => $this->date_joined,
             // 'rating' => new StaffRatingResource($this->rating()),
             'ratingOpen' => (Utilities::isMidYear(date('Y-m-d')) || Utilities::isEndYear(date('Y-m-d'))) ? true : false,
-            'canRate' => ($this->role && ($this->role->id==Role::HR()?->id || $this->role->id==Role::SuperAdmin()?->id)) ? true : false,
+            'canRate' => ($this->role && ($this->role->id == Role::HR()?->id || $this->role->id == Role::SuperAdmin()?->id)) ? true : false,
             // 'commission_tax' => Helpers::companyInfo()->commission_tax,
             'bank' => $this->bank?->name,
             'accountNumber' => $this->account_number,

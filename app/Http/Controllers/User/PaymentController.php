@@ -3,12 +3,17 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use app\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
+
+use app\Exceptions\AppException;
 
 use app\Http\Requests\User\ConfirmPayment;
 use app\Http\Requests\User\DeclinePayment;
+use app\Http\Requests\User\GenerateReceipt;
 
 use app\Http\Resources\PaymentResource;
 
@@ -21,89 +26,77 @@ use app\Services\OrderService;
 use app\Services\CommissionService;
 use app\Services\ClientPackageService;
 use app\Services\ClientInvestmentService;
+use app\Services\NotificationService;
+
+use app\Domain\Payments\Context\PaymentConfirmationContext;
+use app\Domain\Payments\Events\PaymentProcessed;
+use app\Domain\Payments\Events\PaymentCompleted;
+
+use app\Domain\Payments\Pipelines\Stages\ReferralCommissionStage;
+use app\Domain\Payments\Pipelines\PostConfirmationStages\OrderUpdateStage;
 
 use app\Enums\PackageType;
 use app\Enums\UserType;
+use app\Enums\ClientPackageOrigin;
 // use app\Enums\PaymentMode;
 
 use app\Utilities;
 
 class PaymentController extends Controller
 {
+    private $userActivityLogService;
+
     private $paymentService;
     private $orderService;
     private $commissionService;
     private $clientPackageService;
     private $clientInvestmentService;
+    private $notificationService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->paymentService = new PaymentService;
         $this->orderService = new OrderService;
         $this->commissionService = new CommissionService;
         $this->clientPackageService = new ClientPackageService;
         $this->clientInvestmentService = new ClientInvestmentService;
+        $this->notificationService = new NotificationService;
     }
 
     public function confirm(ConfirmPayment $request)
     {
+        DB::beginTransaction();
         try{
-            DB::beginTransaction();
-            $payment = $this->paymentService->getPayment($request->validated("paymentId"));
-            if(!$payment) return Utilities::error402("Payment not found");
+            $context = new PaymentConfirmationContext($request->validated());
 
-            if($payment->confirmed === 0) return Utilities::error402("This Payment has been rejected, let another request be made");
-            if($payment->confirmed === 1) return Utilities::error402("This Payment is already Confirmed");
+            Utilities::logStuff("Started confirmation process");
+            $payment = $this->paymentService->confirm($context->payment);
+            Utilities::logStuff("Finished confirmation process");
 
-            $payment = $this->paymentService->confirm($payment);
+            event(new PaymentCompleted($context));
 
-            $order = $payment->purchase;
-            // dd($payment->purchase);
-            // update order table to reflect amount_payed and balance;
-            // $order = $this->orderService->saveAmountPaid($order, $payment->amount);
-            // $data['paymentStatusId'] = ($order->balance <= 0) ? PaymentStatus::complete()->id : PaymentStatus::deposit()->id;
-            // $data['installmentsPayed'] = $order->installments_payed+1;
-            if($payment->payment_mode_id == PaymentMode::bankTransfer()->id) $data['amountPayed'] = $payment->amount;
-            if($order->is_installment == 1 && $order->amount_per_installment && $payment->amount != $order->amount_per_installment) {
-                $data['updateInstallment'] = true;
-            }
-            $order = $this->orderService->update($data, $order);
-
-            // update staff commission
-            $referrer = $payment->client->referer;
-            if(($order->is_installment==0 || ($order->installments_payed < 2 || $order->payment_status_id==PaymentStatus::complete()->id)) && $payment->client->referer) {
-                // calculate the bonus/commission for the referer and save it
-                if($order->payment_status_id==PaymentStatus::complete()->id && $payment->client->referer_type == UserType::CLIENT->value) {
-                    $this->commissionService->saveClientEarning($payment->client->referer, $order);
-                }
-                if($payment->client->referer_type == UserType::USER->value) {
-                    $this->commissionService->save($payment->client->referer, $order);
-                }
-            }
-
-            $this->paymentService->uploadReceipt($payment, $payment->client); 
-            if($order->is_installment == 0 || $order->installments_payed == $order->installment_count) {
-                $this->orderService->completeOrder($order, $payment);
-            }else{
-                if($order->installments_payed == 1) {
-                    if($order->package->type==PackageType::INVESTMENT->value) {
-                        $clientInvestment = $this->clientInvestmentService->getByOrderId($order->id);
-                        if($clientInvestment) $this->clientPackageService->saveClientPackageInvestment($clientInvestment);
-                    }else{
-                        $this->clientPackageService->saveClientPackageOrder($order);
-                    }
-                }
-            }
+            Event::dispatch(new PaymentProcessed($context));
 
             DB::commit();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Confirmed Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok([
                 "message" => "payment has been Confirmed",
                 "payment" => new PaymentResource($payment)
             ]);
+        }catch(AppException $e){
+            DB::rollBack();
+            throw $e;
         }catch(\Exception $e){
             DB::rollBack();
-            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+            return Utilities::error($e, 'An error occurred while trying to confirm payment, Please try again later or contact support');
         }
     }
 
@@ -116,8 +109,22 @@ class PaymentController extends Controller
             $payment = $this->paymentService->reject($payment, $request->validated("message"));
 
             if($payment->purchase_type == Order::$type && $payment->purchase->is_installment == 1) {
-                $installmentsPayed = $payment->purchase->installments_payed - 1;
-                $this->orderService->update(['installmentsPayed' => $installmentsPayed], $payment->purchase);
+                $isFirstPayment = !\app\Models\Payment::where('purchase_id', $payment->purchase_id)
+                    ->where('purchase_type', $payment->purchase_type)
+                    ->where('id', '<', $payment->id)
+                    ->exists();
+
+                if ($isFirstPayment) {
+                    $installmentsPayed = max(0, $payment->purchase->installments_payed - 1);
+                    $this->orderService->update(['installmentsPayed' => $installmentsPayed], $payment->purchase);
+                }
+            }
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
             }
 
             return Utilities::ok([
@@ -137,11 +144,43 @@ class PaymentController extends Controller
 
             $payment = $this->paymentService->flag($payment, $request->validated("message"));
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Flagged Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok([
                 "message" => "payment has been Flagged",
                 "payment" => new PaymentResource($payment)
             ]);
         }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
+    }
+
+    public function generateReceipt(GenerateReceipt $request)
+    {
+        try{
+            $payment = $this->paymentService->getPayment($request->validated("paymentId"));
+            if(!$payment) return Utilities::error402("Payment not found");
+            
+            $oldReceiptFile = $payment->paymentReceipt;
+
+            $file = $this->paymentService->uploadReceipt($payment);
+            if($file) $this->paymentService->update(['receiptFileId' => $file->id], $payment);
+            if($oldReceiptFile) $oldReceiptFile->delete();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Generated Payment Receipt");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Payment Receipt Generated Successfully");
+        } catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }

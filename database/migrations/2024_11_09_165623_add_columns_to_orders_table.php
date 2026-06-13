@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->boolean("completed")->default(false)->after("payment_status_id");
-            $table->integer("installments_payed")->nullable()->after("installment_count");
+            if (!Schema::hasColumn('orders', 'completed')) {
+                $table->boolean("completed")->default(false)->after("payment_status_id");
+            }
+            if (!Schema::hasColumn('orders', 'installments_payed')) {
+                $table->integer("installments_payed")->nullable()->after("installment_count");
+            }
         });
     }
 

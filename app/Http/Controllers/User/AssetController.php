@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
@@ -23,12 +24,15 @@ use app\Utilities;
 
 class AssetController extends Controller
 {
+    private $userActivityLogService;
+
     private $assetService;
     private $clientPackageService;
     private $fileService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->assetService = new AssetService;   
         $this->clientPackageService = new ClientPackageService;
         $this->fileService = new FileService;
@@ -48,6 +52,13 @@ class AssetController extends Controller
             if($res['status'] != 200) return Utilities::error402('Sorry file could not be uploaded: '.$res['message']);
 
             $asset = $this->assetService->saveDoa($res['file']->id, $asset);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Saved Asset Deed of Assignment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return new AssetResource($asset);
         }catch(\Exception $e){

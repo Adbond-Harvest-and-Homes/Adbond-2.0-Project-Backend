@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 use app\Http\Resources\ProjectResource;
@@ -28,6 +30,8 @@ use app\Enums\MetricDuration;
 
 class IndexController extends Controller
 {
+    private $userActivityLogService;
+
     private $projectTypeService;
     private $projectService;
     private $clientService;
@@ -38,6 +42,7 @@ class IndexController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->projectTypeService = new ProjectTypeService;
         $this->projectService = new ProjectService;
         $this->clientService = new ClientService;

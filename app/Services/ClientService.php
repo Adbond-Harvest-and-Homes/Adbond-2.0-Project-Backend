@@ -9,9 +9,16 @@ use PDF;
 
 use Illuminate\Support\Facades\DB;
 
+use app\Jobs\GenerateContract;
+use app\Jobs\GenerateMOU;
+use app\Jobs\GenerateReceipt;
+
 use app\Services\AgeGroupService;
+use app\Services\PackageService;
+use app\Services\ClientPackageService;
 
 use app\Models\Client;
+use app\Models\Offer;
 use app\Models\ClientNextOfKin;
 use app\Models\ClientSummaryView;
 use app\Models\ClientCommissionEarning;
@@ -21,6 +28,7 @@ use app\Exports\ClientExport;
 
 use app\Enums\KYCStatus;
 use app\Enums\ActiveToggle;
+use app\Enums\ClientPackageOrigin;
 use app\Helpers;
 
 /**
@@ -177,6 +185,9 @@ class ClientService
                 $client->update();
             }
         }
+
+        if($client->kyc_status == KYCStatus::COMPLETED->value) $this->uploadDocs($client);
+        
         return $client;
     }
 
@@ -184,6 +195,39 @@ class ClientService
     {
         $client->password =  bcrypt($password);
         $client->update();
+    }
+
+    public function uploadDocs($client)
+    {
+        $paymentService = new PaymentService;
+        $clientPackageService = new ClientPackageService;
+        //upload receipts
+        $payments = $paymentService->getClientPayments($client->id);
+        if($payments->count() > 0) {
+            foreach($payments as $payment) {
+                if(!$payment->receipt_file_id) {
+                    GenerateReceipt::dispatch($payment->id, false);
+                    // $paymentService->uploadReceipt($payment, $client);
+                    // $payment->docs_uploaded == 1;
+                    // $payment->update();
+                }
+            }
+        }
+
+        $assets = $clientPackageService->clientAssets($client->id);
+        if($assets->count() > 0) {
+            foreach($assets as $asset) {
+                switch($asset->purchase_type) {
+                    case ClientPackageOrigin::ORDER->value : 
+                        $isOffer = ($asset->purchase_type == Offer::$type);
+                        GenerateContract::dispatch($asset->id, $isOffer, false);
+                        break;
+                    case ClientPackageOrigin::INVESTMENT->value : 
+                        if($asset?->purchase) GenerateMOU::dispatch($asset->purchase_id, false);
+                        break;
+                }
+            }
+        }
     }
 
     public function saveGoogleUser($data)

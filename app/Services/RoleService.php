@@ -17,7 +17,7 @@ class RoleService
     public function roles()
     {
         $roles = cache()->remember('roles', 60 * 5, function () {
-            return Role::all();
+            return Role::where("id", "!=", Role::SuperAdmin()->id)->get();
         });
         return $roles;
     }

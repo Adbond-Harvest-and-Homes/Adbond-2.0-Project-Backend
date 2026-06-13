@@ -111,7 +111,7 @@ class CommissionService
 
     public function save($user, $order)
     {
-        if($user->staffType && $user->staffType->name=="e-staff") {
+        if($user->staffType && $user->staffType->name==StaffTypes::VIRTUAL_STAFF->value) {
             $staff = $user->registerer;
         }
         $commission = $this->addDirectCommission($user, $order);
@@ -133,6 +133,12 @@ class CommissionService
     {
         $totalEarning = StaffTotalEarningView::where("user_id", $userId)->first();
         return ($totalEarning) ? $totalEarning->total_earnings : 0;
+    }
+
+    public function getTotalStaffIndirectEarnings($userId)
+    {
+        $totalEarning = StaffTotalEarningView::where("user_id", $userId)->first();
+        return ($totalEarning) ? $totalEarning->total_indirect_earnings : 0;
     }
 
     public function getTotalStaffRedemptions($userId)
@@ -304,7 +310,7 @@ class CommissionService
         $commission->commission_amount = $taxCommission['beforeTax'];
         $commission->commission = $commissionPercentage;
         $commission->commission_after_tax = (float)$taxCommission['afterTax'];
-        $commission->type = StaffCommissionType::DIRECT->value;
+        $commission->type = StaffCommissionType::INDIRECT->value;
         $commission->save();
 
         return $commission;

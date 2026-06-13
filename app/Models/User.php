@@ -10,6 +10,14 @@ use Laravel\Sanctum\HasApiTokens;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
+use app\Services\StaffTypeService;
+use app\Services\UserHistoryService;
+
+use app\Models\Order;
+
+use app\Enums\RefererCodePrefix;
+use app\Utilities;
+
 class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -40,7 +48,8 @@ class User extends Authenticatable implements JWTSubject
      *
      * @return mixed
      */
-    public function getJWTIdentifier() {
+    public function getJWTIdentifier()
+    {
         return $this->getKey();
     }
 
@@ -49,7 +58,8 @@ class User extends Authenticatable implements JWTSubject
      *
      * @return array
      */
-    public function getJWTCustomClaims() {
+    public function getJWTCustomClaims()
+    {
         return [];
     }
 
@@ -71,8 +81,8 @@ class User extends Authenticatable implements JWTSubject
     public function getNameAttribute()
     {
         $fullname = '';
-        if($this->firstname && !empty($this->firstname)) $fullname .= $this->firstname.' ';
-        if($this->lastname && !empty($this->lastname)) $fullname .= $this->lastname.' ';
+        if ($this->firstname && !empty($this->firstname)) $fullname .= $this->firstname . ' ';
+        if ($this->lastname && !empty($this->lastname)) $fullname .= $this->lastname . ' ';
         return $fullname;
     }
 
@@ -101,10 +111,81 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(User::class, "registered_by", "id");
     }
 
-    public function clientReferrals(): MorphMany
+    public function clients(): MorphMany
     {
         return $this->morphMany(Client::class, 'referer');
     }
+
+    /**
+     * Get all the transactions for the user's clients.
+     */
+    public function clientTransactions()
+    {
+        return $this->hasManyThrough(
+            Payment::class,
+            Client::class,
+            'referer_id',     // Foreign key on intermediate table (clients)
+            'client_id',      // Foreign key on final table (orders)
+            'id',             // Local key on users table
+            'id'              // Local key on clients table
+        )->where('clients.referer_type', self::$userType)->where('purchase_type', Order::$type);
+    }
+
+    /**
+     * Get all the orders for the user's clients.
+     */
+    public function clientOrders()
+    {
+        return $this->hasManyThrough(
+            Order::class,
+            Client::class,
+            'referer_id',     // Foreign key on intermediate table (clients)
+            'client_id',      // Foreign key on final table (orders)
+            'id',             // Local key on users table
+            'id'              // Local key on clients table
+        )->where('clients.referer_type', self::$userType);
+    }
+
+    public function sales()
+    {
+        return $this->clientOrders()->where("completed", 1);
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(UserActivityLog::class);
+    }
+
+    public function lastActivity()
+    {
+        return $this->hasOne(UserActivityLog::class)->latestOfMany();
+    }
+
+    public function getConversionRateAttribute()
+    {
+        if ($this->relationLoaded('clients')) {
+            $totalClients = $this->clients->count();
+            if ($totalClients === 0) {
+                return 0;
+            }
+
+            $clientsWithOrders = $this->clients->filter(function ($client) {
+                return $client->relationLoaded('orders')
+                    ? $client->orders->isNotEmpty()
+                    : $client->orders()->exists();
+            })->count();
+        } else {
+            $totalClients = $this->clients()->count();
+            if ($totalClients === 0) {
+                return 0;
+            }
+
+            $clientsWithOrders = $this->clients()->whereHas('orders')->count();
+        }
+
+        return round(($clientsWithOrders / $totalClients) * 100, 2);
+    }
+
 
     /**
      * Get all commission earnings for the user
@@ -150,8 +231,8 @@ class User extends Authenticatable implements JWTSubject
     {
         $ids = [];
         // dd($this->likedPosts()->pluck("posts.id")->toArray());
-        if($this->likedPosts()->count() > 0) {
-            foreach($this->likedPosts() as $post) $ids[] = $post->id;
+        if ($this->likedPosts()->count() > 0) {
+            foreach ($this->likedPosts() as $post) $ids[] = $post->id;
         }
         return $ids;
     }
@@ -170,8 +251,8 @@ class User extends Authenticatable implements JWTSubject
     public function likedCommentIds()
     {
         $ids = [];
-        if($this->likedComments()->count() > 0) {
-            foreach($this->likedComments() as $comment) $ids[] = $comment->id;
+        if ($this->likedComments()->count() > 0) {
+            foreach ($this->likedComments() as $comment) $ids[] = $comment->id;
         }
         return $ids;
     }
@@ -190,8 +271,8 @@ class User extends Authenticatable implements JWTSubject
     public function dislikedPostIds()
     {
         $ids = [];
-        if($this->dislikedPosts()->count() > 0) {
-            foreach($this->dislikedPosts() as $post) $ids[] = $post->id;
+        if ($this->dislikedPosts()->count() > 0) {
+            foreach ($this->dislikedPosts() as $post) $ids[] = $post->id;
         }
         return $ids;
     }
@@ -210,9 +291,57 @@ class User extends Authenticatable implements JWTSubject
     public function dislikedCommentIds()
     {
         $ids = [];
-        if($this->dislikedComments()->count() > 0) {
-            foreach($this->dislikedComments() as $comment) $ids[] = $comment->id;
+        if ($this->dislikedComments()->count() > 0) {
+            foreach ($this->dislikedComments() as $comment) $ids[] = $comment->id;
         }
         return $ids;
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(UserHistory::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            $prefix = RefererCodePrefix::USER->value;
+
+            if (empty($user->referer_code)) {
+                do {
+                    $suffix = Utilities::generateRandomString(8);
+                    $code = $prefix . $suffix;
+                    $exists = self::where('referer_code', $code)->exists();
+                } while ($exists);
+
+                $user->referer_code = $code;
+                $user->staff_referer_code = $suffix;
+            } else {
+                if (str_starts_with($user->referer_code, $prefix)) {
+                    $suffix = substr($user->referer_code, strlen($prefix));
+                } else {
+                    $suffix = trim($user->referer_code);
+                    $user->referer_code = $prefix . $suffix;
+                }
+
+                if (empty($user->staff_referer_code)) {
+                    $user->staff_referer_code = $suffix;
+                }
+            }
+        });
+
+        static::updated(function ($user) {
+
+            if ($user->wasChanged('staff_type_id')) {
+                $oldStaffType = app(StaffTypeService::class)->getStaffType($user->getOriginal('staff_type_id'));
+                $newStaffType = app(StaffTypeService::class)->getStaffType($user->staff_type_id);
+
+                $action = "Staff type changed from " . ($oldStaffType->name ?? 'none') . " to " . ($newStaffType->name ?? 'none');
+
+                app(UserHistoryService::class)->addHistory($user->id, $action);
+            }
+        });
     }
 }

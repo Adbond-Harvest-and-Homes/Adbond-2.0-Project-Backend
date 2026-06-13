@@ -4,6 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+use app\Enums\Measurement;
+
 return new class extends Migration
 {
     /**
@@ -15,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string("type");
             $table->double("discount");
+            $table->string("discount_measurement")->default(Measurement::PERCENTAGE->value);
             $table->timestamps();
         });
     }

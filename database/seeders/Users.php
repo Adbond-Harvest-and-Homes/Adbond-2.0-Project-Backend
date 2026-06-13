@@ -30,6 +30,16 @@ class Users extends Seeder
                 "phone_number" => "08035033581",
                 "activated" => 1,
             ],
+            [
+                "firstname" => "Development",
+                "lastname" => "Admin",
+                "email" => "adbond-dev@gmail.com",
+                "password" =>  bcrypt("#dev02"),
+                "role_id" => Role::SuperAdmin()->id,
+                "referer_code" => Utilities::generateRandomString(5),
+                "phone_number" => "08035033581",
+                "activated" => 1,
+            ],
         ];
 
         foreach($users as $user) { //dd($user['name']);
@@ -44,7 +54,7 @@ class Users extends Seeder
                 $userObj->referer_code = $user['referer_code'];
                 $userObj->phone_number = $user['phone_number'];
                 $userObj->activated = $user['activated'];
-                $userObj->staff_type_id = StaffType::FullStaff()?->id;
+                $userObj->staff_type_id = StaffType::PhysicalStaff()?->id;
                 $userObj->email_verified_at = now();
                 $userObj->save();
             }

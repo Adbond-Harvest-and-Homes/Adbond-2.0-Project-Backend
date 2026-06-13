@@ -20,7 +20,9 @@ return new class extends Migration
             $table->morphs('entity');
             $table->timestamps();
         });
-        DB::statement("ALTER TABLE reactions CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE reactions CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;");
+        }
     }
 
     /**
