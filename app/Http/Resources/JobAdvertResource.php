@@ -20,6 +20,7 @@ class JobAdvertResource extends JsonResource
         return [
             "id" => $this->id,
             "title" => $this->title,
+            "slug" => $this->slug,
             "department" => new DepartmentResource($this->department),
             "employmentType" => new EmploymentTypeResource($this->employmentType),
             "location" => $this->location,
