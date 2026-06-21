@@ -3,6 +3,7 @@
 namespace app\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use app\Http\Requests\BaseRequest;
 
 class UpdateJobAdvert extends BaseRequest
@@ -23,7 +24,13 @@ class UpdateJobAdvert extends BaseRequest
     public function rules(): array
     {
         return [
-            "title" => "nullable|string|min:3|max:255",
+            "title" => [
+                "nullable",
+                "string",
+                "min:3",
+                "max:255",
+                Rule::unique("job_adverts", "title")->ignore($this->route("id"))
+            ],
             "departmentId" => "nullable|exists:departments,id",
             "employmentTypeId" => "nullable|exists:employment_types,id",
             "location" => "nullable|string|max:255",

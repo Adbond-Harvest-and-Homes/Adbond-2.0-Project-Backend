@@ -23,7 +23,7 @@ class CreateJobAdvert extends BaseRequest
     public function rules(): array
     {
         return [
-            "title" => "required|string|min:3|max:255",
+            "title" => "required|string|min:3|max:255|unique:job_adverts,title",
             "departmentId" => "required|exists:departments,id",
             "employmentTypeId" => "required|exists:employment_types,id",
             "location" => "nullable|string|max:255",

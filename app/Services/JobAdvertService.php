@@ -6,6 +6,8 @@ use app\Exceptions\AppException;
 
 use app\Models\JobAdvert;
 
+use app\Helpers;
+
 class JobAdvertService
 {
     public $isOpen = true;
@@ -25,9 +27,15 @@ class JobAdvertService
         return JobAdvert::find($id);
     }
 
+    public function getBySlug(string $slug)
+    {
+        return JobAdvert::where("slug", $slug)->when($this->isOpen, fn($query) => $query->where("is_open", $this->isOpen))->first();
+    }
+
     public function save(array $data)
     {
-        return JobAdvert::create($data);
+        $data['slug'] = Helpers::createSlug($data['title']);
+        return JobAdvert::firstOrCreate($data);
     }
 
     public function update(int $id, array $data)

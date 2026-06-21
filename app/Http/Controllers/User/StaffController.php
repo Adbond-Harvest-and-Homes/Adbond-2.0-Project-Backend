@@ -75,7 +75,7 @@ class StaffController extends Controller
     public function update(UpdateUser $request, $userId)
     {
         try {
-            if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
+            if (!is_numeric($userId)) return Utilities::error402("Invalid parameter userId");
 
             $user = $this->userService->getUser($userId);
             if (!$user) return Utilities::error402("User not found");
@@ -98,7 +98,7 @@ class StaffController extends Controller
 
     public function reset($userId)
     {
-        if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
+        if (!is_numeric($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId);
         if (!$user) return Utilities::error402("User not found");
@@ -154,7 +154,7 @@ class StaffController extends Controller
 
     public function user(int $userId)
     {
-        if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
+        if (!is_numeric($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId, ['histories']);
         if (!$user) return Utilities::error402("User not found");
@@ -218,7 +218,7 @@ class StaffController extends Controller
     {
         if (Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");
 
-        if (!is_numeric($userId) || !ctype_digit($userId)) return Utilities::error402("Invalid parameter userId");
+        if (!is_numeric($userId)) return Utilities::error402("Invalid parameter userId");
 
         $user = $this->userService->getUser($userId);
         if (!$user) return Utilities::error402("User not found");

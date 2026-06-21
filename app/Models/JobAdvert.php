@@ -11,6 +11,19 @@ class JobAdvert extends Model
 
     protected $guarded = [];
 
+    protected $fillable = [
+        "title",
+        "slug",
+        "department_id",
+        "employment_type_id",
+        "location",
+        "slots",
+        "deadline",
+        "description",
+        "is_open",
+        "opened_on"
+    ];
+
     protected static function boot()
     {
         parent::boot();
