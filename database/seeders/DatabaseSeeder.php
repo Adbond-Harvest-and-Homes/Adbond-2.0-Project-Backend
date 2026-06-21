@@ -32,6 +32,8 @@ use Database\Seeders\BankAccounts;
 use Database\Seeders\AddRefererUserCode;
 use Database\Seeders\Ghana;
 use Database\Seeders\LoadPackageStates;
+use Database\Seeders\Departments;
+use Database\Seeders\EmploymentTypes;
 
 class DatabaseSeeder extends Seeder
 {
@@ -69,11 +71,13 @@ class DatabaseSeeder extends Seeder
             // new WalletSeeder,
             new BankAccounts,
             // new Ghana,
-            new LoadPackageStates
+            new LoadPackageStates,
             // new AddRefererUserCode
+            new Departments,
+            new EmploymentTypes,
+
         ];
 
-        foreach($seeders as $seeder) $seeder->run();
-
+        foreach ($seeders as $seeder) $seeder->run();
     }
 }

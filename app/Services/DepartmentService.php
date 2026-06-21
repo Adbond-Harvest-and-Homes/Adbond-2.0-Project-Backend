@@ -20,7 +20,7 @@ class DepartmentService
 
     public function save(array $data)
     {
-        return Department::create($data);
+        return Department::firstOrCreate($data);
     }
 
     public function update(int $id, array $data)

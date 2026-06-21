@@ -20,7 +20,7 @@ class EmploymentTypeService
 
     public function save(array $data)
     {
-        return EmploymentType::create($data);
+        return EmploymentType::firstOrCreate($data);
     }
 
     public function update(int $id, array $data)
