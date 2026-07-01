@@ -39,7 +39,7 @@ class ReferralCommissionStage
             }
             
             if ($refererType == UserType::USER->value) {
-                $commissionService->save($referer, $context->order);
+                $commissionService->save($referer, $context->order, $context->isFirstPayment);
             }
         }
 

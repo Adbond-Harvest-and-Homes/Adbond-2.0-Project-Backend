@@ -37,6 +37,12 @@ class UpdateJobAdvert extends BaseRequest
             "slots" => "nullable|integer|min:1",
             "deadline" => "nullable|date",
             "description" => "nullable|string",
+            "requirements" => "nullable|array",
+            "requirements.*" => "required|integer|exists:job_requirements,id",
+            "responsibilities" => "nullable|array",
+            "responsibilities.*" => "required|integer|exists:job_responsibilities,id",
+            "benefits" => "nullable|array",
+            "benefits.*" => "required|integer|exists:job_benefits,id",
         ];
     }
 }

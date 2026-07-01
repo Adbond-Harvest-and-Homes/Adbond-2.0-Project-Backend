@@ -11,6 +11,7 @@ use app\Models\Bank;
 use app\Models\ResellOrder;
 use app\Models\BankAccount;
 use app\Models\Identification;
+use app\Models\VirtualStaffCategory;
 
 use app\Helpers;
 use app\Utilities;
@@ -46,9 +47,9 @@ class UtilityService
         return Bank::all();
     }
 
-    public function bankAccounts($active=null)
+    public function bankAccounts($active = null)
     {
-        if(!$active) return BankAccount::all();
+        if (!$active) return BankAccount::all();
         return BankAccount::where("active", $active)->get();
     }
 
@@ -62,4 +63,8 @@ class UtilityService
         return Identification::all();
     }
 
+    public function VirtualStaffCategories()
+    {
+        return VirtualStaffCategory::all();
+    }
 }

@@ -311,9 +311,9 @@ class UserService
         $user = new User;
         $user->staff_type_id = StaffType::VirtualStaff()->id;
         // $user->role_id = Role::ClientRelation()->id;
-        $user->password = bcrypt('123456');
+        $user->password = bcrypt('password');
         $user->firstname = $virtualStaffAssessment->firstname;
-        $user->lastname = $virtualStaffAssessment->lastname;
+        $user->lastname = $virtualStaffAssessment->lastname ?? $virtualStaffAssessment->surname;
         $user->email = $virtualStaffAssessment->email;
         $user->phone_number = $virtualStaffAssessment->phone_number;
         $user->address = $virtualStaffAssessment->address;
@@ -321,9 +321,15 @@ class UserService
         // $user->occupation = $virtualStaffAssessment->occupation;
         $user->referer_code = Utilities::generateRandomString(5);
         $user->date_joined = date('Y-m-d');
-        if ($virtualStaffAssessment->referal_code && $virtualStaffAssessment->referal_code != null) {
-            $referer = $this->getUserByRefererCode($virtualStaffAssessment->referal_code);
-            $user->registered_by = $referer->id;
+
+        $referralCode = $virtualStaffAssessment->referral_code ?? $virtualStaffAssessment->referal_code;
+        if ($referralCode && $referralCode != null) {
+            $referer = $this->getUserByRefererCode($referralCode);
+            if ($referer) {
+                $user->registered_by = $referer->id;
+            } else {
+                $user->registered_by = Helpers::selectVirtualStaffParent();
+            }
         } else {
             // Select a parent for e-staff;
             $user->registered_by = Helpers::selectVirtualStaffParent();

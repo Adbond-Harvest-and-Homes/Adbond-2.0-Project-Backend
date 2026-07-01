@@ -7,6 +7,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 use app\Http\Resources\DepartmentResource;
 use app\Http\Resources\EmploymentTypeResource;
+use app\Http\Resources\JobBenefitResource;
+use app\Http\Resources\JobRequirementResource;
+use app\Http\Resources\JobResponsibilityResource;
 
 class JobAdvertResource extends JsonResource
 {
@@ -29,6 +32,9 @@ class JobAdvertResource extends JsonResource
             "description" => $this->description,
             "isOpen" => $this->is_open == 1,
             "openedOn" => $this->opened_on,
+            "benefits" => JobBenefitResource::collection($this->whenLoaded('benefits')),
+            "requirements" => JobRequirementResource::collection($this->whenLoaded('requirements')),
+            "responsibilities" => JobResponsibilityResource::collection($this->whenLoaded('responsibilities'))
         ];
         /*
             $table->id();

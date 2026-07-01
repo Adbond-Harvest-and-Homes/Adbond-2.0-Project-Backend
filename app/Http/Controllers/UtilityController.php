@@ -14,6 +14,7 @@ use app\Http\Resources\CountryResource;
 use app\Http\Resources\StateResource;
 use app\Http\Resources\DepartmentResource;
 use app\Http\Resources\EmploymentTypeResource;
+use app\Http\Resources\VirtualStaffCategoryResource;
 
 use app\Services\UtilityService;
 use app\Services\CountryService;
@@ -98,5 +99,12 @@ class UtilityController extends Controller
         $types = $this->employmentTypeService->getTypes();
 
         return Utilities::ok(EmploymentTypeResource::collection($types));
+    }
+
+    public function virtualStaffCategories()
+    {
+        $categories = $this->utilityService->VirtualStaffCategories();
+
+        return Utilities::ok(VirtualStaffCategoryResource::collection($categories));
     }
 }

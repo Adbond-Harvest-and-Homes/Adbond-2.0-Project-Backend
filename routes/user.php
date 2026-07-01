@@ -38,6 +38,7 @@ use app\Http\Controllers\UtilityController;
 use app\Http\Controllers\User\ClientBondController;
 use app\Http\Controllers\User\DocumentTypeController;
 use app\Http\Controllers\User\JobAdvertController;
+use app\Http\Controllers\User\JobController;
 
 //User/Admin/Staff Routes
 Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'User',], function () {
@@ -240,6 +241,10 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::post('/upload_/{id}', [ClientBondController::class, "uploadDocuments"]);
     });
 
+    Route::group(['prefix' => '/commissions'], function () {
+        Route::get('', [ReferralController::class, "referralEarnings"]);
+    });
+
     Route::group(['middleware' => 'hrAuth', 'prefix' => '/admin_referrals'], function () {
         Route::get('', [ReferralController::class, "referralCommissions"]);
         Route::get('/earnings/{staffId}', [ReferralController::class, "referralEarnings"]);
@@ -255,6 +260,30 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::delete('/{id}', [JobAdvertController::class, "delete"]);
         Route::get('/{id}', [JobAdvertController::class, "show"]);
         Route::patch('/toggle_open/{id}', [JobAdvertController::class, "toggleIsOpen"]);
+    });
+
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/job_benefits'], function () {
+        Route::get('', [JobController::class, "getBenefits"]);
+        Route::post('', [JobController::class, "saveBenefit"]);
+        Route::get('/{id}', [JobController::class, "getBenefit"]);
+        Route::patch('/{id}', [JobController::class, "updateBenefit"]);
+        Route::delete('/{id}', [JobController::class, "deleteBenefit"]);
+    });
+
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/job_requirements'], function () {
+        Route::get('', [JobController::class, "getRequirements"]);
+        Route::post('', [JobController::class, "saveRequirement"]);
+        Route::get('/{id}', [JobController::class, "getRequirement"]);
+        Route::patch('/{id}', [JobController::class, "updateRequirement"]);
+        Route::delete('/{id}', [JobController::class, "deleteRequirement"]);
+    });
+
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/job_responsibilities'], function () {
+        Route::get('', [JobController::class, "getResponsibilities"]);
+        Route::post('', [JobController::class, "saveResponsibility"]);
+        Route::get('/{id}', [JobController::class, "getResponsibility"]);
+        Route::patch('/{id}', [JobController::class, "updateResponsibility"]);
+        Route::delete('/{id}', [JobController::class, "deleteResponsibility"]);
     });
 
     Route::group(['middleware' => 'userAuth', 'prefix' => '/notifications'], function () {
@@ -320,6 +349,12 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::post('/{assessmentId}', [UserAssessmentController::class, "update"]);
         Route::get('/{assessmentId}', [UserAssessmentController::class, "assessment"]);
         Route::delete('/{assessmentId}', [UserAssessmentController::class, "delete"]);
+    });
+
+    Route::group(['middleware' => 'hrAuth', 'prefix' => '/applications'], function () {
+        Route::get('', [AssessmentAttemptController::class, "applications"]);
+        Route::post('/approve/{attemptId}', [AssessmentAttemptController::class, "approve"]);
+        Route::post('/reject/{attemptId}', [AssessmentAttemptController::class, "reject"]);
     });
 
     // analytics

@@ -18,16 +18,19 @@ class StaffCommissionEarningResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "name" => $this->getName(),
+            "client" => $this->getName(),
             "userType" => ($this->type == StaffCommissionType::DIRECT->value) ? "Client" : "Staff",
             "type" => $this->type,
-            "amount" => $this->commission_after_tax
+            "amount" => $this->amount,
+            "earning" => $this->commission_after_tax,
+            "commission" => $this->commission,
+            "commissionType" => ($this->order->is_installment == 0) ? "Outright" : (($this->balance == 1) ? "Installment(balance)" : "Installment(initial)"),
         ];
     }
 
     private function getName()
     {
-        if($this->type == StaffCommissionType::DIRECT->value) return $this->order?->client?->name;
+        if ($this->type == StaffCommissionType::DIRECT->value) return $this->order?->client?->name;
         return $this->order?->client?->referer?->name;
     }
 }

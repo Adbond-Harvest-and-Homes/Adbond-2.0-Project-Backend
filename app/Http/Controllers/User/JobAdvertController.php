@@ -34,7 +34,7 @@ class JobAdvertController extends Controller
 
     public function show(int $id)
     {
-        $advert = $this->service->getAdvert($id);
+        $advert = $this->service->getAdvert($id, ['benefits', 'requirements', 'responsibilities']);
 
         if (!$advert) return Utilities::error402("Advert not found");
 
@@ -49,6 +49,7 @@ class JobAdvertController extends Controller
         // })->all();
 
         $advert = $this->service->save($data);
+        $advert->load(['benefits', 'requirements', 'responsibilities']);
         return Utilities::ok(new JobAdvertResource($advert));
     }
 

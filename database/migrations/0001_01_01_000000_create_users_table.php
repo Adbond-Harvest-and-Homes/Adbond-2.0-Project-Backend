@@ -44,6 +44,7 @@ return new class extends Migration
             $table->string('account_number')->nullable();
             $table->string('account_name')->nullable();
             $table->foreignId('bank_id')->nullable();
+            $table->foreignId('virtual_staff_category_id')->nullable();
             $table->date('date_joined')->nullable();
             $table->rememberToken();
             $table->timestamps();

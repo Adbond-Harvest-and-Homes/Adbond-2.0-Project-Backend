@@ -13,6 +13,7 @@ use app\Http\Resources\FileResource;
 use app\Http\Resources\OrderResource;
 use app\Http\Resources\PaymentResource;
 use app\Http\Resources\UserHistoryResource;
+use app\Http\Resources\VirtualStaffCategoryResource;
 
 use app\Models\Role;
 
@@ -51,6 +52,7 @@ class UserResource extends JsonResource
             "lastActivityDate" => $this->whenLoaded('lastActivity', function () {
                 return $this->lastActivity->created_at->diffForHumans();
             }),
+            "virtualStaffCategory" => new VirtualStaffCategoryResource($this->virtualStaffCategory),
             'registeredBy' => new UserBriefResource($this->whenLoaded('registerer')),
             'clientsCount' => $this->whenCounted('clients'),
             'clients' => ClientBriefResource::collection($this->whenLoaded('clients')),

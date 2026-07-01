@@ -106,6 +106,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo("app\Models\User", "registered_by", "id");
     }
 
+    public function virtualStaffCategory()
+    {
+        return $this->belongsTo(VirtualStaffCategory::class, "category_id", "id");
+    }
+
     public function staffReferrals()
     {
         return $this->hasMany(User::class, "registered_by", "id");

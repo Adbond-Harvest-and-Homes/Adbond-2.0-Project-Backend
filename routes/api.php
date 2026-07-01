@@ -132,6 +132,7 @@ Route::group(['prefix' => '/v2',], function () {
         Route::get('states/{countryId}', [UtilityController::class, 'states']);
         Route::get('departments', [UtilityController::class, 'departments']);
         Route::get('employment_types', [UtilityController::class, 'employmentTypes']);
+        Route::get('virtual_staff_categories', [UtilityController::class, 'virtualStaffCategories']);
     });
 
 
