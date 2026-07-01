@@ -42,7 +42,7 @@ class AssessmentAttemptController extends Controller
         if (!$assessment) return Utilities::error402("Assessment not found");
 
         return Utilities::ok(
-            new AssessmentAttemptResource($assessment)
+            new AssessmentResource($assessment)
         );
     }
 
