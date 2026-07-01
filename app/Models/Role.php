@@ -41,7 +41,7 @@ class Role extends Model
         return self::where('name', Roles::OPERATION_ACCOUNTING->value)->first();
     }
 
-    public static function CustomerManagement()
+    public static function ContentManagement()
     {
         return self::where('name', Roles::CONTENT_MANAGEMENT->value)->first();
     }

@@ -47,6 +47,7 @@ class CommissionService
 
     public function saveClientEarning($client, $order)
     {
+        $order->refresh();
         $fee = DeductibleFee::where("name", "commission tax")->first();
         $commissionTax = $fee ? $fee->percentage : 0;
         $clientCommissionRate = ClientCommissionRate::first();
@@ -114,6 +115,7 @@ class CommissionService
 
     public function save($user, $order, $isFirstPayment = false)
     {
+        $order->refresh();
         if ($user->staffType && $user->staffType->name == StaffTypes::VIRTUAL_STAFF->value) {
             $staff = $user->registerer;
         }
@@ -305,7 +307,7 @@ class CommissionService
     private function addIndirectCommission($user, $order, $isFirstPayment = false)
     {
         $staffType = ($user->staffType) ? $user->staffType : null;
-        $amount = $order->amount;
+        $amount = $order->amount_payed;
         $commissionPercentage = ($order->is_installment == 0) ? $this->getCommissionPercentage($staffType, 0) : $this->getCommissionInstallmentPercentage($staffType, 0);
 
         $taxCommission = $this->taxCommission($commissionPercentage, $amount);

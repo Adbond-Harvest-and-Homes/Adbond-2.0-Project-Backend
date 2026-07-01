@@ -37,37 +37,37 @@ class OrderController extends Controller
 
     public function prepareOrder(PrepareOrder $request)
     {
-        try{
+        try {
             $data = $request->validated();
 
             $package = $this->packageService->package($data['packageId']);
-            if(!$package) return Utilities::error402("Package was not found");
+            if (!$package) return Utilities::error402("Package was not found");
 
-            if($package->type == PackageType::INVESTMENT->value) {
-                if(!isset($data['redemptionOption'])) return Utilities::error402("You must select a redemption option");
-                if($data['redemptionOption'] == InvestmentRedemptionOption::PROFIT_ONLY->value || $data['redemptionOption'] == InvestmentRedemptionOption::PROPERTY->value) {
+            if ($package->type == PackageType::INVESTMENT->value) {
+                if (!isset($data['redemptionOption'])) return Utilities::error402("You must select a redemption option");
+                if ($data['redemptionOption'] == InvestmentRedemptionOption::PROFIT_ONLY->value || $data['redemptionOption'] == InvestmentRedemptionOption::PROPERTY->value) {
                     // if(!isset($data['redemptionPackageId'])) return Utilities::error402("You must select the redemption package");
                     $data['redemptionPackageId'] = $package->redemption_package_id;
                 }
             }
 
-            if($package->available_units < $data['units']) return Utilities::error402("Available Units is not up to ".$data['units']);
+            if ($package->available_units < $data['units']) return Utilities::error402("Available Units is not up to " . $data['units']);
 
             $promoCodeDiscount = null;
-            if(isset($data['promoCode'])) {
+            if (isset($data['promoCode'])) {
                 $res = $this->promoCodeService->validatePromoCode($data['promoCode'], $package);
-                if(!$res['valid']) return Utilities::error402("This Promo code is not valid");
+                if (!$res['valid']) return Utilities::error402("This Promo code is not valid");
                 $promoCodeDiscount = $res['discount'];
             }
 
             // $promoCodeDiscount = (isset($data['promoCode'])) ? $this->promoCodeService->validatePromoCode($data['promoCode'], $package)['discount'] : null;
             $promos = $this->promoService->getPromos($package, Auth::guard('client')->user());
             $processingData = ["amount" => ($package->amount * $data['units']), "isInstallment" => $data['isInstallment'], "packageType" => $package->type];
-            if($data['isInstallment']) $processingData['duration'] = $data['installmentCount'];
+            if ($data['isInstallment']) $processingData['duration'] = $data['installmentCount'];
             $amountDetail = $this->orderService->getPayable($processingData, $promos, $promoCodeDiscount);
 
             $processingId  = (isset($data['processingId'])) ? $data['processingId'] : Utilities::getOrderProcessingId();
-            
+
             $data['amountDetail'] = $amountDetail;
 
             // if($data['isInstallment']) {
@@ -79,7 +79,7 @@ class OrderController extends Controller
 
             $data['amountPayable'] = ($data['isInstallment']) ? $data['amount'] : $amountDetail['amount'];
             // Cache this data to be used to complete the order processing
-            if(isset($data['processingId'])) Cache::forget('order_processing_' . $processingId);
+            if (isset($data['processingId'])) Cache::forget('order_processing_' . $processingId);
             Cache::put('order_processing_' . $processingId, $data, now()->addHours(12));
 
             $processedData = Cache::get('order_processing_' . $processingId);
@@ -94,7 +94,7 @@ class OrderController extends Controller
                 "amountPayable" => $data['amountPayable'],
                 "appliedDiscounts" => $amountDetail
             ]);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred while trying to perform this operation, Please try again later or contact support');
         }
     }

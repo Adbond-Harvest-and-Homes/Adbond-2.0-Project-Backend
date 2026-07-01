@@ -55,7 +55,7 @@ class DatabaseSeeder extends Seeder
             new Roles,
             new StaffTypes,
             // new States,
-            new Users,
+            // new Users,
             // new Projects,
             // new Packages,
             // new Promos,

@@ -74,9 +74,9 @@ class PaymentController extends Controller
             $payment = $this->paymentService->confirm($context->payment);
             Utilities::logStuff("Finished confirmation process");
 
-            event(new PaymentCompleted($context));
-
             Event::dispatch(new PaymentProcessed($context));
+
+            event(new PaymentCompleted($context));
 
             DB::commit();
 

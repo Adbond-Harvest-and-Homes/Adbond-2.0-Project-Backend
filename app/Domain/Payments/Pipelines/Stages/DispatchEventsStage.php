@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 
 use app\Domain\Payments\Context\PaymentContext;
 
+use app\Domain\Payments\Events\PaymentProcessed;
 use app\Domain\Payments\Events\PaymentCompleted;
 use app\Domain\Payments\Events\ReceiptGenerated;
 use app\Domain\Orders\Events\OrderActivated;
@@ -21,7 +22,10 @@ class DispatchEventsStage implements PaymentStage
         
         // Dispatch events AFTER the pipeline completes successfully
 
-        if ($context->payment->confirmed || $context->payment->success) Event::dispatch(new PaymentCompleted($context));
+        if ($context->payment->confirmed || $context->payment->success) {
+            Event::dispatch(new PaymentProcessed($context));
+            Event::dispatch(new PaymentCompleted($context));
+        }
         
         return $result;
     }
