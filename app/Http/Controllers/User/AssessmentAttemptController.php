@@ -13,6 +13,7 @@ use app\Http\Requests\User\SubmitAssessment;
 use app\Http\Requests\User\ApproveAssessmentAttempt;
 
 use app\Http\Resources\AssessmentAttemptResource;
+use app\Http\Resources\AssessmentResource;
 
 use app\Services\AssessmentAttemptService;
 use app\Services\AssessmentService;
@@ -32,6 +33,15 @@ class AssessmentAttemptController extends Controller
         $this->userActivityLogService = new UserActivityLogService;
         $this->assessmentAttemptService = new AssessmentAttemptService;
         $this->assessmentService = new AssessmentService;
+    }
+
+    public function activeAssessment()
+    {
+        $assessment = $this->assessmentService->activeAssessment();
+
+        return Utilities::ok(
+            new AssessmentAttemptResource($assessment)
+        );
     }
 
     public function start(StartAssessment $request)
