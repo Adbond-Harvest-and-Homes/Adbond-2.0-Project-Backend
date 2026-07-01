@@ -77,7 +77,7 @@ Route::group(['prefix' => '/v2',], function () {
     });
 
     Route::group(['prefix' => '/assessments'], function () {
-        Route::get('active', [AssessmentAttemptController::class, "activeAssessment"]);
+        Route::get('/active', [AssessmentAttemptController::class, "activeAssessment"]);
         Route::post('/start', [AssessmentAttemptController::class, "start"]);
         Route::post('/update', [AssessmentAttemptController::class, "update"]);
         Route::post('/submit', [AssessmentAttemptController::class, "submit"]);

@@ -39,6 +39,8 @@ class AssessmentAttemptController extends Controller
     {
         $assessment = $this->assessmentService->activeAssessment();
 
+        if (!$assessment) return Utilities::error402("Assessment not found");
+
         return Utilities::ok(
             new AssessmentAttemptResource($assessment)
         );
