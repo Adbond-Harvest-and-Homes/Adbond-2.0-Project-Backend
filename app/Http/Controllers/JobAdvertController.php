@@ -31,7 +31,7 @@ class JobAdvertController extends Controller
     {
         $this->service->isOpen = true;
 
-        $advert = $this->service->getBySlug($slug);
+        $advert = $this->service->getBySlug($slug, ['benefits', 'requirements', 'responsibilities']);
 
         if (!$advert) return Utilities::error402("Advert not found");
 
