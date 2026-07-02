@@ -40,7 +40,6 @@ class StaffTypeService
 
     public function getStaffTypeByName($name)
     {
-        return StaffType::role($name);
+        return StaffType::where("name", $name)->first();
     }
-
 }
