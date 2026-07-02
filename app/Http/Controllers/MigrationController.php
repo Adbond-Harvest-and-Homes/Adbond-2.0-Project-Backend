@@ -170,11 +170,11 @@ class MigrationController extends Controller
             // if(!$this->newsMigration->migrated) $this->news();
             // if(!$this->reactionsMigration->migrated) $this->reactions();
 
-            // if(!$this->projectsMigration->migrated) $this->projects();
+            if(!$this->projectsMigration->migrated) $this->projects();
             
-            if(!$this->nextOfKinMigration->migrated) $this->nextOfKins();
+            // if(!$this->nextOfKinMigration->migrated) $this->nextOfKins();
             // if(!$this->inspectionDaysMigration->migrated) $this->siteTours();
-            if(!$this->userCommissionsMigration->migrated) $this->userCommissions();
+            // if(!$this->userCommissionsMigration->migrated) $this->userCommissions();
             
             // if(!$this->promosMigration->migrated) $this->promos();
 

@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
@@ -21,11 +22,14 @@ use app\Utilities;
 
 class CommentController extends Controller
 {
+    private $userActivityLogService;
+
     private $commentService;
     private $reactionService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->commentService = new CommentService;
         $this->reactionService = new ReactionService;
     }
@@ -39,6 +43,13 @@ class CommentController extends Controller
             $data['commenterType'] = User::$userType;
 
             $comment = $this->commentService->save($data);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added/Saved Comment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new CommentResource($comment));
         }catch(\Exception $e){
@@ -54,7 +65,14 @@ class CommentController extends Controller
 
         $this->commentService->delete($comment);
 
-        return Utilities::okay("Comment Deleted");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Comment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Comment Deleted");
     }
 
     public function react(React $request)
@@ -72,6 +90,13 @@ class CommentController extends Controller
             $reaction = $this->reactionService->userReaction($data['userId'], $data['userType'], $data['entityId'], $data['entityType']);
 
             $reaction = $this->reactionService->save($data, $reaction);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Reacted to Comment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Successful");
             

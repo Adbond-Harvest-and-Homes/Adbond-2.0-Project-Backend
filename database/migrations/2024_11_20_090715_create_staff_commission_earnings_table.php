@@ -21,6 +21,7 @@ return new class extends Migration
             $table->double("tax");
             $table->double("commission_after_tax");
             $table->string("type");
+            $table->boolean("balance")->default(true);
             $table->timestamps();
         });
     }

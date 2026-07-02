@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string("address")->nullable();
             $table->string("gender")->nullable();
             $table->string("occupation")->nullable();
+            $table->foreignId("category_id");
             $table->string("referral_code")->nullable();
             $table->double("score")->nullable();
             $table->double("cut_off_mark")->nullable();
@@ -31,6 +32,9 @@ return new class extends Migration
             $table->integer("time_used")->nullable();
             $table->boolean("cancelled")->default(false);
             $table->boolean("disqualified")->default(false);
+            $table->boolean("approved")->nullable();
+            $table->foreignId("treated_by")->nullable();
+            $table->string("review_note")->nullable();
             $table->timestamps();
         });
     }

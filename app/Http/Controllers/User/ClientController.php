@@ -12,6 +12,7 @@ use app\Http\Resources\ClientResource;
 use app\Http\Resources\ClientSummaryResource;
 
 use app\Http\Requests\User\UpdateClient;
+use app\Http\Requests\User\AddClient;
 
 use app\Services\ClientService;
 use app\Services\FileService;
@@ -90,7 +91,28 @@ class ClientController extends Controller
         return Utilities::ok(new ClientResource($client));
     }
 
-    public function update(UpdateClient $request, $clientId)
+    public function AddClient(AddClient $request)
+    {
+        try{
+            $data = $request->validated();
+
+            $data['emailVerifiedAt'] = now();
+            $client = $this->clientService->save($data);
+
+            
+            try {
+                $this->activityLogService->log(Auth::user(), "Added Client");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new ClientResource($client));
+        }catch(\Exception $e){
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
+    }
+
+    public function update(UpdateClient $request, int $clientId)
     {
         try{
             DB::beginTransaction();
@@ -129,6 +151,28 @@ class ClientController extends Controller
         }
     }
 
+    public function delete($clientId)
+    {
+        if (!is_numeric($clientId) || !ctype_digit($clientId)) return Utilities::error402("Invalid parameter clientID");
+
+        $client = $this->clientService->getClient($clientId);
+
+        if(!$client) return Utilities::error402("Client not found");
+
+        if($client->assets->count() > 0) return Utilities::error402("This client already has assets, so he/she cannot be deleted");
+
+        $this->clientService->delete($client);
+
+        
+            try {
+                $this->activityLogService->log(Auth::user(), "Deleted Client");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Client Deleted Successfully");
+    }
+
 
     private function savePhoto($file, $client)
     {
@@ -153,6 +197,13 @@ class ClientController extends Controller
 
             // $clients = [$clients];
             // $clients = collect($clients);
+
+            
+            try {
+                $this->activityLogService->log(Auth::user(), "Exported Clients list");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return $this->clientService->exportToPDF($clients);
 

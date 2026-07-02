@@ -23,7 +23,8 @@ class PrepareAdditionalPayment extends BaseRequest
     public function rules(): array
     {
         return [
-            "assetId" => "required|integer"
+            "assetId" => "required|integer",
+            "amount" => "required|numeric"
         ];
     }
 }

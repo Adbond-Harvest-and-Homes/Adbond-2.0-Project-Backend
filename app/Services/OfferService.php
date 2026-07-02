@@ -106,7 +106,7 @@ class OfferService
 
         if($this->clientId) {
             if($this->mine) {
-                $query->$query->where("client_id", $this->clientId);
+                $query->where("client_id", $this->clientId);
             }else{
                 $query = $query->whereHas("acceptedBid", function($bidQuery) {
                     $bidQuery->where("client_id", $this->clientId);
@@ -115,6 +115,8 @@ class OfferService
         }
         
         $query = $query->whereNotNull("resell_order_id")->orWhere("payment_status_id", PaymentStatus::complete()->id);
+
+        return $query->get();
     }
 
     public function getOffersByAssetId($clientPackageId)
