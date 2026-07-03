@@ -34,7 +34,7 @@ class AssessmentAttemptService
         if (isset($data['occupation'])) $attempt->occupation = $data['occupation'];
         if (isset($data['referralCode'])) $attempt->referral_code = $data['referralCode'];
         if (isset($data['cutOffMark'])) $attempt->cut_off_mark = $data['cutOffMark'];
-        $attempt->total_question = $data['totalQuestions'];
+        $attempt->total_questions = $data['totalQuestions'];
         $attempt->started_at = now();
 
         $attempt->save();
