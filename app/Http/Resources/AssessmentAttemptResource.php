@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use app\Http\Resources\AssessmentResource;
 use app\Http\Resources\AssessmentAttemptAnswerResource;
 use app\Http\Resources\VirtualStaffCategoryResource;
-use App\Http\Resources\UserResource;
+use app\Http\Resources\UserResource;
 
 class AssessmentAttemptResource extends JsonResource
 {
