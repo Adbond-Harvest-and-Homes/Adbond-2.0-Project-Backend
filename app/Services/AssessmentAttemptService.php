@@ -66,8 +66,8 @@ class AssessmentAttemptService
                 $assessmentAnswer->question_id = $answer['questionId'];
                 $assessmentAnswer->answer = $optionService->option($answer['selectedOptionId'])?->value;
                 $assessmentAnswer->question = $question->question;
-                $assessmentAnswer->correct_answer = $question->correctOption->value;
-                $assessmentAnswer->correct = ($answer['selectedOptionId'] == $question->correctOption->id) ? true : false;
+                $assessmentAnswer->correct_answer = $question->correctOption()->value;
+                $assessmentAnswer->correct = ($answer['selectedOptionId'] == $question->correctOption()->id) ? true : false;
                 $assessmentAnswer->save();
 
                 if ($assessmentAnswer->correct == 1) $correctAnswers++;
