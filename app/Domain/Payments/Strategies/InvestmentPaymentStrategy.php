@@ -14,13 +14,14 @@ use app\Domain\Payments\Pipelines\StrategyStages\{
 };
 
 use app\Domain\Payments\Context\PaymentContext;
-use App\Utilities;
+use app\Utilities;
 
 class InvestmentPaymentStrategy implements PaymentStrategy
 {
     private $stages;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->stages = [
             new OrderUpdateStage,
             new SaveInvestmentStage,
@@ -36,8 +37,8 @@ class InvestmentPaymentStrategy implements PaymentStrategy
         Utilities::logStuff("Executing Investment Strategy");
 
         return app(Pipeline::class)
-        ->send($context)
-        ->through($this->stages)
-        ->thenReturn();
+            ->send($context)
+            ->through($this->stages)
+            ->thenReturn();
     }
 }

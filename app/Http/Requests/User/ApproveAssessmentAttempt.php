@@ -3,7 +3,7 @@
 namespace app\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Http\Requests\BaseRequest;
+use app\Http\Requests\BaseRequest;
 
 class ApproveAssessmentAttempt extends BaseRequest
 {

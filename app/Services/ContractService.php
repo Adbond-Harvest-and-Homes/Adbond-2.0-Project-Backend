@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace app\Services;
 
@@ -20,28 +20,28 @@ use app\Models\ClientInvestment;
 use app\Models\Order;
 
 use app\Helpers;
-use App\Utilities;
+use app\Utilities;
 
-class ContractService 
+class ContractService
 {
-    public function generateContract($order, $isOffer, $preparedData=null)
+    public function generateContract($order, $isOffer, $preparedData = null)
     {
         $file = "files/contract_{$order->id}.pdf";
         $publicFile = public_path($file);
 
-        if(file_exists($publicFile)) return $file;
-        
-        if($isOffer) Helpers::$purchaseOrigin = ClientPackageOrigin::OFFER->value;
+        if (file_exists($publicFile)) return $file;
+
+        if ($isOffer) Helpers::$purchaseOrigin = ClientPackageOrigin::OFFER->value;
         $data = ($preparedData) ? $preparedData : Helpers::prepareContract($order);
-        if(!isset($data['project']) || $data['project']==null) $data['project'] = '';
-        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
-        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
-        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
-        if(!isset($data['state']) || $data['state']==null) $data['state'] = '';
-        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
-        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
-        if(!isset($data['installment_duration']) || $data['installment_duration']==null) $data['installment_duration'] = 12;
-        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        if (!isset($data['project']) || $data['project'] == null) $data['project'] = '';
+        if (!isset($data['package']) || $data['package'] == null) $data['package'] = '';
+        if (!isset($data['client']) || $data['client'] == null) $data['client'] = '';
+        if (!isset($data['address']) || $data['address'] == null) $data['address'] = '';
+        if (!isset($data['state']) || $data['state'] == null) $data['state'] = '';
+        if (!isset($data['size']) || $data['size'] == null) $data['size'] = '';
+        if (!isset($data['price']) || $data['price'] == null) $data['price'] = '';
+        if (!isset($data['installment_duration']) || $data['installment_duration'] == null) $data['installment_duration'] = 12;
+        $data['location'] = (!isset($data['location']) || $data['location'] == null) ? '' : $data['location'];
         $pdfData = [
             'image' => public_path('images/logo.PNG'),
             'day' => date('jS'),
@@ -63,7 +63,7 @@ class ContractService
         ];
         $pdf = PDF::loadView('pdf/contract', $pdfData);
         // return $pdf->stream('contract.pdf');
-        
+
         // $path = public_path($publicFile);
         $pdf->save($publicFile);
         return $file;
@@ -76,28 +76,34 @@ class ContractService
         $uploadedFile = "files/contract_{$purchase->id}.pdf";
         $publicFile = public_path($uploadedFile);
         // dd('generate Contract');
-        if(!file_exists($publicFile)) {
-            if($asset->contract_file_id) return null;
+        if (!file_exists($publicFile)) {
+            if ($asset->contract_file_id) return null;
 
             $uploadedFile = $this->generateContract($purchase, ($asset->purchase_type != Order::$type));
         }
 
         DB::beginTransaction();
-        try{
-            $response = Helpers::moveUploadedFileToCloud($uploadedFile, FileTypes::PDF->value, $asset->client->id, 
-                                FilePurpose::CONTRACT->value, UserType::CLIENT->value, "client-contracts");
-            if($response['success']) {
-                $fileMeta = ["belongsId"=>$asset->id, "belongsType"=>ClientPackage::$type];
+        try {
+            $response = Helpers::moveUploadedFileToCloud(
+                $uploadedFile,
+                FileTypes::PDF->value,
+                $asset->client->id,
+                FilePurpose::CONTRACT->value,
+                UserType::CLIENT->value,
+                "client-contracts"
+            );
+            if ($response['success']) {
+                $fileMeta = ["belongsId" => $asset->id, "belongsType" => ClientPackage::$type];
                 $fileService->updateFileObj($fileMeta, $response['upload']['file']);
 
                 $clientPackageService->update(['contractFileId' => $response['upload']['file']->id], $asset);
-                
+
                 // dd("got here");
                 $asset->markDocUploaded();
                 DB::commit();
                 return $uploadedFile;
             }
-        }catch(\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             Utilities::error($e);
@@ -111,18 +117,18 @@ class ContractService
         $file = "files/memorandum_agreement_{$order->id}.pdf";
         $publicFile = public_path($file);
 
-        if(file_exists($publicFile)) return $file;
+        if (file_exists($publicFile)) return $file;
 
         $data = Helpers::prepareContract($order);
-        if(!isset($data['project']) || $data['project']==null) $data['project'] = '';
-        if(!isset($data['package']) || $data['package']==null) $data['package'] = '';
-        if(!isset($data['client']) || $data['client']==null) $data['client'] = '';
-        if(!isset($data['address']) || $data['address']==null) $data['address'] = '';
-        if(!isset($data['state']) || $data['state']==null) $data['state'] = '';
-        if(!isset($data['size']) || $data['size']==null) $data['size'] = '';
-        if(!isset($data['price']) || $data['price']==null) $data['price'] = '';
-        if(!isset($data['installment_duration']) || $data['installment_duration']==null) $data['installment_duration'] = 12;
-        $data['location'] = (!isset($data['location']) || $data['location']==null) ? '' : $data['location'];
+        if (!isset($data['project']) || $data['project'] == null) $data['project'] = '';
+        if (!isset($data['package']) || $data['package'] == null) $data['package'] = '';
+        if (!isset($data['client']) || $data['client'] == null) $data['client'] = '';
+        if (!isset($data['address']) || $data['address'] == null) $data['address'] = '';
+        if (!isset($data['state']) || $data['state'] == null) $data['state'] = '';
+        if (!isset($data['size']) || $data['size'] == null) $data['size'] = '';
+        if (!isset($data['price']) || $data['price'] == null) $data['price'] = '';
+        if (!isset($data['installment_duration']) || $data['installment_duration'] == null) $data['installment_duration'] = 12;
+        $data['location'] = (!isset($data['location']) || $data['location'] == null) ? '' : $data['location'];
         $pdfData = [
             'image' => public_path('images/logo.PNG'),
             'day' => date('jS'),
@@ -151,11 +157,11 @@ class ContractService
         $file = "files/bond_memorandum_agreement_{$order->id}.pdf";
         $publicFile = public_path($file);
 
-        if(file_exists($publicFile)) return $file;
+        if (file_exists($publicFile)) return $file;
         $bond = $order->clientBond;
 
         $projectAddress = $order?->package?->address;
-        $state = $order?->package?->state.' State';
+        $state = $order?->package?->state . ' State';
         $pdfData = [
             'image' => public_path('images/logo.PNG'),
             'contract_day' => date('jS'),
@@ -164,7 +170,7 @@ class ContractService
             'bond_owner_name' => ucfirst($order->client->full_name),
             'bond_owner_address' => $order->client?->address,
             'project_name' => $order?->package?->project?->name,
-            'project_location' => ($projectAddress) ? $projectAddress.', '.$state : $state,
+            'project_location' => ($projectAddress) ? $projectAddress . ', ' . $state : $state,
             'purchase_price' => $order->amount_payable,
             'payment_plan' => ($order->is_installment == 1) ? "Installments" : "Full Payment",
             'is_installment' => $order->is_installment,

@@ -3,17 +3,25 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Project;
-use App\Models\State;
-use App\Models\User;
-use App\Services\PackageService;
+use app\Models\Project;
+use app\Models\State;
+use app\Models\User;
+use app\Services\PackageService;
 use Illuminate\Support\Facades\Log;
 
 class Packages1 extends Seeder
 {
     private $packageTypes = [
-        'Premium', 'Standard', 'Deluxe', 'Executive', 'Classic',
-        'Elite', 'Comfort', 'Luxury', 'Basic', 'Superior'
+        'Premium',
+        'Standard',
+        'Deluxe',
+        'Executive',
+        'Classic',
+        'Elite',
+        'Comfort',
+        'Luxury',
+        'Basic',
+        'Superior'
     ];
 
     private $benefitsList = [
@@ -33,7 +41,7 @@ class Packages1 extends Seeder
         'School Nearby',
         'Hospital Nearby'
     ];
-    
+
     public function run(): void
     {
         $packageService = new PackageService;
@@ -81,7 +89,7 @@ class Packages1 extends Seeder
             ],
         ];
 
-        foreach($packages as $packageData) {
+        foreach ($packages as $packageData) {
             try {
                 $project = Project::whereName($packageData['project'])->first();
                 $state = State::whereName($packageData['state'])->first();
@@ -100,7 +108,7 @@ class Packages1 extends Seeder
                 $packageData['stateId'] = $state->id;
 
                 $existingPackage = $packageService->getByName($packageData['name'], $project->id);
-                
+
                 if (!$existingPackage) {
                     $packageService->save($packageData);
                     $this->command->info("Created package: {$packageData['name']}");
@@ -113,6 +121,4 @@ class Packages1 extends Seeder
             }
         }
     }
-
-    
 }

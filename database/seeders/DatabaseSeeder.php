@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use app\Models\Benefit;
 use app\Models\DeductibleFee;
-use App\Models\User;
+use app\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 

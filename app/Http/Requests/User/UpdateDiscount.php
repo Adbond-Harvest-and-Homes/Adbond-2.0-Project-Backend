@@ -28,7 +28,8 @@ class UpdateDiscount extends BaseRequest
     {
         return [
             "discount" => "required|numeric|max:100",
-            "measurement" => ["nullable", Rule::in(EnumClass::Measurements())]
+            "measurement" => ["nullable", Rule::in(EnumClass::Measurements())],
+            "installment" => "nullable|boolean"
         ];
     }
 }

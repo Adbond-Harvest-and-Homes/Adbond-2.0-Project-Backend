@@ -34,6 +34,22 @@ use app\Enums\Measurement;
 class OrderService
 {
 
+    private function getAppliedDiscountFromDiscountObj($discountObj, $discountedAmount)
+    {
+        $fullPaymentDiscount = $discountObj->discount;
+        $discountMeasurement = $discountObj->discount_measurement;
+        $isPercentage = $discountMeasurement == Measurement::PERCENTAGE->value;
+        $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount, $isPercentage);
+        $discountedAmount = $discountArr['amount'];
+        return [
+            "name" => "Full Payment Discount",
+            "type" => OrderDiscountType::FULL_PAYMENT->value,
+            "discount" => $fullPaymentDiscount,
+            "amount" => $discountArr['amount'],
+            "discountedAmount" => $discountArr['discountedAmount']
+        ];
+    }
+
     public function order($id, $with = [])
     {
         return Order::with($with)->where("id", $id)->first();
@@ -45,18 +61,19 @@ class OrderService
         $discountedAmount = $data['amount'];
         if ($data['packageType'] == PackageType::NON_INVESTMENT->value && !$data['isInstallment']) {
             $fullPaymentDiscountObj =  Discount::fullPayment();
-            $fullPaymentDiscount = $fullPaymentDiscountObj->discount;
-            $discountMeasurement = $fullPaymentDiscountObj->discount_measurement;
-            $isPercentage = $discountMeasurement == Measurement::PERCENTAGE->value;
-            $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount, $isPercentage);
-            $discountedAmount = $discountArr['amount'];
-            $appliedDiscounts[] = [
-                "name" => "Full Payment Discount",
-                "type" => OrderDiscountType::FULL_PAYMENT->value,
-                "discount" => $fullPaymentDiscount,
-                "amount" => $discountArr['amount'],
-                "discountedAmount" => $discountArr['discountedAmount']
-            ];
+            $appliedDiscounts[] = $this->getAppliedDiscountFromDiscountObj($fullPaymentDiscountObj, $discountedAmount);
+            // $fullPaymentDiscount = $fullPaymentDiscountObj->discount;
+            // $discountMeasurement = $fullPaymentDiscountObj->discount_measurement;
+            // $isPercentage = $discountMeasurement == Measurement::PERCENTAGE->value;
+            // $discountArr = Utilities::getDiscount($discountedAmount, $fullPaymentDiscount, $isPercentage);
+            // $discountedAmount = $discountArr['amount'];
+            // $appliedDiscounts[] = [
+            //     "name" => "Full Payment Discount",
+            //     "type" => OrderDiscountType::FULL_PAYMENT->value,
+            //     "discount" => $fullPaymentDiscount,
+            //     "amount" => $discountArr['amount'],
+            //     "discountedAmount" => $discountArr['discountedAmount']
+            // ];
         }
         if ($data['packageType'] == PackageType::NON_INVESTMENT->value && $data['isInstallment']) {
             $discountService = new DiscountService;
@@ -72,6 +89,12 @@ class OrderService
                     "discountedAmount" => $discountArr['discountedAmount']
                 ];
             }
+        }
+
+        //Bond Payment
+        if ($data['packageType'] == PackageType::BOND->value) {
+            $bondDiscountObj = ($data['isInstallment']) ? Discount::bondInstallment() : Discount::bond();
+            $appliedDiscounts[] = $this->getAppliedDiscountFromDiscountObj($bondDiscountObj, $discountedAmount);
         }
 
         if ($promoCodeDiscount) {
@@ -150,7 +173,7 @@ class OrderService
         if (isset($data['amountPayed'])) {
             $order->amount_payed += $data['amountPayed'];
         }
-        
+
         $order->balance = $order->amount_payable - $order->amount_payed;
         $balance = $order->balance;
 

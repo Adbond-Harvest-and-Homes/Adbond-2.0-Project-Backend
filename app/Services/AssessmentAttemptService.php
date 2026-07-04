@@ -9,10 +9,10 @@ use PDF;
 use app\Models\AssessmentAttempt;
 use app\Models\AssessmentAttemptAnswer;
 
-use App\Services\AssessmentQuestionService;
-use App\Services\AssessmentQuestionOptionService;
+use app\Services\AssessmentQuestionService;
+use app\Services\AssessmentQuestionOptionService;
 
-use App\Utilities;
+use app\Utilities;
 
 class AssessmentAttemptService
 {

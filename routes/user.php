@@ -292,8 +292,10 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     });
 
     Route::group(['prefix' => '/discounts'], function () {
-        Route::get('full_payment', [DiscountController::class, "fullPayment"]);
-        Route::post('full_payment/update', [DiscountController::class, "updateFullPayment"]);
+        Route::get('/full_payment', [DiscountController::class, "fullPayment"]);
+        Route::get('/bond', [DiscountController::class, "getBondDiscounts"]);
+        Route::post('/full_payment/update', [DiscountController::class, "updateFullPayment"]);
+        Route::post('/bond/update', [DiscountController::class, "updateBond"]);
         Route::get('/installments', [DiscountController::class, "installments"]);
         Route::post('/installments/update', [DiscountController::class, "updateInstallmentDiscounts"]);
         Route::post('/installments/add', [DiscountController::class, "addInstallmentDiscounts"]);

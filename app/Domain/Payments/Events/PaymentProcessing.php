@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-use App\Domain\Payments\Context\PaymentContext;
+use app\Domain\Payments\Context\PaymentContext;
 
 use app\Utilities;
 
@@ -23,7 +23,7 @@ class PaymentProcessing
      */
     public function __construct(public PaymentContext $context)
     {
-        Utilities::logStuff("Payment processing started for order: " . 
+        Utilities::logStuff("Payment processing started for order: " .
             ($context->order?->id ?? 'new order'));
     }
 

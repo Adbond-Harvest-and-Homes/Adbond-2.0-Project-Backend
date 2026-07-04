@@ -17,7 +17,7 @@ use app\Domain\Payments\Strategies\PaymentStrategy;
 use app\Enums\PackageType;
 
 use app\Services\PackageService;
-use App\Utilities;
+use app\Utilities;
 
 class PostPaymentListener
 {
@@ -38,7 +38,7 @@ class PostPaymentListener
         $context = $event->context;
         // Determine if we should deduct units
         // $shouldProcess = $context->order?->package && $context->payment->confirmed == 1;
-        
+
         // if ($shouldProcess) {
         //     $packageService = new PackageService;
         //     $packageService->deductUnits($context->order->units, $context->order->package);
@@ -59,7 +59,7 @@ class PostPaymentListener
             PackageType::NON_INVESTMENT->value => app(NonInvestmentPaymentStrategy::class),
             PackageType::BOND->value => app(BondPaymentStrategy::class)
         ];
-        
+
         $packageType = $context->package->type;
         return $strategies[$packageType] ?? $strategies[PackageType::NON_INVESTMENT->value];
     }

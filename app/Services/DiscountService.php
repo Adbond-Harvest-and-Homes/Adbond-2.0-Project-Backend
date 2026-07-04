@@ -26,23 +26,33 @@ class DiscountService
         return InstallmentDiscount::where("duration", $duration)->first();
     }
 
-    public function updateDiscount($type, $data)
+    public function getBondDiscounts()
     {
-        $discount = Discount::where("type", $type)->first();
-        $discount->discount = $data['discount'];
-        if(isset($data['measurement'])) $discount->discount_measurement = $data['measurement'];
-        $discount->update();
+        return Discount::where("type", DiscountType::BOND->value)->orWhere("type", DiscountType::BOND_INSTALLMENT->value)->get();
+    }
 
-        return $discount;
+    public function updateDiscount($data)
+    {
+        return Discount::firstOrCreate([
+            "type" => $data['type'],
+            "discount" => $data['discount'],
+            "discount_measurement" => $data['measurement']
+        ]);
+        // $discount = Discount::where("type", $type)->first();
+        // $discount->discount = $data['discount'];
+        // if(isset($data['measurement'])) $discount->discount_measurement = $data['measurement'];
+        // $discount->update();
+
+        // return $discount;
     }
 
     public function updateInstallmentDiscounts($installments)
     {
-        if(count($installments) > 0) {
-            foreach($installments as $installmentArr) {
+        if (count($installments) > 0) {
+            foreach ($installments as $installmentArr) {
                 $installment = $installmentArr[0];
                 $installmentDiscount = InstallmentDiscount::where("duration", $installment['duration'])->first();
-                if(!$installmentDiscount) {
+                if (!$installmentDiscount) {
                     $installmentDiscount = new InstallmentDiscount;
                     $installmentDiscount->duration = $installment['duration'];
                 }
@@ -54,8 +64,8 @@ class DiscountService
 
     public function addInstallmentDiscounts($installments)
     {
-        if(count($installments) > 0) {
-            foreach($installments as $installmentArr) {
+        if (count($installments) > 0) {
+            foreach ($installments as $installmentArr) {
                 $installment = $installmentArr[0];
                 InstallmentDiscount::firstOrCreate([
                     "duration" => $installment['duration'],
@@ -69,5 +79,4 @@ class DiscountService
     {
         $installment->delete();
     }
-
 }
