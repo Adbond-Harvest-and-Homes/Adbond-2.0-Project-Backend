@@ -73,7 +73,10 @@ class AssessmentAttemptService
                 if ($assessmentAnswer->correct == 1) $correctAnswers++;
             }
             $attempt->score = Utilities::getPercentage($correctAnswers, $attempt->assessment->questions->count());
-            $attempt->time_used = $attempt->started_at ? now()->diffInSeconds($attempt->started_at) : null;
+            $attempt->correct = $correctAnswers;
+            if ($attempt->cut_off_mark) $attempt->passed = ($attempt->score >= $attempt->cut_off_mark) ? 1 : 0;
+            $startedAt = \Illuminate\Support\Carbon::parse($attempt->started_at);
+            $attempt->time_used = $attempt->started_at ? max(0, $startedAt->diffInSeconds(now(), false)) : null;
             $attempt->update();
         }
     }
