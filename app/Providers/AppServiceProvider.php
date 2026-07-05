@@ -83,6 +83,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(Schedule $schedule): void
     {
+        \Illuminate\Support\Facades\Gate::define('viewApiDocs', function ($user = null) {
+            // Allow all users (or restrict as needed in the future)
+            return true;
+        });
+        
         // $schedule->call(function () {
         //     \Log::info('Test scheduler is working!');
         // })->everyMinute();
