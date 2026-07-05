@@ -131,7 +131,7 @@ class AssessmentAttemptService
             ->when($this->status, fn($query) => $query->where("approved", $approved))
             ->when($this->minScore, fn($query) => $query->where("score", "<=", $this->minScore))
             ->when($this->maxScore, fn($query) => $query->where("score", ">=", $this->maxScore))
-            ->orderBy("created_at")->get();
+            ->orderBy("created_at", "DESC")->get();
     }
 
     public function attempt($attemptId)
