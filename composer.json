@@ -9,6 +9,7 @@
         "barryvdh/laravel-dompdf": "^3.0",
         "cloudinary-labs/cloudinary-laravel": "^2.2",
         "cloudinary/cloudinary_php": "^2.0",
+        "dedoc/scramble": "^0.13.30",
         "doctrine/dbal": "^4.2",
         "google/apiclient": "^2.17",
         "guzzlehttp/guzzle": "^7.9",

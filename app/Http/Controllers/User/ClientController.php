@@ -91,7 +91,7 @@ class ClientController extends Controller
         return Utilities::ok(new ClientResource($client));
     }
 
-    public function AddClient(AddClient $request)
+    public function addClient(AddClient $request)
     {
         try{
             $data = $request->validated();
