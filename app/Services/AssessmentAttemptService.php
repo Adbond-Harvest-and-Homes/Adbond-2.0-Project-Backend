@@ -101,16 +101,18 @@ class AssessmentAttemptService
 
     public function assessmentAttempts($assessmentId)
     {
-        return AssessmentAttempt::where("assessment_id", $assessmentId)->orderBy("created_at", "DESC")->get();
+        return AssessmentAttempt::with(['category'])->where("assessment_id", $assessmentId)->orderBy("created_at", "DESC")->get();
     }
 
     public function attempts($with = [])
     {
+        if (!in_array('category', $with)) $with[] = 'category';
         return AssessmentAttempt::with($with)->orderBy("created_at", "DESC")->get();
     }
 
-    public function successfulAttampts($with = [])
+    public function successfulAttempts($with = [])
     {
+        if (!in_array('category', $with)) $with[] = 'category';
         $approved = null;
         if ($this->status) {
             switch ($this->status) {
@@ -134,6 +136,6 @@ class AssessmentAttemptService
 
     public function attempt($attemptId)
     {
-        return AssessmentAttempt::find($attemptId);
+        return AssessmentAttempt::with(['category', 'answers', 'assessment', 'treatedBy'])->find($attemptId);
     }
 }

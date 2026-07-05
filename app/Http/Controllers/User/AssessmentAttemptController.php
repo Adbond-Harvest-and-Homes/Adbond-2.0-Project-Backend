@@ -144,7 +144,7 @@ class AssessmentAttemptController extends Controller
             if (!in_array($status, ['pending', 'approved', 'rejected'])) return Utilities::error402("Invalid status parameter");
             $this->assessmentAttemptService->status = $status;
         }
-        $applications = $this->assessmentAttemptService->successfulAttampts(['treatedBy']);
+        $applications = $this->assessmentAttemptService->successfulAttempts(['treatedBy', 'category']);
         return AssessmentAttemptResource::collection($applications);
     }
 

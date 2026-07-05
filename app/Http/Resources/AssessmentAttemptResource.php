@@ -33,9 +33,9 @@ class AssessmentAttemptResource extends JsonResource
             "status" => ($this->approved == null) ? "pending" : (($this->approved == 1) ? "approved" : "rejected"),
             "submittedAt" => $this->created_at,
             "timeUsed" => $this->time_used,
-            "category" => new VirtualStaffCategoryResource($this->category),
-            "answers" => AssessmentAttemptAnswerResource::collection($this->answers),
-            "assessment" => new AssessmentResource($this->assessment),
+            "category" => new VirtualStaffCategoryResource($this->whenLoaded('category')),
+            "answers" => AssessmentAttemptAnswerResource::collection($this->whenLoaded('answers')),
+            "assessment" => new AssessmentResource($this->whenLoaded('assessment')),
             "treatedBy" => new UserResource($this->whenLoaded('treatedBy')),
 
         ];
