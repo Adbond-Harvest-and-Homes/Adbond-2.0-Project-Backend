@@ -30,7 +30,7 @@ class AssessmentAttemptResource extends JsonResource
             "occupation" => $this->occupation,
             "score" => $this->score,
             "passed" => ($this->passed === null) ? "pending" : (($this->passed == 1) ? true : false),
-            "status" => ($this->approved == null) ? "pending" : (($this->approved == 1) ? "approved" : "rejected"),
+            "status" => ($this->approved === null) ? "pending" : (($this->approved == 1) ? "approved" : "rejected"),
             "submittedAt" => $this->created_at,
             "timeUsed" => $this->time_used,
             "category" => new VirtualStaffCategoryResource($this->whenLoaded('category')),

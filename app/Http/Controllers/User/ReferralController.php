@@ -15,6 +15,7 @@ use app\Http\Resources\TotalStaffCommissionEarningsResource;
 use app\Http\Resources\StaffCommissionRedemptionResource;
 
 use app\Services\CommissionService;
+use app\Services\UserService;
 
 use app\Utilities;
 use app\EnumClass;
@@ -25,10 +26,13 @@ class ReferralController extends Controller
 
     private $commissionService;
 
+    private $userService;
+
     public function __construct()
     {
         $this->userActivityLogService = new UserActivityLogService;
         $this->commissionService = new CommissionService;
+        $this->userService = new UserService;
     }
 
     public function referralCommissions()
@@ -137,5 +141,16 @@ class ReferralController extends Controller
         } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
+    }
+
+    public function referrals(Request $request)
+    {
+        $staffs = $this->userService->getMyStaffs(Auth::user()->id);
+        $clients = $this->userService->getMyClients(Auth::user()->id);
+
+        return Utilities::ok([
+            'staffs' => $staffs,
+            'clients' => $clients
+        ]);
     }
 }

@@ -253,6 +253,11 @@ class UserService
         return Client::with($with)->where("referer_id", $userId)->where("referer_type", User::$userType)->get();
     }
 
+    public function getMyStaffs(int $userId, $with = [])
+    {
+        return User::with($with)->where("registered_by", $userId)->get();
+    }
+
     public function save($data, $user_id = null)
     {
         $user = new User;

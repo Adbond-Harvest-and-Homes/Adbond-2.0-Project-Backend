@@ -228,6 +228,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     });
 
     Route::group(['prefix' => '/referrals'], function () {
+        Route::get('', [ReferralController::class, "referrals"]);
         Route::get('/earnings', [ReferralController::class, "referralEarnings"]);
         Route::post('/redeem_commission', [ReferralController::class, "redeem"]);
         Route::get('/redemptions', [ReferralController::class, "staffRedemptions"]);
