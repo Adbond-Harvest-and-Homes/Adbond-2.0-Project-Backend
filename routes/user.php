@@ -57,6 +57,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
 
 
     Route::get('/dashboard', [UserIndexController::class, "dashboard"]);
+    Route::get('/dashboard2', [UserIndexController::class, "dashboard2"]);
     Route::get('/dashboard/purchase_chart', [UserIndexController::class, "purchaseSummary"]);
 
     Route::group(['prefix' => '/transactions'], function () {

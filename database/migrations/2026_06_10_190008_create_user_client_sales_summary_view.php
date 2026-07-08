@@ -19,10 +19,12 @@ return new class extends Migration
                 u.id AS user_id,
                 COUNT(DISTINCT c.id) AS total_clients,
                 COALESCE(COUNT(o.id), 0) AS sales_count,
-                COALESCE(SUM(o.amount_payable), 0) AS total_sales
+                COALESCE(SUM(o.amount_payable), 0) AS total_sales,
+                COALESCE(MAX(ste.total_earnings), 0) AS total_commission
             FROM users u
             LEFT JOIN clients c ON c.referer_id = u.id AND c.referer_type = 'app\\\\Models\\\\User'
             LEFT JOIN orders o ON o.client_id = c.id AND o.completed = 1
+            LEFT JOIN staff_total_earnings ste ON ste.user_id = u.id
             GROUP BY u.id
         ");
     }

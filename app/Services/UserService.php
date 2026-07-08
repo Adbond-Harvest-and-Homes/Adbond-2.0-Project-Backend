@@ -243,6 +243,16 @@ class UserService
         return StaffTypeUserSummary::all()->keyBy('staff_type_name')->toArray();
     }
 
+    public function getStaffSalesSummary(int $userId)
+    {
+        return UserClientSalesSummaryView::where("user_id", $userId)->first();
+    }
+
+    public function getMyClients(int $userId, $with = [])
+    {
+        return Client::with($with)->where("referer_id", $userId)->where("referer_type", User::$userType)->get();
+    }
+
     public function save($data, $user_id = null)
     {
         $user = new User;
