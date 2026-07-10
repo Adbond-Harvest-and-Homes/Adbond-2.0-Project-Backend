@@ -13,6 +13,8 @@ use app\Http\Requests\User\CompleteReferralCommissionPayment;
 use app\Http\Resources\StaffCommissionEarningResource;
 use app\Http\Resources\TotalStaffCommissionEarningsResource;
 use app\Http\Resources\StaffCommissionRedemptionResource;
+use app\Http\Resources\UserBriefResource;
+use app\Http\Resources\ClientBriefResource;
 
 use app\Services\CommissionService;
 use app\Services\UserService;
@@ -149,8 +151,8 @@ class ReferralController extends Controller
         $clients = $this->userService->getMyClients(Auth::user()->id);
 
         return Utilities::ok([
-            'staffs' => $staffs,
-            'clients' => $clients
+            'staffs' => UserBriefResource::collection($staffs),
+            'clients' => ClientBriefResource::collection($clients)
         ]);
     }
 }
