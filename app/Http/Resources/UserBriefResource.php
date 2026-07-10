@@ -23,6 +23,8 @@ class UserBriefResource extends JsonResource
             'firstname' => $this->firstname,
             'lastname' => $this->lastname,
             'email' => $this->email,
+            'refererCode' => $this->referer_code,
+            'staffRefererCode' => $this->staff_referer_code,
             'photo' => new FileResource($this->photo),
             'phoneNumber' => $this->phone_number,
             'passwordSet' => $this->password_set,
