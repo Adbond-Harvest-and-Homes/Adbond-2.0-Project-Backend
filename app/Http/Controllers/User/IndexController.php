@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use app\Http\Resources\ProjectResource;
 use app\Http\Resources\ProjectTypeResource;
 use app\Http\Resources\TransactionResource;
+use app\Http\Resources\ClientBriefResource;
 
 use app\Services\ProjectTypeService;
 use app\Services\ProjectService;
@@ -159,7 +160,7 @@ class IndexController extends Controller
                     "commisiionEarned" => $summary->total_commission,
                     "totalSales" => $summary->total_sales
                 ],
-                "clients" => $clients
+                "clients" => ClientBriefResource::collection($clients)
             ]);
         } catch (\Exception $e) {
             return Utilities::error($e, "An error occurred while fetching data");
