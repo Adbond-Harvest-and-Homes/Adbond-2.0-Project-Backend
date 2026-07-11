@@ -19,7 +19,7 @@ class DiscountResource extends JsonResource
         return [
             "type" => $this->getType(),
             "discount" => $this->discount,
-            "measurement" => $this->measurement
+            "measurement" => $this->discount_measurement
         ];
     }
 
