@@ -19,6 +19,7 @@ use app\Http\Resources\AssessmentResource;
 use app\Services\AssessmentAttemptService;
 use app\Services\AssessmentService;
 use app\Services\UserService;
+use app\Jobs\SendNewStaffMail;
 
 use app\Utilities;
 
@@ -163,7 +164,7 @@ class AssessmentAttemptController extends Controller
             $attempt = $this->assessmentAttemptService->approve($attempt, $note);
 
             $userService = new UserService;
-            $userService->upgradeToVirtualStaff($attempt);
+            $user = $userService->upgradeToVirtualStaff($attempt);
 
             try {
                 $this->userActivityLogService->log(Auth::user(), "Approved Assessment Attempt & Upgraded User");
@@ -172,6 +173,11 @@ class AssessmentAttemptController extends Controller
             }
 
             DB::commit();
+
+            if ($user) {
+                SendNewStaffMail::dispatch($user, 'password');
+            }
+
             return Utilities::ok(new AssessmentAttemptResource($attempt));
         } catch (\Exception $e) {
             DB::rollBack();
