@@ -339,7 +339,8 @@ class UserService
 
         $referralCode = $virtualStaffAssessment->referral_code ?? $virtualStaffAssessment->referal_code;
         if ($referralCode && $referralCode != null) {
-            $referer = $this->getUserByRefererCode($referralCode);
+            $referralCode = trim($referralCode);
+            $referer = $this->getUserByStaffRefererCode($referralCode);
             if ($referer) {
                 $user->registered_by = $referer->id;
             } else {

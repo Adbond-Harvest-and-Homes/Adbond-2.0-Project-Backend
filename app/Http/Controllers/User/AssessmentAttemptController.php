@@ -5,6 +5,7 @@ namespace app\Http\Controllers\User;
 use Illuminate\Http\Request;
 use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\StartAssessment;
@@ -150,6 +151,7 @@ class AssessmentAttemptController extends Controller
 
     public function approve(ApproveAssessmentAttempt $request, int $attemptId)
     {
+        DB::beginTransaction();
         try {
             if (!is_numeric($attemptId) || !ctype_digit($attemptId)) return Utilities::error402("Invalid parameter attemptID");
 
@@ -169,8 +171,10 @@ class AssessmentAttemptController extends Controller
                 Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
             }
 
+            DB::commit();
             return Utilities::ok(new AssessmentAttemptResource($attempt));
         } catch (\Exception $e) {
+            DB::rollBack();
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }
