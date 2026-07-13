@@ -31,6 +31,8 @@ class TransactionController extends Controller
 
     public function transactions(Request $request)
     {
+        $this->applyTransactionRestrictions();
+
         $page = ($request->query('page')) ?? 1;
         $perPage = ($request->query('perPage'));
         if(!is_int((int) $page) || $page <= 0) $page = 1;
@@ -109,8 +111,25 @@ class TransactionController extends Controller
     {
         if (!is_numeric($transactionId) || !ctype_digit($transactionId)) return Utilities::error402("Invalid parameter transactionID");
 
+        $this->applyTransactionRestrictions();
         $transaction = $this->transactionService->transaction($transactionId);
 
+        if (!$transaction) return Utilities::error402("Transaction not found");
+
         return Utilities::ok(new TransactionResource($transaction));
+    }
+
+    private function applyTransactionRestrictions()
+    {
+        $user = Auth::user();
+        $isAdmin = $user && $user->role && in_array($user->role->name, [
+            \app\Enums\Roles::SUPER_ADMIN->value,
+            \app\Enums\Roles::ADMIN->value,
+            \app\Enums\Roles::HUMAN_RESOURCE->value
+        ]);
+
+        if (!$isAdmin) {
+            $this->transactionService->user = $user;
+        }
     }
 }

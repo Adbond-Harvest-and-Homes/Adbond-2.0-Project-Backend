@@ -38,10 +38,15 @@ class ClientService
 {
     public $count = false;
     public $active = null;
+    public $user = null;
 
     public function getClient($id, $with=[])
     {
-        return Client::with($with)->where("id", $id)->first();
+        $query = Client::with($with)->where("id", $id);
+        if ($this->user !== null) {
+            $query->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+        }
+        return $query->first();
     }
 
     public function getClientByEmail($email, $with=[])
@@ -61,7 +66,11 @@ class ClientService
 
     public function getClients()
     {
-        return Client::orderBy('created_at', 'DESC')->get();
+        $query = Client::orderBy('created_at', 'DESC');
+        if ($this->user !== null) {
+            $query->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+        }
+        return $query->get();
     }
 
     public function clients($with=[], $offset=0, $perPage=null)
@@ -83,6 +92,9 @@ class ClientService
     public function filter($filter, $with=[], $offset=0, $perPage=null)
     {
         $query = Client::with($with);
+        if ($this->user !== null) {
+            $query->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+        }
         if(isset($filter['text'])) {
             $query = $query->where(function($q) use($filter) { 
                 $q->where("firstname", "LIKE", "%".$filter['text']."%")->orWhere("lastname", "LIKE", "%".$filter['text']."%")
@@ -97,6 +109,26 @@ class ClientService
 
     public function summary()
     {
+        if ($this->user !== null) {
+            $clientQuery = $this->user->clients();
+
+            $totalClients = (clone $clientQuery)->count();
+            $activeClients = (clone $clientQuery)->where('activated', 1)->count();
+            $inactiveClients = (clone $clientQuery)->where('activated', 0)->count();
+            $purchasingClients = (clone $clientQuery)->whereHas('assets')->count();
+            $newClients = (clone $clientQuery)->whereYear('created_at', now()->year)
+                                              ->whereMonth('created_at', now()->month)
+                                              ->count();
+
+            return (object) [
+                'total_clients' => $totalClients,
+                'active_clients' => $activeClients,
+                'inactive_clients' => $inactiveClients,
+                'purchasing_clients' => $purchasingClients,
+                'new_clients' => $newClients
+            ];
+        }
+
         return ClientSummaryView::first();
     }
 

@@ -21,11 +21,18 @@ class TransactionService
     public $clientId = null;
     public $count = null;
     public $filters = [];
+    public $user = null;
 
     public function transactions($with=[], $offset=0, $perPage=null)
     {
         $filter = $this->filters;
         $query = Payment::with($with)->where("purchase_type", Order::$type);
+
+        if ($this->user !== null) {
+            $query->whereHas('client', function($q) {
+                $q->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+            });
+        }
 
         if(array_key_exists('status', $filter)) {
             ($filter['status'] === null) ? $query->whereNull("confirmed") : $query->where("confirmed", $filter['status']);
@@ -64,7 +71,13 @@ class TransactionService
 
     public function transaction($id, $with=[])
     {
-        return Payment::with($with)->where("id", $id)->first();
+        $query = Payment::with($with)->where("id", $id);
+        if ($this->user !== null) {
+            $query->whereHas('client', function($q) {
+                $q->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+            });
+        }
+        return $query->first();
     }
 
     public function filter($filter, $with=[], $offset=0, $perPage=null)

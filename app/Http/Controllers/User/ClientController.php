@@ -41,6 +41,7 @@ class ClientController extends Controller
 
     public function index(Request $request)
     {
+        $this->applyClientRestrictions();
 
         $summaryData = $this->clientService->summary();
         $summaryData = new ClientSummaryResource($summaryData);
@@ -84,6 +85,7 @@ class ClientController extends Controller
     {
         if (!is_numeric($clientId) || !ctype_digit($clientId)) return Utilities::error402("Invalid parameter clientID");
 
+        $this->applyClientRestrictions();
         $client = $this->clientService->getClient($clientId, ['assets', 'nextOfKins']);
 
         if(!$client) return Utilities::error402("Client not found");
@@ -118,6 +120,7 @@ class ClientController extends Controller
             DB::beginTransaction();
             if (!is_numeric($clientId) || !ctype_digit($clientId)) return Utilities::error402("Invalid parameter clientID");
 
+            $this->applyClientRestrictions();
             $client = $this->clientService->getClient($clientId);
 
             if(!$client) return Utilities::error402("Client not found");
@@ -155,6 +158,7 @@ class ClientController extends Controller
     {
         if (!is_numeric($clientId) || !ctype_digit($clientId)) return Utilities::error402("Invalid parameter clientID");
 
+        $this->applyClientRestrictions();
         $client = $this->clientService->getClient($clientId);
 
         if(!$client) return Utilities::error402("Client not found");
@@ -193,6 +197,7 @@ class ClientController extends Controller
     public function export(Request $request)
     {
         try {
+            $this->applyClientRestrictions();
             $clients = $this->clientService->getClients();
 
             // $clients = [$clients];
@@ -209,6 +214,20 @@ class ClientController extends Controller
 
         } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred during export');
+        }
+    }
+
+    private function applyClientRestrictions()
+    {
+        $user = Auth::user();
+        $isAdmin = $user && $user->role && in_array($user->role->name, [
+            \app\Enums\Roles::SUPER_ADMIN->value,
+            \app\Enums\Roles::ADMIN->value,
+            \app\Enums\Roles::HUMAN_RESOURCE->value
+        ]);
+
+        if (!$isAdmin) {
+            $this->clientService->user = $user;
         }
     }
 }
