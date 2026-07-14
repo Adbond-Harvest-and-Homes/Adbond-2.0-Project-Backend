@@ -22,9 +22,13 @@ use app\Services\MetricService;
 use app\Services\UserService;
 
 use app\Models\ClientPurchasesSummaryView;
+use app\Models\Client;
+use app\Models\Order;
+use app\Models\StaffCommissionEarning;
 
 use app\Enums\ProjectFilter;
 use app\Enums\PurchaseSummaryDuration;
+use app\Enums\Roles;
 
 use app\Utilities;
 use app\EnumClass;
@@ -150,15 +154,34 @@ class IndexController extends Controller
     public function dashboard2(Request $request)
     {
         try {
-            $summary = $this->userService->getStaffSalesSummary(Auth::user()->id);
+            $user = Auth::user();
+            $isAdmin = $user && $user->role && in_array($user->role->name, [
+                Roles::SUPER_ADMIN->value,
+                Roles::ADMIN->value,
+                Roles::HUMAN_RESOURCE->value,
+                Roles::OPERATION_ACCOUNTING->value
+            ]);
 
-            $clients = $this->userService->getMyClients(Auth::user()->id);
+            if ($isAdmin) {
+                $totalClients = Client::count();
+                $commissionEarned = StaffCommissionEarning::sum('commission_after_tax');
+                $totalSales = Order::where('completed', 1)->sum('amount_payable');
+
+                $clients = Client::all();
+            } else {
+                $summary = $this->userService->getStaffSalesSummary($user->id);
+                $totalClients = optional($summary)->total_clients ?? 0;
+                $commissionEarned = optional($summary)->total_commission ?? 0;
+                $totalSales = optional($summary)->total_sales ?? 0;
+
+                $clients = $this->userService->getMyClients($user->id);
+            }
 
             return Utilities::ok([
                 "summary" => [
-                    "totalClients" => $summary->total_clients,
-                    "commisiionEarned" => $summary->total_commission,
-                    "totalSales" => $summary->total_sales
+                    "totalClients" => $totalClients,
+                    "commisiionEarned" => $commissionEarned,
+                    "totalSales" => $totalSales
                 ],
                 "clients" => ClientBriefResource::collection($clients)
             ]);
