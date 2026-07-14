@@ -167,7 +167,7 @@ class IndexController extends Controller
                 $commissionEarned = StaffCommissionEarning::sum('commission_after_tax');
                 $totalSales = Order::where('completed', 1)->sum('amount_payable');
 
-                $clients = Client::all();
+                $clients = Client::orderBy("created_at", "DESC")->limit(10);
             } else {
                 $summary = $this->userService->getStaffSalesSummary($user->id);
                 $totalClients = optional($summary)->total_clients ?? 0;
