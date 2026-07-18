@@ -66,6 +66,12 @@ class SendPaymentEmail implements ShouldQueue
             Mail::to($this->payment->client->email)
                 ->send(new NewPayment($this->payment, $this->uploadedReceipt));
 
+            \Illuminate\Support\Facades\Log::info("Receipt email successfully sent.", [
+                'payment_id' => $this->payment->id,
+                'client_email' => $this->payment->client->email,
+                'receipt_no' => $this->payment->receipt_no
+            ]);
+
             $this->payment->markReceiptSent();
             
             // Clean up receipt file
