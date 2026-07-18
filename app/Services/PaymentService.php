@@ -56,7 +56,15 @@ class PaymentService
 
     public function getMissingOrUnsentReceipts()
     {
-        return Payment::whereNull("receipt_file_id")->orWhere("receipt_sent", 0)->get();
+        return Payment::where(function ($query) {
+            $query->whereNull("receipt_file_id")
+                  ->orWhere("receipt_sent", 0);
+        })
+        ->where(function ($query) {
+            $query->where("confirmed", 1)
+                  ->orWhere("success", 1);
+        })
+        ->get();
     }
 
     public function getPurchasePayments($purchaseId, $purchaseType, $confirmed=1)

@@ -83,27 +83,6 @@ class Payment extends Model
 
         return $this;
     }
-
-    private static function uploadReceipt($payment)
-    {
-        $res = [];
-        $clientPackageService = new ClientPackageService;
-        $paymentService = new PaymentService;
-        // if($payment->purchase_type == Order::$type && $payment->purchase->clientPackage->origin != ClientPackageOrigin::INVESTMENT->value && 
-        //     Helpers::kycCompleted($payment->client)) {
-        //     $purchase = $payment->purchase; 
-        //     $isOffer = ($payment->purchase->clientPackage->origin == ClientPackageOrigin::OFFER->value);
-        //     $clientPackageService->uploadContract($purchase, $payment->purchase->clientPackage, $isOffer);
-        //     // dd("uploaded contract");
-        // }
-        if(Helpers::kycCompleted($payment->client)) {
-            $file =  $paymentService->uploadReceipt($payment, $payment->client); 
-            if($file) $res['receiptFile'] = $file;
-            // dd($res);
-        }
-        return $res;
-    }
-
     protected static function boot()
     {
         parent::boot();
@@ -112,10 +91,6 @@ class Payment extends Model
             if($payment->receipt_file_id == $payment->evidence_file_id) $payment->receipt_file_id = null;
             if($payment->confirmed==null && $payment->payment_mode_id && $payment->payment_mode_id == PaymentMode::cardPayment()->id) {
                 $payment->confirmed = ($payment->flag==0 && $payment->success==1);
-            }
-            if($payment->confirmed == 1) {
-                $res = self::uploadReceipt($payment);
-                if(isset($res['receiptFile'])) $payment->receipt_file_id = $res['receiptFile']->id;
             }
         });
 

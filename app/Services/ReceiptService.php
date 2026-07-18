@@ -38,10 +38,6 @@ class ReceiptService
         $file = 'files/receipt'.$payment->receipt_no.'.pdf';
         $publicFile = public_path('files/receipt'.$payment->receipt_no.'.pdf');
 
-        if (file_exists($publicFile)) {
-            return $file;
-        }
-
         // if(file_exists($file)) return $file;
 
         $address1 = '';
