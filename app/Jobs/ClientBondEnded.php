@@ -8,6 +8,8 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+
 use Illuminate\Support\Facades\Mail;
 
 use app\Mail\BondEnded as BondEndedMail;
@@ -16,14 +18,14 @@ use app\Services\ClientBondService;
 
 class ClientBondEnded implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $bond;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(private integer $bondId)
+    public function __construct(private int $bondId)
     {
         $this->bond = app(ClientBondService::class)->getBond($bondId);
     }

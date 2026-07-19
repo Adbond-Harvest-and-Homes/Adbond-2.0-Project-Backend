@@ -19,7 +19,7 @@ use app\Utilities;
 
 class SendOrderNotificationMail implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
