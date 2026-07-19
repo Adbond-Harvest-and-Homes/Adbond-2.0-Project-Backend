@@ -8,6 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\Mail;
 
@@ -47,5 +48,9 @@ class BondPayout implements ShouldQueue
     {
         // Send Payout Mail
         Mail::to($this->bondPayout->client->email)->send(new BondPayoutMail($this->bondPayout->client, $this->bondPayout->payout_amount));
+        Log::info("Bond Payout email successfully sent.", [
+            'bondPayout' => $this->bondPayout->id,
+            'client_email' => $this->bondPayout->client->email
+        ]);
     }
 }
