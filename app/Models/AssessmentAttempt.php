@@ -14,6 +14,16 @@ class AssessmentAttempt extends Model
         return $this->belongsTo(Assessment::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(VirtualStaffCategory::class, "category_id", "id");
+    }
+
+    public function treatedBy()
+    {
+        return $this->belongsTo(User::class, "treated_by", "id");
+    }
+
     public function answers()
     {
         return $this->hasMany(AssessmentAttemptAnswer::class, "attempt_id", "id");
@@ -24,8 +34,8 @@ class AssessmentAttempt extends Model
         parent::boot();
 
         self::deleting(function (AssessmentAttempt $attempt) {
-            if($attempt->answers->count() > 0) {
-                foreach($attempt->answers as $answer) $answer->delete();
+            if ($attempt->answers->count() > 0) {
+                foreach ($attempt->answers as $answer) $answer->delete();
             }
         });
     }

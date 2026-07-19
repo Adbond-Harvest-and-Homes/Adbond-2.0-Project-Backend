@@ -59,6 +59,13 @@ class NewPayment extends Mailable
      */
     public function attachments(): array
     {
+        if (str_starts_with($this->filePath, 'http')) {
+            return [
+                Attachment::fromData(fn () => file_get_contents($this->filePath), "Receipt.pdf")
+            ];
+        }
+
+
         return [
             Attachment::fromPath(public_path($this->filePath))
                 ->as("Receipt.pdf") // Optional: specify the name in the email

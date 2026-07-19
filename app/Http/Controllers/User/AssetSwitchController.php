@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use app\Http\Controllers\Controller;
 
@@ -22,12 +24,15 @@ use app\Utilities;
 
 class AssetSwitchController extends Controller
 {
+    private $userActivityLogService;
+
     private $assetSwitchService;
     private $packageService;
     private $clientPackageService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->assetSwitchService = new AssetSwitchService;
         $this->packageService = new PackageService;
         $this->clientPackageService = new ClientPackageService;
@@ -117,6 +122,13 @@ class AssetSwitchController extends Controller
 
             DB::commit();
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Approved Asset Switch Request");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Asset has been ".$request->type."d successfully");
         }catch(\Exception $e){
             DB::rollBack();
@@ -132,6 +144,13 @@ class AssetSwitchController extends Controller
             if(!$request) return Utilities::error402("Asset Switch Request not found");
 
             $request = $this->assetSwitchService->reject($request, $data['reason']);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Asset Switch Request");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Asset Switch Request rejected");
         }catch(\Exception $e){

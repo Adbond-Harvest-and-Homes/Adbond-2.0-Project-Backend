@@ -3,11 +3,14 @@
 namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 use app\Http\Resources\ProjectResource;
 use app\Http\Resources\ProjectTypeResource;
 use app\Http\Resources\TransactionResource;
+use app\Http\Resources\ClientBriefResource;
 
 use app\Services\ProjectTypeService;
 use app\Services\ProjectService;
@@ -16,11 +19,16 @@ use app\Services\ClientPackageService;
 use app\Services\PurchaseService;
 use app\Services\TransactionService;
 use app\Services\MetricService;
+use app\Services\UserService;
 
 use app\Models\ClientPurchasesSummaryView;
+use app\Models\Client;
+use app\Models\Order;
+use app\Models\StaffCommissionEarning;
 
 use app\Enums\ProjectFilter;
 use app\Enums\PurchaseSummaryDuration;
+use app\Enums\Roles;
 
 use app\Utilities;
 use app\EnumClass;
@@ -28,6 +36,8 @@ use app\Enums\MetricDuration;
 
 class IndexController extends Controller
 {
+    private $userActivityLogService;
+    private $userService;
     private $projectTypeService;
     private $projectService;
     private $clientService;
@@ -38,6 +48,8 @@ class IndexController extends Controller
 
     public function __construct()
     {
+        $this->userService = new UserService;
+        $this->userActivityLogService = new UserActivityLogService;
         $this->projectTypeService = new ProjectTypeService;
         $this->projectService = new ProjectService;
         $this->clientService = new ClientService;
@@ -56,8 +68,8 @@ class IndexController extends Controller
 
         $purchaseChart = $this->purchaseService->clientPurchaseSummary();
         $purchaseTotal = 0;
-        if($purchaseChart->count() > 0) {
-            foreach($purchaseChart as $purchase) {
+        if ($purchaseChart->count() > 0) {
+            foreach ($purchaseChart as $purchase) {
                 $purchaseTotal += $purchase->total_amount;
             }
         }
@@ -65,7 +77,7 @@ class IndexController extends Controller
         $projectTypesCounts = [];
         if (count($projectTypes) > 0) {
             foreach ($projectTypes as $projectType) {
-                if(!$projectTypeObj) $projectTypeObj = $projectType;
+                if (!$projectTypeObj) $projectTypeObj = $projectType;
                 $projectTypesCounts[$projectType->name] = [
                     "totalProjects" => $projectType->projects->count(),
                     "activeProjects" => $projectType->activeProjects->count(),
@@ -77,13 +89,13 @@ class IndexController extends Controller
 
         $page = ($request->query('page')) ?? 1;
         $perPage = ($request->query('perPage'));
-        if(!is_int((int) $page) || $page <= 0) $page = 1;
-        if(!is_int((int) $perPage) || $perPage==null) $perPage = null;
-        $offset = $perPage * ($page-1);
+        if (!is_int((int) $page) || $page <= 0) $page = 1;
+        if (!is_int((int) $perPage) || $perPage == null) $perPage = null;
+        $offset = $perPage * ($page - 1);
 
         $duration = ($request->query('duration'));
         $validDurations = [MetricDuration::TODAY->value, MetricDuration::WEEK->value, MetricDuration::MONTH->value, MetricDuration::YEAR->value];
-        if(!in_array($duration, $validDurations)) $duration = MetricDuration::TODAY->value;
+        if (!in_array($duration, $validDurations)) $duration = MetricDuration::TODAY->value;
 
         $this->projectService->typeId = $projectTypeObj->id;
         $projects = $this->projectService->projects([], $offset, $perPage);
@@ -92,7 +104,7 @@ class IndexController extends Controller
 
         $this->projectService->count = true;
         $projectsCount = $this->projectService->projects();
-        
+
         $this->projectService->status = ProjectFilter::ACTIVE->value;
         $projectsActiveCount = $this->projectService->projects();
 
@@ -139,28 +151,67 @@ class IndexController extends Controller
         ]);
     }
 
+    public function dashboard2(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $isAdmin = $user && $user->role && in_array($user->role->name, [
+                Roles::SUPER_ADMIN->value,
+                Roles::ADMIN->value,
+                Roles::HUMAN_RESOURCE->value,
+                Roles::OPERATION_ACCOUNTING->value
+            ]);
+
+            if ($isAdmin) {
+                $totalClients = Client::count();
+                $commissionEarned = StaffCommissionEarning::sum('commission_after_tax');
+                $totalSales = Order::where('completed', 1)->sum('amount_payable');
+
+                $clients = Client::orderBy("created_at", "DESC")->limit(10)->get();
+            } else {
+                $summary = $this->userService->getStaffSalesSummary($user->id);
+                $totalClients = optional($summary)->total_clients ?? 0;
+                $commissionEarned = optional($summary)->total_commission ?? 0;
+                $totalSales = optional($summary)->total_sales ?? 0;
+
+                $clients = $this->userService->getMyClients($user->id);
+            }
+
+            return Utilities::ok([
+                "summary" => [
+                    "totalClients" => $totalClients,
+                    "commisiionEarned" => $commissionEarned,
+                    "totalSales" => $totalSales
+                ],
+                "clients" => ClientBriefResource::collection($clients)
+            ]);
+        } catch (\Exception $e) {
+            return Utilities::error($e, "An error occurred while fetching data");
+        }
+    }
+
     public function purchaseSummary(Request $request)
     {
         $summaryDuration = ($request->query('summaryDuration')) ?? PurchaseSummaryDuration::WEEK->value;
-        if(!in_array($summaryDuration, EnumClass::purchaseSummaryDurations())) return Utilities::error402("Invalid Summary Duration");
+        if (!in_array($summaryDuration, EnumClass::purchaseSummaryDurations())) return Utilities::error402("Invalid Summary Duration");
 
         $this->purchaseService->summaryDuration = $summaryDuration;
-        if($summaryDuration == PurchaseSummaryDuration::CUSTOM->value) {
+        if ($summaryDuration == PurchaseSummaryDuration::CUSTOM->value) {
             $start = $request->query('start');
             $end = $request->query('end');
 
-            if(!$start) return Utilities::error402("Custom Start Date is required");
+            if (!$start) return Utilities::error402("Custom Start Date is required");
 
             $this->purchaseService->start = $start;
-            if($end) $this->purchaseService->end = $end;
+            if ($end) $this->purchaseService->end = $end;
         }
 
         $this->purchaseService->summaryDuration = $summaryDuration;
 
         $purchaseChart = $this->purchaseService->clientPurchaseSummary();
         $purchaseTotal = 0;
-        if($purchaseChart->count() > 0) {
-            foreach($purchaseChart as $purchase) {
+        if ($purchaseChart->count() > 0) {
+            foreach ($purchaseChart as $purchase) {
                 $purchaseTotal += $purchase->total_amount;
             }
         }

@@ -7,6 +7,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 use app\Http\Resources\AssessmentResource;
 use app\Http\Resources\AssessmentAttemptAnswerResource;
+use app\Http\Resources\VirtualStaffCategoryResource;
+use app\Http\Resources\UserResource;
 
 class AssessmentAttemptResource extends JsonResource
 {
@@ -20,7 +22,7 @@ class AssessmentAttemptResource extends JsonResource
         return [
             "id" => $this->id,
             "firstname" => $this->firstname,
-            "lastname" => $this->lastname,
+            "lastname" => $this->surname,
             "email" => $this->email,
             "phoneNumber" => $this->phone_number,
             "gender" => $this->gender,
@@ -28,8 +30,14 @@ class AssessmentAttemptResource extends JsonResource
             "occupation" => $this->occupation,
             "score" => $this->score,
             "passed" => ($this->passed === null) ? "pending" : (($this->passed == 1) ? true : false),
-            "answers" => AssessmentAttemptAnswerResource::collection($this->answers),
-            "assessment" => new AssessmentResource($this->assessment)
+            "status" => ($this->approved === null) ? "pending" : (($this->approved == 1) ? "approved" : "rejected"),
+            "submittedAt" => $this->created_at,
+            "timeUsed" => $this->time_used,
+            "category" => new VirtualStaffCategoryResource($this->whenLoaded('category')),
+            "answers" => AssessmentAttemptAnswerResource::collection($this->whenLoaded('answers')),
+            "assessment" => new AssessmentResource($this->whenLoaded('assessment')),
+            "treatedBy" => new UserResource($this->whenLoaded('treatedBy')),
+
         ];
     }
 }

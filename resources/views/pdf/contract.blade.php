@@ -1,381 +1,249 @@
-	
 <!DOCTYPE html>
 <html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Contract</title>
-    <style type="text/css">
-        body {
-            font-family: Arial, sans-serif;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <title>Offer Letter</title>
+        <style>
+            body { 
+                font-family: DejaVu Sans, sans-serif; line-height: 1.5; font-size: 13px; color: #000; 
+            }
+            h2, h3 { 
+                text-align: center; margin-bottom: 6px; 
+            }
+            h4 { 
+                margin-top: 18px; margin-bottom: 6px; 
+            }
+            p { 
+                margin: 6px 0; 
+            }
+            table { 
+                width: 100%; border-collapse: collapse; margin-bottom: 12px; 
+            }
+            th, td { 
+                border: 1px solid #333; padding: 8px; vertical-align: top; 
+            }
+            th { 
+                background: #f2f2f2; text-align: left; 
+            }
+            .no-border { 
+                border: none; padding: 0; 
+            }
+            .small { 
+                font-size: 12px; 
+            }
+            .signature { 
+                margin-top: 30px; 
+            }
+        </style>
+    </head>
+    <body>
 
-        table td {
-            text-align: center;
-        }
-        ol.has-sub > li {
-            counter-increment: root;
-        }
+        <!-- Header: Name & Address as a small table -->
+        <table>
+            <tr>
+                <th style="width:15%;">NAME</th>
+                <td>{{ $name }}</td>
+            </tr>
+            <tr>
+                <th>ADDRESS</th>
+                <td>{{ $address }}</td>
+            </tr>
+        </table>
 
-        ol.has-sub > li > ol.sub {
-            counter-reset: subsection;
-            list-style-type: none;
-        }
+        <h3>OFFER LETTER FOR THE SALE OF A PARCEL OF LAND MEASURING APPROXIMATELY {{ $size }} SQUARE METRES OF LAND</h3>
 
-        ol.has-sub > li > ol.sub > li {
-            counter-increment: subsection;
-        }
+        <p>
+        The <b>Adbond (Product Name: {{ $product_name }})</b>, a Residential Estate (Agro to Home Community development project)
+        situate at {{ $location }}, and owned by ADBOND HARVEST AND HOMES LIMITED,
+        is pleased to offer you the above Property on the following terms and conditions:
+        </p>
 
-        ol.has-sub > li > ol.sub > li:before {
-            content: counter(root) "." counter(subsection) " ";
-        }
-        .list-heading {
-            margin-bottom: 5px;
-        }
-        li {
-            margin-bottom: 5px;
-        }
-    </style>
-    
-</head>
-<body>
-    <div style="margin-right:10%;width: 100%; margin:0px">
+        <!-- Property summary table -->
+        <h4>PROPERTY SUMMARY</h4>
+        <table>
+            <tr>
+                <th style="width:30%;">Property Location</th>
+                <td>{{ $product_name }}, {{ $state }}</td>
+            </tr>
+            <tr>
+                <th>Description of Property</th>
+                <td>A parcel of land measuring approximately {{ $size }} square metres (The "Demised Property")</td>
+            </tr>
+            <tr>
+                <th>Total Amount Payable</th>
+                <td>{{ number_format($amount, 2) }} <span class="small">(Exclusive of taxes, fees and charges)</span></td>
+            </tr>
+            <tr>
+                <th>Payment Plan</th>
+                <td>{{ $payment_plan }}</td>
+            </tr>
+            <tr>
+                <th>Use</th>
+                <td>{{ $use_type }}</td>
+            </tr>
+        </table>
 
-        <div style="height:95%; width: 90%; border: solid thin #000; width: 100%">
-            <div style="text-align: center; margin-top:15%">
-                <p style="margin-bottom: 8%;"><i>DATED THIS {{$day}} DAY OF {{$month}} {{$year}}</i></p>
-                <p style="margin-bottom: 8%;"><i>CONTRACT OF SALE</i></p>
-                <p style="margin-bottom: 8%;"><i>BETWEEN</i></p>
+        <!-- Payment terms block (long text rendered safely) -->
+        <h4>PAYMENT TERMS</h4>
+        <p>{!! nl2br(e($payment_terms)) !!}</p>
 
-                <div style="width: 80%; height: 10%; border: solid thin #000; margin-right:auto; margin-left:auto; padding-top:2%; margin-bottom: 8%; text-align:center">
-                    <p style="margin-bottom: 4%;"><b>ADBOND HARVEST AND HOMES LIMITED</b></p>
-                    <p><b>("VENDOR")</b></p>
-                </div>
+        <!-- Fees table -->
+        <h4>FEES & CHARGES</h4>
+        <table>
+            <tr>
+                <th style="width:50%;">Legal / Survey Fee</th>
+                <td>A legal/survey fee of {{ $legal_fee_percent ?? '13' }}% of the total amount payable shall be paid for documentation (legal) before the date of the handover. The Vendor agrees to make all documentation that will enable the Purchaser perfect his/her title including the provisional survey provided by the company.</td>
+            </tr>
+            <tr>
+                <th>Statutory Charges & Land Registration</th>
+                <td>Payable subject to Government's policy. Purchaser shall pay statutory charges on delivery of the property (up to {{ $statutory_charges_percent ?? '3' }}% of the cost of delivery). Land registration (survey, C of O etc.) shall be paid separately in the purchaser's name.</td>
+            </tr>
+            <tr>
+                <th>Infrastructural Fees</th>
+                <td>
+                    Infrastructural Fees are Optional. Where purchaser decides to build, payment is mandatory (subject to review).<br>
+                    Management Fee: After 36 months of Readiness for Allocation and customers do not show up, a Management Fee of {{ $management_fee_per_sqm ?? '#XX' }} per sqm for the {{ $product_name }} Project will be paid annually before allocation.<br>
+                    Agro/Home Development Fee: If purchaser gets allocation during Agricultural Development Stage with payment of Agro Development Land Fee. <strong>Note:</strong> An additional Home Development Fee per sqm may apply later.
+                </td>
+            </tr>
+        </table>
 
-                <p style="margin-bottom: 8%;"><i>AND</i></p>
+        <!-- Allocation schedule as table -->
+        <h4>ALLOCATION</h4>
+        <table>
+            <tr>
+                <th style="width:30%;">Frequency</th>
+                <th>Deadlines</th>
+                <th>Notes</th>
+            </tr>
+            <tr>
+                <td>March Batch</td>
+                <td>Deadline for sign-up: February 25th</td>
+                <td>Allocation carried out on the 2nd & 4th Thursday</td>
+            </tr>
+            <tr>
+                <td>September Batch</td>
+                <td>Deadline for sign-up: August 25th</td>
+                <td>Allocation carried out on the 2nd & 4th Thursday</td>
+            </tr>
+            <tr>
+                <td>Villa Owners</td>
+                <td>12th to 36th month after launch</td>
+                <td>Villa owners with instant request can upgrade to already developing locations or place a resale order (24 months after sign-up). Allocation remains provisional until Final Allocation Letter issued prior to handover.</td>
+            </tr>
+        </table>
 
-                <div style="width: 80%; height: 10%; border: solid thin #000; margin-right:auto; margin-left:auto; padding-top:2%; margin-bottom:30%; text-align:center">
-                    <p style="margin-bottom: 4%;"><b>{{strtoupper($client)}}</b></p>
-                    <p><b>("PURCHASER")</b></p>
-                </div>
+        <p><strong>Notice:</strong> Allocation at ADBOND is 100% Free and means Instant Development either at the Agricultural Development or Home Development. <strong>Implementation in Less than 21 days.</strong></p>
 
-                <div style="width:90%; height:8%; margin-right:auto; margin-left:auto;">
-                    <hr/>
-                    <p><i>
-                        IN RESPECT OF ({{number_format($size)}}SQM) LAND BEING AND ASSOCIATED AT ADBOND AGRO TO HOME, {{strtoupper($project)}}, {{strtoupper($state)}}.
-                    </i></p>
-                    <hr/>
-                </div>
-            </div>
-        </div>
-        
-        <div style="padding-left:50px; width: 85%;">
-            <p>
-                <b>THIS CONTRACT OF SALE</b> is made this {{$day}} day of {{$month}}, {{$year}}
-                <br/>
-            </p>
-            
-            <p>
-            <b>BETWEEN</b>
-            <br/>
-            </p>
-            
-            <p>
-                <b>ADBOND HARVEST AND HOMES LIMITED</b>, a Company duly incorporated under the Companies and Allied Matters Act CAP C20 LFN 2004 with Registered Certificate (RC:1368601) and having its registered address at 14, 
-                Allen Avenue suite 4-14/15, Ikeja, Lagos (hereinafter referred to as the “Vendor” which expression shall where the contexts to admits include his successors­‐in­‐title and assigns) of the one part;<br/>
-            </p>
-            <p>
-                <b>AND</b>
-            </p>
-            
-            <p>
-                ({{$client}}) of ({{$address}}). (Herein after called the “Purchaser” which expression shall where the context so admits include its successors-­in­‐title and assigns) of the other part.
-            </p>
+        <!-- Title transfer / checklist table -->
+        <h4>TITLE TRANSFER / CONTRACT</h4>
+        <p>The title document (to be prepared by the Vendor) shall be a Deed of Assignment or other appropriate transfer of title documents, Survey Plan & application for consent (if applicable) duly executed between the Vendor and the Purchaser.</p>
 
-            <p>
-                The “Vendor” and the “Purchaser” are jointly referred to as the Parties.
-            </p>
-            
-            <p>
-                WHEREAS:
-                <ol type="I">
-                    <li>
-                        The Vendor as the owner of all that parcel of land measuring approximately ({{number_format($size)}}Sqm) situate at and known as ADBOND ({{$project}}) at ({{$state}}) desires to assign his title and interest to the 
-                        Purchaser over a part of parcel of land measuring approximately ({{number_format($size)}}Sqm). 
-                    </li>
-                    <li>
-                        The Vendor has agreed to sell, assign and transfer its interest in respect of the property to the Purchaser, free from any encumbrance, and the Purchaser has agreed to purchase same from the Vendor in 
-                        accordance with the terms and conditions set out in this Contract of Sale.
-                    </li>
-                </ol>
-            </p>
+        <table>
+            <tr>
+                <th style="width:6%;">#</th>
+                <th>Requirement</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Payment of the total purchase price inclusive of fees, charges, taxes and government charges.</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Payment of the advised legal/survey fees.</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Due execution of the Estate's Handbook (if applicable) and any other required documents (Contract of Sale/Deed of Assignment), Finishing guidelines, Property Identification Form, Handover Contract, Move-In Contract, and MOU for Handover.</td>
+            </tr>
+        </table>
 
-            <b>THE PARTIES HAVE AGREED AS FOLLOWS:</b><br/>
-            <ol class="has-sub">
-                <li>
-                    <b>OFFER</b><br/>
-                    The Vendor has offered to sell, assign and transfer to the Purchaser, all of the Vendor’s  rights, interests, options and equity, including the unexpired term of years and any extension thereof granted 
-                    to the Vendor, covering all that parcel of land measuring approximately ({{number_format($size)}}Sqm), known and referred to as ({{$location}}), and the Purchaser has agreed to purchase the Demised Property subject to 
-                    the terms and conditions contained in this Contract of Sale.
-                </li>
-                <li>
-                    <b>PURCHASE PRICE</b><br/>
-                    @if($installment)
-                    <p>
-                        In pursuance of the said offer by the Vendor which the Purchaser hereby accepts, the Parties hereby agree that the purchase price for the Demised Property shall be the sum of (N{{number_format($price)}}) to be paid on 
-                        installment for a period not more than {{$installment_duration}}months.
-                    </p>
-                    @else
-                    <p>
-                    In pursuance of the said offer by the Vendor, which the Purchaser hereby accepts, 
-                    the Parties hereby agree that the purchase price for the Demised Property shall be the sum of (N{{number_format($price)}}) to be paid Outrightly.
-                    </p>
-                    @endif
+        <!-- Terms & conditions - keep as paragraphs -->
+        <h4>TERMS AND CONDITIONS</h4>
+        <p>
+        The delivery timelines agreed by Parties may be affected by unforeseen circumstances, economic forces, pandemics, epidemics, social and security unrests, bureaucratic delays in governmental and regulatory approvals. The Vendor reserves the right to vary or terminate this Contract upon the occurrence of one or more of the events beyond its control which affects its ability to meet the delivery timelines and Project delivery cost.
+        </p>
 
-                    <p><b>
-                        NB: All land registration documentation shall be carried out in purchaser’s name and it does not include the amount paid for the land (such as survey land registration at the Ministry of Land in Ogun 
-                        State and CofO at a different charge from the Ministry of Land that are usually subject to review).
-                        That shall be paid separately after the purchaser have duly completed the land purchase amount.
-                        <br/><br/>
-                    </b></p>
+        <table>
+            <tr>
+                <th style="width:6%;">i.</th>
+                <td><strong>Default in Payment:</strong> Compliance with the payment structure is a fundamental condition for the sale price offered. Failure to make payments as and when due may invalidate the offered sale price, in which case the Vendor reserves the right to review the price or cancel the offer.</td>
+            </tr>
+            <tr>
+                <th>ii.</th>
+                <td><strong>Transfer/Withdrawal:</strong> Payment made for land purchase is not refundable. The purchased land can only be transferred or placed on resale order. If a current client intends to reduce the number of plots, a legal fee of 10% deduction fees on each plot transferred applies.</td>
+            </tr>
+            <tr>
+                <th>iii.</th>
+                <td><strong>Resale Fees (Standard):</strong> 12% transaction fee charged while the seller pays another 10% for documentation legal fees and VAT of 7.5% — total 29.5% fee.</td>
+            </tr>
+            <tr>
+                <th>iv.</th>
+                <td><strong>Resale Fees (Villa Owner to Villa Owner):</strong> If Villa Owner sells to another Villa Owner by self, total charges will be 17.5% accruable to the company.</td>
+            </tr>
+            <tr>
+                <th>v.</th>
+                <td><strong>Resale Timeline:</strong> Resale order is not immediate; the instruction will be queued until sale is achievable.</td>
+            </tr>
+        </table>
 
-                    <ol class="sub" style="margin-top: 10%;">
-                        <li class="list-heading">
-                            <b>LEGAL FEE</b>
-                            <ol type="I">
-                                <li>
-                                    Without prejudice to the Purchase Price agreed by the Parties in Clause 2 above, the Vendor agrees to make all information available for the purchaser to perfect his/her title free at no 
-                                    additional cost including the provisional survey plan provided by the Vendor.
-                                </li>
-                                @if($installment)
-                                <li>
-                                    First payment (initial deposit payment) paid for Land Package subscribed on installments payment plan of 12-months cannot be refunded. However; the Initial deposit payment can only be 
-                                    transferred for another purchase/package or resale in not more than 24-months of payment.
-                                </li>
-                                @endif
-                                <li>
-                                    Land purchased by current client and intending to reduce number of plots bought; client will pay a legal fee of 10% deduction fees on each plot transferred.
-                                </li>
-                                <li>
-                                    Infrastructural Fees is Optional: If you decide to build; is mandatory to pay (fees are subject to review as at when ready to build) OR If you decide to sell; 
-                                    the new owner will pay the infrastructural fees before building.
-                                </li>
-                                <li>48sqm out of 648sqm will be allotted for road and set-backs before building</li>
-                            </ol>
-                        </li>
-                        <li class="list-heading">
-                            <b>TERMS & CONDITIONS</b>
-                            <ul>
-                                <li>
-                                    Note that 12% will be charged as transaction fee while the seller pays another 10% as change of 
-                                    documentation legal charges and VAT of 7.5% making a total of 29.5% Fee.
-                                </li>
-                                <li>
-                                    If Villa Owner is selling to another Villa Owner by Self the Charges will only be total of 17.5% to 
-                                    the company
-                                </li>
-                                <li>
-                                    Your Instruction will be followed and the Order will be in queue until sales is achievable in less 
-                                    than 12-18months.
-                                </li>
-                                <li>
-                                    Kindly Note that Allocation for Implementation is done only twice in a Year; March and 
-                                    September of the Year.
-                                    <ul>
-                                        <li>
-                                            March Batch Deadline for sign up is February 25th of Every Year and Allocation is 2nd & 4th 
-                                            Thursdays in March.
-                                        </li>
-                                        <li>
-                                            September Batch Deadline for sign up is August 25th of Every Year and Allocation is 2nd & 4th 
-                                            Thursdays in September.
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>Allocation of Land to Villa Owners will kick off from the 12th to 36th Month of Property launch, 
-                                    and will be ready for Physical Allocation. Villa Owners with instant request for Allocation have 
-                                    100% advantage to upgrade to already developing location based on choice or place land for resales 
-                                    order that will happen in between 12-18months of signing up for resale.
-                                </li>
-                                <li>
-                                    Also Note: That After 36months of Readiness for Allocation and customers did not show up for 
-                                    theirs, a Management Fee of N29 Per Square meter for Motherland, N39 Per Square meter for 
-                                    Heritage, N49 Per Square meter for Legacy Green, N99 Per Square meter for My Country Home 
-                                    annually that will be paid for Assets management fee before allocation can take place.
-                                </li>
-                                <li>
-                                    Also make your Infrastructural Fee payment receipt paid in full forwarded to our correspondence 
-                                    via support@adbondharvestandhomes.com or inquiry@adbondharvestandhomes.com or can also 
-                                    be forwarded on WhatsApp 09063890175/07061569205 (Request for Your Development Fee since 
-                                    its different in all Locations).
-                                </li>
-                                <li>
-                                    Also; If you get allocation during Agricultural Development Stage with the payment of Agro 
-                                    Development Land Fee and also note that in future there will be Additional Sum for Home 
-                                    Development Fee to be paid per square meter.
-                                </li>
-                                <li>
-                                    NOTE; FREE CASSSAVA CULTIVATION FOR THE FIRST ONE HUNDRED (100) VILLA 
-                                    OWNERS THAT COMPLETE PAYMENT WITHIN THE YEAR 2025 OF SUBSCRIPTION.<br><br>
-                                    Notice! Notice!! Notice!!!
-                                </li>
-                                <li>
-                                    At ADBOND, Allocation is 100% Free
-                                    Allocation at ADBOND means Instant Development either at the Agricultural Development or 
-                                    Home Development Implementation in Less than 21days.
-                                </li>
-                            </ul>
-                        </li>
-                        <!-- <li class="list-heading">
-                            <b>DEVELOPMENT TERMS</b>
-                            <ol type="I">
-                                <li>
-                                    For every Purchaser that decides to develop, Payment of Developmental Fees is Mandatory: (Fees are subject to review depending on when the Purchaser is ready and willing to develop). 
-                                    However, If the Purchaser decides to resell; the new Purchaser will be under the obligation to pay the developmental fees before any form of development.
-                                </li>
-                                <li>
-                                    The Vendor hereby undertakes to make provision for a Perimeter Fence that will safely protect and guard the whole community. Hence, no Purchaser’s individual fence will be ALLOWED.
-                                </li>
-                                <li>
-                                    The purchaser’s structural specifications will determine the actual location of his/her portion(s) in the community vis-à-vis Duplex, Bungalow, Block of Flat or Detached House which 
-                                    will be described as Zone A, B, C and D respectively.
-                                </li>
-                                <li>
-                                    Purchasers are not permitted to bury their dead ones in the community. However, the Vendor undertakes to make provision for a burial vault/burial site to cater for the community. 
-                                </li>
-                            </ol>
-                        </li> -->
-                    </ol>
-                </li>
+        <p><strong>Force Majeure:</strong> This Contract shall be terminated by the Vendor in the event of riots, strikes, natural disasters, earthquakes, pandemics, epidemics and their consequences, government regulations that can impede or stop work, changes in Government policies resulting in the devaluation of the Naira, foreign exchange fluctuations and their consequences, changes in Governmental Town Planning or land laws and regulations, construction and ancillary matters.</p>
 
-                <li class="list-heading">
-                    <b>MODE OF PAYMENT</b>
-                    <ol type="I"> 
-                        <li>
-                            All payments shall be made into the Corporate Account of the Vendor as stated in the Schedule 1 below of this Agreement. 
-                        </li>
-                        <li>
-                            Payment for sales of land are not refundable, except the purchaser is willing to resell subject to Clause 3(i, ii, iii) of the General Terms and Conditions of this Agreement. 
-                        </li>
-                        <li>
-                            However, ADBOND must be expressly notified (written) for of every resale effected by an outgoing Villa Owner for the purpose of guidance and legal documentation. 
-                        </li>
-                    </ol>
-                    <br/><br/>
-                </li>
-                <li class="list-heading">
-                    <b>THE VENDOR HEREBY COVENANTS WITH THE PURCHASERS AS FOLLOWS:</b>
-                    <ol class="sub">
-                        <li>
-                            The Vendor covenants that he has full powers and rights to sell the Demised Property to the Purchasers free from all encumbrances and hereby indemnifies the Purchasers against any reasonable loss 
-                            in title related to the Demised Property.
-                        </li>
-                        <li>
-                            The Vendor shall properly sign and execute all relevant documents to this transaction and all documents conferring title on the Purchasers.
-                        </li>
-                    </ol>
-                </li>
-                <li class="list-heading">
-                    <b>THE PURCHASER HEREBY COVENANTS WITH THE VENDORS AS FOLLOWS:</b>
-                    <ol class="sub">
-                        <li>
-                            To pay to the Vendor in the agreed manner, the Purchase Price and the Legal Fees herein stated in this Contract of Sale.
-                        </li>
-                        <li>
-                            To pay all future levies, taxes, rates and assessments including Ground Rents, Land Use Charges, Tenement Rates, or any other Charges payable in respect of the Demised Property.
-                        </li>
-                        <li>
-                            To pay a 20% revertible interest on the purchased price after 12months of default payment for the first year and another 20% revertible interest in the subsequent year of default payments.
-                        </li>
-                        <li>
-                            In the event where the Purchaser fails to complete payment as stated in the preceding paragraph, the Vendor shall have every right to reconsider the Purchaser for another package/location in 
-                            consonance with the amount already paid.
-                        </li>
-                    </ol>
-                </li>
-                <li class="list-heading">
-                    <b>DISPUTE RESOLUTION</b>
-                    <ol class="sub">
-                        <li>
-                            <b>Negotiation/Mediation</b><br/>
-                            In the event of any dispute, amicable resolution shall be considered by both Parties with or without their legal representative(s).
-                        </li>
-                        <li>
-                            <b>Arbitration</b><br/>
-                            If at any time the Parties are unable to amicably resolve any dispute(s) through negotiation, unsatisfied party shall refer the matter to be finally settled by arbitration in accordance with 
-                            the Arbitration & Conciliation Act, Cap A18, Laws of the Federation of Nigeria (LFN) 2004, by an Arbitration Committee of One (1) Arbitrator. Both parties shall appoint one Arbitrator within 
-                            Fourteen (14) days of notice to commence arbitral proceedings. If parties do not agree in appointing an Arbitrator, an Arbitrator shall be appointed by the President of the Chartered Institute 
-                            of Arbitrators (UK) Nigeria Branch. The Arbitration shall take place in Lagos, Nigeria and be conducted in English Language. Cost of Arbitration shall be borne in ratio 70(Unsatisfied Party) 
-                            and 30(other Party). Arbitration shall be a condition precedent to applying to a court of competent jurisdiction by any of the parties. 
-                        </li>
-                    </ol>
-                </li>
-                <li class="list-heading">
-                    <b>WAIVER</b><br/>
-                    No waiver by either party, where the express or implied of any provision of this Agreement, or of any breach thereof, shall constitute a continuing waiver of such provision or a breach or waiver of 
-                    any other provision of this Agreement.
-                </li>
-                <li> class="list-heading"
-                    <b>SEVERABILITY</b><br/>
-                    If any provision of this Agreement is invalid under any applicable statute or rule of Law, it is to that extent to be deemed omitted. The remainder of the Agreement shall be valid and enforceable to the maximum extent possible.
-                </li>
-                <li class="list-heading">
-                    <b>NOTICES</b><br/>
-                    Any notice or other communication required or permitted in this Agreement shall be in writing and shall be deemed to have been duly given when received by the other party or their agents or three (3) 
-                    working days after delivery to a recognized courier company with evidence of payment for delivery. Notice may be served personally or through electronic mail transmission with confirmation, or by 
-                    acknowledged courier delivery and addressed to the respective parties at the addresses set out above written or at such other addresses as may be specified by either party in writing.
-                </li>
-                <li class="list-heading">
-                    <b>GOVERNING LAW</b><br/>
-                    This Agreement shall be governed by and construed in accordance with the Laws of Federal Republic of Nigeria and the Parties have agreed to submit to the exclusive jurisdiction of Nigerian Courts.
-                </li>
-            </ol>
+        <!-- Insurance & Common Areas -->
+        <h4>INSURANCE</h4>
+        <p>
+        The Purchaser shall take out a comprehensive Insurance Policy to cover Fire, flood, theft and damage, which are associated occupancy risk in respect of the Property and shall do so within 7 Days after the handover exercise provided a copy of the Insurance Policy on Fire, flood, theft and damage is made available to the Vendor.<br>
+        The Purchaser shall on an annualized basis renew the Insurance Policy and shall diligently forward the renewed Policy to the Vendor.
+        </p>
 
-            <b><u>SCHEDULE 1 - VENDOR’S CORPORATE ACCOUNTS DETAILS</u></b>
-            <br/>
-            Account Name: Adbond Harvest & Homes Limited<br/>
-            Bank Type: UBA    Account No.: 1019884249<br/>				
-            <br/><br/>
-            <p>
-                <b>IN WITNESS OF WHICH</b> the Vendor and Purchaser have hereunto set their respective hands and seal the day, month and year first above written:
-            </p>
-            <p>
-                <b>The Common Seal of the within named Vendor is hereby affixed in the presence of:</b>
-            </p>
+        <h4>COMMON AREAS</h4>
+        <p>
+        The Purchaser understands and accepts that all common areas, green areas, recreational grounds and facilities belong to the Vendor and are the properties of the Vendor, provided by the Vendor for the common use and enjoyment of all the Home Owners and Residents in the Estate/Community. The Vendor reserves the right to take actions that it seems fit in respect of the common areas, green areas, recreational grounds and facilities. (Standard facilities to be provided includes: car park, water and power infrastructure and recreational area. Add-ons on recreational area are applicable as may be deemed fit by the vendor).
+        </p>
 
-            <div style="margin-top:5px; width:30%">
-            <img src="images/md-signature.jpg" />  	
-            <div style="margin-top:-10px;"> 
-                    <hr/>			
-            </div>
-                Oluwagbemiga Adekoya					
-                <b>MANAGING DIRECTOR</b>
-            </div>
-            <div style="margin-top:55px; width:30%">
-            <img src="images/ed-signature.jpg" />  	
-            <div style="margin-top:-10px;"> 
-                    <hr/>			
-            </div>
-                Joy Adebayo-Onikeku						
-                <b>EXECUTIVE DIRECTOR</b>
-            </div>											
+        <!-- Payment details (bank details) -->
+        <h4>PAYMENT DETAILS</h4>
+        <table>
+            <tr>
+                <th style="width:30%;">Bank Name</th>
+                <td>{{ $bank_name ?? 'UNITED BANK FOR AFRICA (UBA)' }}</td>
+            </tr>
+            <tr>
+                <th>Account Number</th>
+                <td>{{ $bank_account ?? '1019884249' }}</td>
+            </tr>
+            <tr>
+                <th>Account Name</th>
+                <td>{{ $bank_account_name ?? 'ADBOND HARVEST & HOMES LIMITED' }}</td>
+            </tr>
+        </table>
 
-            <br/><br/>
-            Signed, Sealed and Delivered By the within-named <b>PURCHASER</b>
-            
-            <div style="margin-top:5px; padding-top:60px; width:50%">	
-                <hr/>					
-                <b>({{$client}})</b>
-            </div>
+        <p>We look forward to receiving your signed acceptance of this offer.</p>
 
-            <div style="margin-top: 10%;">
-                In the presence of: <br/><br/>
-                <b>NAME:</b>	<br/><br/>
-                <b>ADDRESS:</b> <br/><br/>
-                <b>OCCUPATION:</b> <br/><br/>
-                <b>SIGNATURE:</b>
-            </div>
-        </div>
-        
-    </div>
-</body>
+        <p><strong>Yours faithfully,<br>For: ADBOND HARVEST AND HOMES LIMITED</strong></p>
+
+        <hr>
+
+        <!-- Acceptance table/signature block -->
+        <h3>MEMORANDUM OF ACCEPTANCE</h3>
+        <table>
+            <tr>
+                <th style="width:30%;">Name of Purchaser</th>
+                <td>{{ $name }}</td>
+            </tr>
+            <tr>
+                <th>Acceptance</th>
+                <td>I/We hereby accept the terms and conditions set forth in this Offer Letter for the purchase of the aforementioned parcel of land/property.</td>
+            </tr>
+            <tr>
+                <th>Signature</th>
+                <td class="signature">&nbsp;</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ $acceptance_date ?? '' }}</td>
+            </tr>
+        </table>
+
+    </body>
 </html>

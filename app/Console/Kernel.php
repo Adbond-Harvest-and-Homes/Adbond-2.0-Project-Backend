@@ -6,6 +6,13 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 use app\Jobs\CheckInvestmentReturns;
+use app\Jobs\GenerateContract;
+use app\Jobs\GenerateMOU;
+use app\Jobs\GenerateReceipt;
+use app\Jobs\SendContractMail;
+use app\Jobs\SendMemorandumMail;
+use app\Jobs\SendOrderNotificationMail;
+use app\Jobs\SendPaymentEmail;
 
 class Kernel extends ConsoleKernel
 {
@@ -15,8 +22,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Example: Run a job hourly
-        \Log::info('Scheduling CheckInvestmentReturns Job');
+        // \Log::info('Scheduling CheckInvestmentReturns Job');
         $schedule->job(new CheckInvestmentReturns)->hourly();
+        $schedule->command('app:monitor-bonds')->everyMinute();
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use app\Http\Controllers\Controller;
 
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,8 @@ use app\Utilities;
 
 class PromoController extends Controller
 {
+    private $userActivityLogService;
+
     private $promoService;
     private $projectService;
     private $packageService;
@@ -37,6 +40,7 @@ class PromoController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->promoService = new PromoService;
         $this->promoCodeService = new PromoCodeService;
         $this->projectService = new ProjectService;
@@ -87,6 +91,13 @@ class PromoController extends Controller
 
             $promo = $this->promoService->getPromo($promo->id, ['packages', 'projects', 'promoProducts']);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Created Promo");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new PromoResource($promo));
 
         }catch(\Exception $e){
@@ -103,9 +114,28 @@ class PromoController extends Controller
             $promo = $this->promoService->getPromo($promoId);
             if(!$promo) return Utilities::error402("Promo not found");
 
+            if($promo->active == 1) { // do not allow discount to be changed for active promos
+                if(isset($data['discount'])) unset($data['discount']);
+                if(isset($data['discountAmount'])) unset($data['discountAmount']);
+            }else{
+                if(isset($data['discount']) && $data['discount']) {
+                    if(isset($data['discountAmount'])) unset($data['discountAmount']);
+                }
+                if(isset($data['discountAmount']) && $data['discountAmount']) {
+                    if(isset($data['discount'])) unset($data['discount']);
+                }
+            }
+
             $data = $request->validated();
 
             $promo = $this->promoService->update($data, $promo);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Promo");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new PromoResource($promo));
         }catch(\Exception $e){
@@ -123,7 +153,14 @@ class PromoController extends Controller
 
         $action = ($promo->active) ? "Activated" : "Deactivated";
 
-        return Utilities::okay("Promo has been ".$action);
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Toggled Promo Activation State");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Promo has been ".$action);
     }
 
     public function addProducts(AddPromoProduct $request)
@@ -166,6 +203,13 @@ class PromoController extends Controller
             $this->promoService->savePromoProducts($products);
             $promo = $this->promoService->getPromo($data['promoId'], ['packages', 'projects']);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added Products to Promo");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new PromoResource($promo));
 
         }catch(\Exception $e){
@@ -184,6 +228,13 @@ class PromoController extends Controller
             $this->promoService->removePromoProduct($product);
 
             $promo = $this->promoService->getPromo($data['promoId'], ['packages', 'projects']);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Removed Product from Promo");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new PromoResource($promo));
         }catch(\Exception $e){
@@ -221,6 +272,13 @@ class PromoController extends Controller
             if(!$promo) return Utilities::error402("Promo not found");
 
             $this->promoService->delete($promo);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Promo");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Promo Deleted");
         }catch(\Exception $e){

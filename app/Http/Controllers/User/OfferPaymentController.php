@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use app\Http\Controllers\Controller;
 
@@ -20,11 +22,14 @@ use app\Utilities;
 
 class OfferPaymentController extends Controller
 {
+    private $userActivityLogService;
+
     private $paymentService;
     private $offerService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->paymentService = new PaymentService;
         $this->offerService = new OfferService;
     }
@@ -107,6 +112,13 @@ class OfferPaymentController extends Controller
 
             DB::commit();
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Confirmed Offer Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok([
                 "message" => "payment has been Confirmed",
                 "payment" => new PaymentResource($payment)
@@ -127,6 +139,13 @@ class OfferPaymentController extends Controller
 
             
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Offer Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok([
                 "message" => "payment has been Rejected",
                 "payment" => new PaymentResource($payment)
@@ -143,6 +162,13 @@ class OfferPaymentController extends Controller
             if(!$payment) return Utilities::error402("Payment not found");
 
             $payment = $this->paymentService->flag($payment, $request->validated("message"));
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Flagged Offer Payment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok([
                 "message" => "payment has been Flagged",

@@ -13,8 +13,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('posts', function (Blueprint $table) {
-            $table->foreignId("project_type_id")->default(ProjectType::land()->id)->after("content");
+        $defaultId = ProjectType::land()?->id ?? 1;
+        Schema::table('posts', function (Blueprint $table) use ($defaultId) {
+            $table->foreignId("project_type_id")->default($defaultId)->after("content");
         });
     }
 

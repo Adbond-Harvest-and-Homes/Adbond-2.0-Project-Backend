@@ -7,17 +7,22 @@ use app\Exceptions\UserNotFoundException;
 
 use app\Models\User;
 use app\Models\Role;
-// use app\Models\Staff_type;
+use app\Models\StaffType;
 use app\Models\Client;
+use app\Models\UserClientSalesSummaryView;
+use app\Models\StaffTypeUserSummary;
 
 // use app\Services\StaffTypeService;
 
 use Illuminate\Support\Facades\DB;
 
+use app\Services\StaffTypeService;
+
 use app\Helpers;
 use app\Utilities;
 
 use app\Enums\UserType;
+use app\Enums\StaffType as StaffTypeEnum;
 
 /**
  * user service class
@@ -26,25 +31,45 @@ class UserService
 {
     private $staffTypeService;
 
+    public $staffType = null;
+    public $role = null;
+    public $hasDownline = null;
+    public $searchString = null;
+    public $count = [];
+
     public function __construct()
     {
         // $this->staffTypeService = new StaffTypeService;
     }
 
-    public function getUser($id)
+    public function getUser(int $id, $with = [])
     {
-        return User::find($id);
+        return User::with($with)->whereId($id)->first();
     }
 
-    public function getByEmail($email, $with=[])
+    public function getByEmail($email, $with = [])
     {
         return User::with($with)->where("email", $email)->first();
     }
 
-    public function getUsers($user)
+    public function getUsers(User $user, $with = [])
     {
-        if($user->role_id != Role::SuperAdmin()->id) return User::where("role_id", "!=", Role::SuperAdmin()->id)->get();
-        return User::all();
+        $staffTypeId = ($this->staffType != null) ? app(StaffTypeService::class)->getStaffTypeByName($this->staffType)->id : null;
+
+        $query = User::with($with)->withCount($this->count);
+        if ($user->role_id != Role::SuperAdmin()->id) $query->where("role_id", "!=", Role::SuperAdmin()->id);
+        if ($user->staff_type_id == StaffType::HybridStaff()->id || $user->staff_type_id == StaffType::VirtualStaff()->id) $query->where('registered_by', $user->id);
+
+        return $query->when($staffTypeId != null, fn($query) => $query->where('staff_type_id', $staffTypeId))
+            ->when($this->role != null, fn($query) => $query->whereHas('role', fn($q) => $q->where('name', $this->role)))
+            ->when($this->hasDownline !== null, function ($query) {
+                $hasDownline = filter_var($this->hasDownline, FILTER_VALIDATE_BOOLEAN);
+                return $hasDownline ? $query->has('staffReferrals') : $query->doesntHave('staffReferrals');
+            })
+            ->when($this->searchString != null, function ($query) {
+                return $query->where('firstname', 'like', '%' . $this->searchString . '%')->orWhere('lastname', 'like', '%' . $this->searchString . '%');
+            })
+            ->orderBy("firstname", "asc")->orderBy("lastname", "asc")->get();
     }
 
     public function get_admins()
@@ -74,30 +99,30 @@ class UserService
 
     public function hybridStaffsCount()
     {
-        return User::where('staff_type_id', Staff_type::HybridStaff()->id)->count();
+        return User::where('staff_type_id', StaffType::HybridStaff()->id)->count();
     }
 
-    public function getPaginatedUsers($page=1, $perPage=null)
+    public function getPaginatedUsers($page = 1, $perPage = null)
     {
-        if($perPage==null) $perPage = env('POSTS_PER_PAGE', 20);
-        if($page <= 0) $page = 1;
-        $offset = $perPage * ($page-1);
+        if ($perPage == null) $perPage = env('POSTS_PER_PAGE', 20);
+        if ($page <= 0) $page = 1;
+        $offset = $perPage * ($page - 1);
         return User::limit($perPage)->offset($offset)->orderBy('created_at', 'desc')->get();
     }
 
-    public function getPaginatedAdmins($page=1, $perPage=null)
+    public function getPaginatedAdmins($page = 1, $perPage = null)
     {
-        if($perPage==null) $perPage = env('POSTS_PER_PAGE', 20);
-        if($page <= 0) $page = 1;
-        $offset = $perPage * ($page-1);
+        if ($perPage == null) $perPage = env('POSTS_PER_PAGE', 20);
+        if ($page <= 0) $page = 1;
+        $offset = $perPage * ($page - 1);
         return User::whereNotNull('role_id')->limit($perPage)->offset($offset)->orderBy('created_at', 'desc')->get();
     }
 
-    public function getPaginatedStaffs($page=1, $perPage=null)
+    public function getPaginatedStaffs($page = 1, $perPage = null)
     {
-        if($perPage==null) $perPage = env('POSTS_PER_PAGE', 20);
-        if($page <= 0) $page = 1;
-        $offset = $perPage * ($page-1);
+        if ($perPage == null) $perPage = env('POSTS_PER_PAGE', 20);
+        if ($page <= 0) $page = 1;
+        $offset = $perPage * ($page - 1);
         return User::whereNull('role_id')->limit($perPage)->offset($offset)->orderBy('created_at', 'desc')->get();
     }
 
@@ -106,9 +131,9 @@ class UserService
         return User::where('role_id', '!=', Role::SuperAdmin()->id)->orderBy('commission', 'desc')->get();
     }
 
-    public function latestFullStaff()
+    public function latestPhysicalStaff()
     {
-        return User::where('staff_type_id', Staff_type::FullStaff()->id)->orderBy('created_at', 'desc')->first();
+        return User::where('staff_type_id', StaffType::PhysicalStaff()->id)->orderBy('created_at', 'desc')->first();
     }
 
     public function getUsersByRoleId($role_id)
@@ -123,12 +148,54 @@ class UserService
 
     public function myVirtualStaffs($user_id)
     {
-        return User::where('registered_by', $user_id)->where('staff_type_id', Staff_type::VirtualStaff()->id)->get();
+        return User::where('registered_by', $user_id)->where('staff_type_id', StaffType::VirtualStaff()->id)->get();
     }
 
     public function getUserByRefererCode($code)
     {
         return User::where('referer_code', $code)->first();
+    }
+
+    public function getUserByStaffRefererCode($code)
+    {
+        return User::where('staff_referer_code', $code)->first();
+    }
+
+    public function getMyTeam(int $userId, bool $returnIds = false)
+    {
+        $staffTypeId = ($this->staffType != null) ? app(StaffTypeService::class)->getStaffTypeByName($this->staffType)->id : null;
+
+        $team = User::with(['clients', 'sales', 'lastActivity'])->where('registered_by', $userId)
+            ->when($staffTypeId != null, function ($query) use ($staffTypeId) {
+                return $query->where('staff_type_id', $staffTypeId);
+            })
+            ->when($this->searchString != null, function ($query) {
+                return $query->where('name', 'like', '%' . $this->searchString . '%');
+            });
+
+        if ($returnIds) return $team->pluck('id')->toArray();
+
+        return $team->get();
+    }
+
+    public function getMyTeamSales(int $userId)
+    {
+        $teamIds = $this->getMyTeam($userId, true);
+        $totalSales = UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('total_sales');
+        $salesCount = UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('sales_count');
+        $totalClients = UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('total_clients');
+
+        return [
+            'total_sales' => $totalSales,
+            'sales_count' => $salesCount,
+            'total_clients' => $totalClients
+        ];
+    }
+
+    public function getMyTeamSalesCount($userId)
+    {
+        $teamIds = $this->getMyTeam($userId, true);
+        return UserClientSalesSummaryView::whereIn('user_id', $teamIds)->sum('sales_count');
     }
 
     // public function usersByMonth($year, $start, $end=null)
@@ -164,61 +231,81 @@ class UserService
     //     return $users;
     // }
 
-    
+
 
     public function totalUsersCommissions()
     {
         return User::select(DB::raw("SUM(commission) as total"))->get();
     }
 
-    public function save($data, $user_id)
+    public function getStaffTypesCount()
+    {
+        return StaffTypeUserSummary::all()->keyBy('staff_type_name')->toArray();
+    }
+
+    public function getStaffSalesSummary(int $userId)
+    {
+        return UserClientSalesSummaryView::where("user_id", $userId)->first();
+    }
+
+    public function getMyClients(int $userId, $with = [])
+    {
+        return Client::with($with)->where("referer_id", $userId)->where("referer_type", User::$userType)->get();
+    }
+
+    public function getMyStaffs(int $userId, $with = [])
+    {
+        return User::with($with)->where("registered_by", $userId)->get();
+    }
+
+    public function save($data, $user_id = null)
     {
         $user = new User;
-        if(isset($data['title'])) $user->title = $data['title'];
+        if (isset($data['title'])) $user->title = $data['title'];
         $user->firstname = $data['firstname'];
         $user->lastname = $data['lastname'];
         $user->email = $data['email'];
         $user->password =  $data['password'];
-        if(isset($data['roleId'])) $user->role_id = $data['roleId'];
+        if (isset($data['roleId'])) $user->role_id = $data['roleId'];
         $user->staff_type_id = $data['staffTypeId'];
-        if(isset($data['phoneNumber'])) $user->phone_number = $data['phoneNumber'];
-        if(isset($data['email_confirmed'])) $user->email_confirmed = $data['email_confirmed'];
-        if(isset($data['address'])) $user->address = $data['address'];
-        if(isset($data['countryId'])) $user->country_id = $data['country_id'];
-        if(isset($data['postalCode'])) $user->postal_code = $data['postal_code'];
-        if(isset($data['maritalStatus'])) $user->marital_status = $data['marital_status'];
-        $user->registered_by = $user_id;
-        $user->referer_code = Utilities::generateRefererCode(UserType::USER->value);
-        if(isset($data['photoId'])) $user->photo_id = $data['photoId']; 
-        if(isset($data['gender'])) $user->gender = $data['gender']; 
-        if(isset($data['departmentId'])) $user->department_id = $data['departmentId']; 
-        if(isset($data['positionId'])) $user->position_id = $data['positionId']; 
-        $user->date_joined = (isset($data['dateJoined'])) ? $data['dateJoined'] : date('Y-m-d'); 
+        if (isset($data['phoneNumber'])) $user->phone_number = $data['phoneNumber'];
+        if (isset($data['email_confirmed'])) $user->email_confirmed = $data['email_confirmed'];
+        if (isset($data['address'])) $user->address = $data['address'];
+        if (isset($data['countryId'])) $user->country_id = $data['country_id'];
+        if (isset($data['postalCode'])) $user->postal_code = $data['postal_code'];
+        if (isset($data['maritalStatus'])) $user->marital_status = $data['marital_status'];
+        if ($user_id != null) $user->registered_by = $user_id;
+        // $user->referer_code = Utilities::generateRefererCode(UserType::USER->value);
+        if (isset($data['photoId'])) $user->photo_id = $data['photoId'];
+        if (isset($data['gender'])) $user->gender = $data['gender'];
+        if (isset($data['departmentId'])) $user->department_id = $data['departmentId'];
+        if (isset($data['positionId'])) $user->position_id = $data['positionId'];
+        $user->date_joined = (isset($data['dateJoined'])) ? $data['dateJoined'] : date('Y-m-d');
         $user->save();
         return $user;
     }
 
     public function update($data, $user)
     {
-        if(isset($data['title'])) $user->title = $data['title'];
-        if(isset($data['firstname'])) $user->firstname = $data['firstname'];
-        if(isset($data['lastname'])) $user->lastname = $data['lastname'];
-        if(isset($data['email'])) $user->email = $data['email'];
-        if(isset($data['role_id'])) $user->role_id = $data['role_id'];
-        if(isset($data['staff_type_id'])) $user->staff_type_id = $data['staff_type_id'];
-        if(isset($data['phone_number'])) $user->phone_number = $data['phone_number'];
-        if(isset($data['address'])) $user->address = $data['address'];
-        if(isset($data['country_id'])) $user->country_id = $data['country_id'];
-        if(isset($data['postal_code'])) $user->postal_code = $data['postal_code'];
-        if(isset($data['marital_status'])) $user->marital_status = $data['marital_status'];
-        if(isset($data['file_id'])) $user->photo_id = $data['file_id']; 
-        if(isset($data['gender'])) $user->gender = $data['gender']; 
-        if(isset($data['department_id'])) $user->department_id = $data['department_id']; 
-        if(isset($data['position_id'])) $user->position_id = $data['position_id']; 
-        if(isset($data['hybrid_staff_draw_id'])) $user->hybrid_staff_draw_id = $data['hybrid_staff_draw_id']; 
-        if(isset($data['account_number'])) $user->account_number = $data['account_number'];
-        if(isset($data['account_name'])) $user->account_name = $data['account_name'];
-        if(isset($data['bank_id'])) $user->bank_id = $data['bank_id'];
+        if (isset($data['title'])) $user->title = $data['title'];
+        if (isset($data['firstname'])) $user->firstname = $data['firstname'];
+        if (isset($data['lastname'])) $user->lastname = $data['lastname'];
+        if (isset($data['email'])) $user->email = $data['email'];
+        if (isset($data['roleId'])) $user->role_id = $data['roleId'];
+        if (isset($data['staffTypeId'])) $user->staff_type_id = $data['staffTypeId'];
+        if (isset($data['phoneNumber'])) $user->phone_number = $data['phoneNumber'];
+        if (isset($data['address'])) $user->address = $data['address'];
+        if (isset($data['countryId'])) $user->country_id = $data['countryId'];
+        if (isset($data['postalCode'])) $user->postal_code = $data['postalCode'];
+        if (isset($data['maritalStatus'])) $user->marital_status = $data['maritalStatus'];
+        if (isset($data['fileId'])) $user->photo_id = $data['fileId'];
+        if (isset($data['gender'])) $user->gender = $data['gender'];
+        if (isset($data['departmentId'])) $user->department_id = $data['departmentId'];
+        if (isset($data['positionId'])) $user->position_id = $data['positionId'];
+        if (isset($data['hybridStaffDrawId'])) $user->hybrid_staff_draw_id = $data['hybridStaffDrawId'];
+        if (isset($data['accountNumber'])) $user->account_number = $data['accountNumber'];
+        if (isset($data['accountName'])) $user->account_name = $data['accountName'];
+        if (isset($data['bankId'])) $user->bank_id = $data['bankId'];
         $user->update();
         return $user;
     }
@@ -237,22 +324,29 @@ class UserService
     public function upgradeToVirtualStaff($virtualStaffAssessment)
     {
         $user = new User;
-        $user->staff_type_id = Staff_type::VirtualStaff()->id;
+        $user->staff_type_id = StaffType::VirtualStaff()->id;
         // $user->role_id = Role::ClientRelation()->id;
-        $user->password = bcrypt('123456');
+        $user->password = bcrypt('password');
         $user->firstname = $virtualStaffAssessment->firstname;
-        $user->lastname = $virtualStaffAssessment->lastname;
+        $user->lastname = $virtualStaffAssessment->lastname ?? $virtualStaffAssessment->surname;
         $user->email = $virtualStaffAssessment->email;
         $user->phone_number = $virtualStaffAssessment->phone_number;
         $user->address = $virtualStaffAssessment->address;
         $user->gender = $virtualStaffAssessment->gender;
         // $user->occupation = $virtualStaffAssessment->occupation;
         $user->referer_code = Utilities::generateRandomString(5);
-        $user->date_joined = date('Y-m-d'); 
-        if($virtualStaffAssessment->referal_code && $virtualStaffAssessment->referal_code != null) {
-            $referer = $this->getUserByRefererCode($virtualStaffAssessment->referal_code);
-            $user->registered_by = $referer->id;
-        }else{
+        $user->date_joined = date('Y-m-d');
+
+        $referralCode = $virtualStaffAssessment->referral_code ?? $virtualStaffAssessment->referal_code;
+        if ($referralCode && $referralCode != null) {
+            $referralCode = trim($referralCode);
+            $referer = $this->getUserByStaffRefererCode($referralCode);
+            if ($referer) {
+                $user->registered_by = $referer->id;
+            } else {
+                $user->registered_by = Helpers::selectVirtualStaffParent();
+            }
+        } else {
             // Select a parent for e-staff;
             $user->registered_by = Helpers::selectVirtualStaffParent();
         }
@@ -263,7 +357,7 @@ class UserService
 
     public function upgradeToHybridStaff($user)
     {
-        $user->staff_type_id = Staff_type::HybridStaff()->id;
+        $user->staff_type_id = StaffType::HybridStaff()->id;
         $user->update();
         return $user;
     }
@@ -271,21 +365,21 @@ class UserService
     /*
     *   Select virtual staffs to be drawn to assign e-staff
     */
-    public function selectStaffsForDraw($draw=null)
+    public function selectStaffsForDraw($draw = null)
     {
         $usersIdArr = [];
-        if($draw==null) {
+        if ($draw == null) {
             // If it is a fresh draw, get all virtual staffs
             // if($this->hybridStaffsCount() > 0) {
-            $usersId = User::select('id')->where('staff_type_id', Staff_type::HybridStaff()->id)->get();
-            if($usersId->count() > 0) {
-                foreach($usersId as $userId) $usersIdArr[] = $userId->id;
+            $usersId = User::select('id')->where('staff_type_id', StaffType::HybridStaff()->id)->get();
+            if ($usersId->count() > 0) {
+                foreach ($usersId as $userId) $usersIdArr[] = $userId->id;
             }
-        }else{
+        } else {
             // If there is an existing draw, select only those that joined before the draw started and those that has not been selected before
-            $usersId = User::select('id')->where('staff_type_id', Staff_type::HybridStaff()->id)->where('date_joined', '<', $draw->created_at)->where('hybrid_staff_draw_id', '!=', $draw->id)->get();
-            if($usersId->count() > 0) {
-                foreach($usersId as $userId) $usersIdArr[] = $userId->id;
+            $usersId = User::select('id')->where('staff_type_id', StaffType::HybridStaff()->id)->where('date_joined', '<', $draw->created_at)->where('hybrid_staff_draw_id', '!=', $draw->id)->get();
+            if ($usersId->count() > 0) {
+                foreach ($usersId as $userId) $usersIdArr[] = $userId->id;
             }
         }
         return $usersIdArr;
@@ -301,5 +395,4 @@ class UserService
     {
         $user->delete();
     }
-
 }

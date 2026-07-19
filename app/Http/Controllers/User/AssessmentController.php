@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use app\Http\Controllers\Controller;
 
@@ -22,6 +24,8 @@ use app\Utilities;
 
 class AssessmentController extends Controller
 {
+    private $userActivityLogService;
+
     private $assessmentService;
     private $questionService;
     private $optionService;
@@ -29,6 +33,7 @@ class AssessmentController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->assessmentService = new AssessmentService;
         $this->questionService = new AssessmentQuestionService;
         $this->optionService = new AssessmentQuestionOptionService;
@@ -55,6 +60,13 @@ class AssessmentController extends Controller
             DB::commit();
 
             $assessment = $this->assessmentService->assessment($assessment->id);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Created Assessment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new AssessmentResource($assessment));
         }catch(\Exception $e){
@@ -119,6 +131,13 @@ class AssessmentController extends Controller
 
             $assessment = $this->assessmentService->update($data, $assessment);
             $assessment = $this->assessmentService->assessment($assessment->id);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Assessment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new AssessmentResource($assessment));
         }catch(\Exception $e){
@@ -190,7 +209,14 @@ class AssessmentController extends Controller
 
         $assessment = ($assessment->active==0) ? $this->assessmentService->activate($assessment) : $this->assessmentService->deactivate($assessment);
 
-        return Utilities::ok(new AssessmentResource($assessment));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Toggled Assessment Activation State");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new AssessmentResource($assessment));
     }
 
     public function delete($assessmentId)
@@ -202,6 +228,13 @@ class AssessmentController extends Controller
 
         $this->assessmentService->delete($assessment);
 
-        return Utilities::okay("Assessment Deleted Successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Assessment");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Assessment Deleted Successfully");
     }
 }
