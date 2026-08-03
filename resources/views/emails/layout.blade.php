@@ -66,7 +66,7 @@
 <body style="font-family: 'Arial', sans-serif; line-height: 1.6; background-color: #f4f4f4; margin: 0; padding: 20px; color: #333;">
     <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden;">
         <div style="background-color: #007bff; color: white; text-align: center; padding: 20px;">
-            <img src="{{ env('APP_URL') }}/images/logo.png" alt="Company Logo" style="width: 30%; max-width: 150px; margin-bottom: 10px;">
+            <img src="{{ env('APP_URL') }}/images/newLogo.png" alt="Company Logo" style="width: 30%; max-width: 150px; margin-bottom: 10px;">
             <h1 style="text-align: center;">@yield('heading')</h1>
         </div>
 
