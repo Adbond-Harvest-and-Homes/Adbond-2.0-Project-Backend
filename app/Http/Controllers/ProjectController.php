@@ -52,7 +52,7 @@ class ProjectController extends Controller
             $project->setRelation('packages.media', $project->packages(10)->where("active", 1)->get());
         });
         $this->projectService->count = true;
-        $projectsCount = $this->projectService->projects();
+        $projectsCount = $this->projectService->activeProjects();
 
         return Utilities::paginatedOkay(ProjectResource::collection($projects), $page, $perPage, $projectsCount);
     }

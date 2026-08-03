@@ -54,7 +54,7 @@ class Users extends Seeder
                 "referer_code" => Utilities::generateRandomString(5),
                 "phone_number" => "08035274581",
                 "activated" => 1,
-                "registeredBy" => app(UserService::class)->getUserByEmail("adbond-dev@gmail.com")->id,
+                "registeredByEmail" => "adbond-dev@gmail.com",
             ],
         ];
 
@@ -72,7 +72,10 @@ class Users extends Seeder
                 $userObj->activated = $user['activated'];
                 $userObj->staff_type_id = $user['staff_type_id'];
                 $userObj->email_verified_at = now();
-                if (isset($user['registeredBy'])) $userObj->registered_by = $user['registeredBy'];
+                if (isset($user['registeredByEmail'])) {
+                    $registeredBy = app(UserService::class)->getUserByEmail($user['registeredByEmail']);
+                    if ($registeredBy) $userObj->registered_by = $registeredBy->id;
+                }
                 $userObj->save();
             }
         }

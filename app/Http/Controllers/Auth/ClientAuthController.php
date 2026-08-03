@@ -258,7 +258,7 @@ class ClientAuthController extends Controller
             $data = $request->validated();
             $resetToken = $this->passwordService->emailExists($data['email'], PasswordTypes::CLIENT->value);
             if(!$resetToken) return Utilities::error402("You have not been cleared to reset this password, go through the password reset process");
-            if(!$resetToken->verified) return Utilities::error402("Your password reset was not successful, click on the verify link sent to your mail");
+            if(!$resetToken->verified) return Utilities::error402("Your password reset was not successful, Invalid or Expired OTP");
 
             $user = $this->clientService->getClientByEmail($data['email']);
             if(!$user) return Utilities::error402("no user exists for this email");
