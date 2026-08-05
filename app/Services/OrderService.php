@@ -61,7 +61,9 @@ class OrderService
         $discountedAmount = $data['amount'];
         if ($data['packageType'] == PackageType::NON_INVESTMENT->value && !$data['isInstallment']) {
             $fullPaymentDiscountObj =  Discount::fullPayment();
-            $appliedDiscounts[] = $this->getAppliedDiscountFromDiscountObj($fullPaymentDiscountObj, $discountedAmount);
+            $appliedDiscount = $this->getAppliedDiscountFromDiscountObj($fullPaymentDiscountObj, $discountedAmount);
+            $appliedDiscounts[] = $appliedDiscount;
+            $discountedAmount = $appliedDiscount['amount'];
             // $fullPaymentDiscount = $fullPaymentDiscountObj->discount;
             // $discountMeasurement = $fullPaymentDiscountObj->discount_measurement;
             // $isPercentage = $discountMeasurement == Measurement::PERCENTAGE->value;
@@ -94,7 +96,9 @@ class OrderService
         //Bond Payment
         if ($data['packageType'] == PackageType::BOND->value) {
             $bondDiscountObj = ($data['isInstallment']) ? Discount::bondInstallment() : Discount::bond();
-            $appliedDiscounts[] = $this->getAppliedDiscountFromDiscountObj($bondDiscountObj, $discountedAmount);
+            $appliedDiscount = $this->getAppliedDiscountFromDiscountObj($bondDiscountObj, $discountedAmount);
+            $appliedDiscounts[] = $appliedDiscount;
+            $discountedAmount = $appliedDiscount['amount'];
         }
 
         if ($promoCodeDiscount) {
