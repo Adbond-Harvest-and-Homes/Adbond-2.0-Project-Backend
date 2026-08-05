@@ -15,21 +15,21 @@ class Discount extends Model
 
     public static function fullPayment()
     {
-        return self::whereType(DiscountType::FULL_PAYMENT->value)->first();
+        return self::whereType(DiscountType::FULL_PAYMENT->value)->latest("id")->first();
     }
 
     public static function bond()
     {
-        return self::whereType(DiscountType::BOND->value)->first();
+        return self::whereType(DiscountType::BOND->value)->latest("id")->first();
     }
 
     public static function bondInstallment()
     {
-        return self::whereType(DiscountType::BOND_INSTALLMENT->value)->first();
+        return self::whereType(DiscountType::BOND_INSTALLMENT->value)->latest("id")->first();
     }
 
     public static function loyalty()
     {
-        return self::whereType(DiscountType::LOYALTY->value)->first();
+        return self::whereType(DiscountType::LOYALTY->value)->latest("id")->first();
     }
 }
