@@ -54,6 +54,15 @@ class UserAuthController extends Controller
                 'message' => 'Wrong Email or Password'
             ], 402);
         }
+
+        if (!Auth::user()->activated) {
+            Auth::logout();
+            return response()->json([
+                'statusCode' => 402,
+                'message' => 'Your account has been deactivated, please contact support'
+            ], 402);
+        }
+
         $user = new UserBriefResource(Auth::user());
         return response()->json([
             'statusCode' => 200,

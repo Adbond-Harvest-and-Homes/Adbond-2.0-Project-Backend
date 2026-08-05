@@ -36,6 +36,7 @@ class UserResource extends JsonResource
             'lastname' => $this->lastname,
             'name' => $this->full_name,
             'email' => $this->email,
+            'active' => ($this->activated && $this->activated == 1) ? true : false,
             'profilePhoto' => new FileResource($this->photo),
             'role' => new RoleResource($this->role),
             'staffType' => new StaffTypeResource($this->staffType),

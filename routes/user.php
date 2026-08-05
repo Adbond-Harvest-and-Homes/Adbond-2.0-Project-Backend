@@ -84,6 +84,8 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
 
     Route::group(['middleware' => ['hrAuth',], 'prefix' => '/staffs'], function () {
         Route::get('/activities', [StaffController::class, "activities"]);
+        Route::post('/activate/{userId}', [StaffController::class, "activate"]);
+        Route::post('/deactivate/{userId}', [StaffController::class, "deactivate"]);
     });
 
     Route::group(['prefix' => '/staffs'], function () {

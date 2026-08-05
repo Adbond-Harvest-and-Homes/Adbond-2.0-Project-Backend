@@ -214,6 +214,46 @@ class StaffController extends Controller
         return Utilities::ok($userLogs);
     }
 
+    public function activate($userId)
+    {
+        if (!is_numeric($userId)) return Utilities::error402("Invalid parameter userId");
+
+        $user = $this->userService->getUser($userId);
+        if (!$user) return Utilities::error402("User not found");
+
+        if ($user->activated) return Utilities::error402("Staff is already active");
+
+        $user = $this->userService->activate($user);
+
+        try {
+            $this->userActivityLogService->log(Auth::user(), "Activated Staff");
+        } catch (\Exception $e) {
+            Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+        }
+
+        return Utilities::ok(new UserResource($user));
+    }
+
+    public function deactivate($userId)
+    {
+        if (!is_numeric($userId)) return Utilities::error402("Invalid parameter userId");
+
+        $user = $this->userService->getUser($userId);
+        if (!$user) return Utilities::error402("User not found");
+
+        if (!$user->activated) return Utilities::error402("Staff is already inactive");
+
+        $user = $this->userService->deactivate($user);
+
+        try {
+            $this->userActivityLogService->log(Auth::user(), "Deactivated Staff");
+        } catch (\Exception $e) {
+            Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+        }
+
+        return Utilities::ok(new UserResource($user));
+    }
+
     public function delete($userId)
     {
         if (Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");

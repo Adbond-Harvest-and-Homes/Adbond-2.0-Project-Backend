@@ -318,6 +318,22 @@ class UserService
         return $user;
     }
 
+    public function activate($user)
+    {
+        $user->activated = 1;
+        $user->update();
+
+        return $user;
+    }
+
+    public function deactivate($user)
+    {
+        $user->activated = 0;
+        $user->update();
+
+        return $user;
+    }
+
     /*
     *   Upgrade candidates that passed the e-staff assessments to become an e-staff
     */
