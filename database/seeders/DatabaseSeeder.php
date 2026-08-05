@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use app\Models\Benefit;
 use app\Models\DeductibleFee;
-use App\Models\User;
+use app\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -30,6 +30,10 @@ use Database\Seeders\Benefits;
 use Database\Seeders\WalletSeeder;
 use Database\Seeders\BankAccounts;
 use Database\Seeders\AddRefererUserCode;
+use Database\Seeders\Ghana;
+use Database\Seeders\LoadPackageStates;
+use Database\Seeders\Departments;
+use Database\Seeders\EmploymentTypes;
 
 class DatabaseSeeder extends Seeder
 {
@@ -50,7 +54,7 @@ class DatabaseSeeder extends Seeder
             new ProjectTypes,
             new Roles,
             new StaffTypes,
-            new States,
+            // new States,
             // new Users,
             // new Projects,
             // new Packages,
@@ -66,10 +70,14 @@ class DatabaseSeeder extends Seeder
             new Benefits,
             // new WalletSeeder,
             new BankAccounts,
+            // new Ghana,
+            new LoadPackageStates,
             // new AddRefererUserCode
+            new Departments,
+            new EmploymentTypes,
+
         ];
 
-        foreach($seeders as $seeder) $seeder->run();
-
+        foreach ($seeders as $seeder) $seeder->run();
     }
 }

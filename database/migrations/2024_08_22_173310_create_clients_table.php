@@ -4,8 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-use App\EnumClass;
-use App\Enums\KYCStatus;
+use app\EnumClass;
+use app\Enums\KYCStatus;
 
 return new class extends Migration
 {

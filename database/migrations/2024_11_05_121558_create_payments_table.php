@@ -32,6 +32,7 @@ return new class extends Migration
             $table->foreignId("receipt_file_id")->nullable()->references("id")->on("files");
             $table->string("purpose");
             $table->foreignId("user_id")->nullable()->references("id")->on("users");
+            $table->boolean("docs_uploaded")->default(false);
             $table->timestamps();
         });
     }

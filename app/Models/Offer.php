@@ -49,7 +49,8 @@ class Offer extends Model
      */
     public function clientPackage()
     {
-        return $this->hasOne(ClientPackage::class, 'purchase_id');
+        // return $this->hasOne(ClientPackage::class, 'purchase_id');
+        $this->morphOne(ClientPackage::class, 'purchase');
     }
 
     /**

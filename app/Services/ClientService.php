@@ -9,9 +9,16 @@ use PDF;
 
 use Illuminate\Support\Facades\DB;
 
+use app\Jobs\GenerateContract;
+use app\Jobs\GenerateMOU;
+use app\Jobs\GenerateReceipt;
+
 use app\Services\AgeGroupService;
+use app\Services\PackageService;
+use app\Services\ClientPackageService;
 
 use app\Models\Client;
+use app\Models\Offer;
 use app\Models\ClientNextOfKin;
 use app\Models\ClientSummaryView;
 use app\Models\ClientCommissionEarning;
@@ -21,6 +28,7 @@ use app\Exports\ClientExport;
 
 use app\Enums\KYCStatus;
 use app\Enums\ActiveToggle;
+use app\Enums\ClientPackageOrigin;
 use app\Helpers;
 
 /**
@@ -30,10 +38,15 @@ class ClientService
 {
     public $count = false;
     public $active = null;
+    public $user = null;
 
     public function getClient($id, $with=[])
     {
-        return Client::with($with)->where("id", $id)->first();
+        $query = Client::with($with)->where("id", $id);
+        if ($this->user !== null) {
+            $query->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+        }
+        return $query->first();
     }
 
     public function getClientByEmail($email, $with=[])
@@ -53,7 +66,11 @@ class ClientService
 
     public function getClients()
     {
-        return Client::orderBy('created_at', 'DESC')->get();
+        $query = Client::orderBy('created_at', 'DESC');
+        if ($this->user !== null) {
+            $query->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+        }
+        return $query->get();
     }
 
     public function clients($with=[], $offset=0, $perPage=null)
@@ -75,6 +92,9 @@ class ClientService
     public function filter($filter, $with=[], $offset=0, $perPage=null)
     {
         $query = Client::with($with);
+        if ($this->user !== null) {
+            $query->where('referer_id', $this->user->id)->where('referer_type', $this->user::class);
+        }
         if(isset($filter['text'])) {
             $query = $query->where(function($q) use($filter) { 
                 $q->where("firstname", "LIKE", "%".$filter['text']."%")->orWhere("lastname", "LIKE", "%".$filter['text']."%")
@@ -89,6 +109,26 @@ class ClientService
 
     public function summary()
     {
+        if ($this->user !== null) {
+            $clientQuery = $this->user->clients();
+
+            $totalClients = (clone $clientQuery)->count();
+            $activeClients = (clone $clientQuery)->where('activated', 1)->count();
+            $inactiveClients = (clone $clientQuery)->where('activated', 0)->count();
+            $purchasingClients = (clone $clientQuery)->whereHas('assets')->count();
+            $newClients = (clone $clientQuery)->whereYear('created_at', now()->year)
+                                              ->whereMonth('created_at', now()->month)
+                                              ->count();
+
+            return (object) [
+                'total_clients' => $totalClients,
+                'active_clients' => $activeClients,
+                'inactive_clients' => $inactiveClients,
+                'purchasing_clients' => $purchasingClients,
+                'new_clients' => $newClients
+            ];
+        }
+
         return ClientSummaryView::first();
     }
 
@@ -177,6 +217,9 @@ class ClientService
                 $client->update();
             }
         }
+
+        if($client->kyc_status == KYCStatus::COMPLETED->value) $this->uploadDocs($client);
+        
         return $client;
     }
 
@@ -184,6 +227,39 @@ class ClientService
     {
         $client->password =  bcrypt($password);
         $client->update();
+    }
+
+    public function uploadDocs($client)
+    {
+        $paymentService = new PaymentService;
+        $clientPackageService = new ClientPackageService;
+        //upload receipts
+        $payments = $paymentService->getClientPayments($client->id);
+        if($payments->count() > 0) {
+            foreach($payments as $payment) {
+                if(!$payment->receipt_file_id) {
+                    GenerateReceipt::dispatch($payment->id, false);
+                    // $paymentService->uploadReceipt($payment, $client);
+                    // $payment->docs_uploaded == 1;
+                    // $payment->update();
+                }
+            }
+        }
+
+        $assets = $clientPackageService->clientAssets($client->id);
+        if($assets->count() > 0) {
+            foreach($assets as $asset) {
+                switch($asset->purchase_type) {
+                    case ClientPackageOrigin::ORDER->value : 
+                        $isOffer = ($asset->purchase_type == Offer::$type);
+                        GenerateContract::dispatch($asset->id, $isOffer, false);
+                        break;
+                    case ClientPackageOrigin::INVESTMENT->value : 
+                        if($asset?->purchase) GenerateMOU::dispatch($asset->purchase_id, false);
+                        break;
+                }
+            }
+        }
     }
 
     public function saveGoogleUser($data)

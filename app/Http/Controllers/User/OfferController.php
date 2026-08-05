@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
@@ -25,12 +26,15 @@ use app\Utilities;
 
 class OfferController extends Controller
 {
+    private $userActivityLogService;
+
     private $offerService;
     private $clientPackageService;
     private $paymentService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->offerService = new OfferService;
         $this->clientPackageService = new ClientPackageService;
         $this->paymentService = new PaymentService;
@@ -68,6 +72,13 @@ class OfferController extends Controller
 
             $offer = $this->offerService->approve($offer, Auth::user()->id);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Approved Offer");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Offer approved successfully");
 
         }catch(\Exception $e){
@@ -87,6 +98,13 @@ class OfferController extends Controller
             if($offer->approved && $offer->approved==1) return Utilities::error402("This offer has been Approved");
 
             $offer = $this->offerService->reject($offer, $data['reason'], Auth::user()->id);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Rejected Offer");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Offer Rejected");
 
@@ -122,6 +140,13 @@ class OfferController extends Controller
             $this->clientPackageService->markAsSold($offer->asset);
 
             DB::commit();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Completed Offer");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new OfferResource($offer));
         }catch(\Exception $e){

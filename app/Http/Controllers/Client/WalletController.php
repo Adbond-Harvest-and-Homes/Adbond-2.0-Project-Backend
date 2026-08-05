@@ -137,7 +137,9 @@ class WalletController extends Controller
 
     public function withdrawalRequests()
     {
-        $this->walletService->walletId = Auth::guard("client")->user()->wallet->id;
+        $wallet = Auth::guard("client")->user()->wallet;
+        if(!$wallet) $wallet = $this->walletService->clientWallet(Auth::guard("client")->user()->id);
+        $this->walletService->walletId = $wallet->id;
         $withdrawalRequests = $this->walletService->withdrawalRequests();
 
         return Utilities::ok(WalletWithdrawalRequestResource::collection($withdrawalRequests));

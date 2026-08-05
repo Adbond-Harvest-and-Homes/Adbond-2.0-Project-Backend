@@ -11,4 +11,6 @@ enum NotificationType: string
         case NEW_OFFER_APPROVAL_REQ = 'new offer approval request';
         case OFFER_PAYMENT_CONF = 'offer payment confirmation';
         case WALLET_WITHDRAWAL_REQ = 'wallet withdrawal request';
+        case BOND_LIQUIDATION_REQ = 'bond liquidation request';
+        case BOND_RENEWAL_REQ = 'bond renewal request';
     }

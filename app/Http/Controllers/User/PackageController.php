@@ -3,9 +3,12 @@
 namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
+use app\Services\UserActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+
+use app\Exceptions\AppException;
 
 use app\Http\Resources\PackageResource;
 use app\Http\Resources\FileResource;
@@ -37,6 +40,8 @@ use app\Utilities;
 
 class PackageController extends Controller
 {
+    private $userActivityLogService;
+
     private $packageService;
     private $projectService;
     private $fileService;
@@ -44,6 +49,7 @@ class PackageController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->packageService = new PackageService;
         $this->projectService = new ProjectService;
         $this->fileService = new FileService;
@@ -72,6 +78,8 @@ class PackageController extends Controller
         $offset = $perPage * ($page-1);
 
         $filter = [];
+        if($request->query('countryId')) $this->packageService->countryId = $request->query('countryId');
+        if($request->query('stateId')) $this->packageService->stateId = $request->query('stateId');
         if($request->query('text')) $filter["text"] = $request->query('text');
         if($request->query('date')) $filter["date"] = $request->query('date');
         if($request->query('status')) {
@@ -131,10 +139,20 @@ class PackageController extends Controller
             // dd($package->benefits);
             DB::commit();
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Saved Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new PackageResource($package));
+        }catch(AppException $e){
+            DB::rollBack();
+            throw $e;
         }catch(\Exception $e){
             DB::rollBack();
-            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+            return Utilities::error($e, 'An error occurred while trying to save Package, Please try again later or contact support');
         }
     }
 
@@ -148,7 +166,14 @@ class PackageController extends Controller
             $fileType = (in_array($mime, $imageMimes)) ? "image" : "video";
             $purpose = (in_array($mime, $imageMimes)) ? FilePurpose::PACKAGE_PHOTO->value : FilePurpose::PACKAGE_VIDEO->value;
             $res = $this->fileService->save($request->file('media'), $fileType, Auth::user()->id, $purpose, User::$userType, 'package-media');  
-            if($res['status'] == 200) return Utilities::ok(new FileResource($res['file']));
+            if($res['status'] == 200) 
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Uploaded Package Media");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new FileResource($res['file']));
             
             return Utilities::error402($res['message']);
         // }catch(\Exception $e){
@@ -178,7 +203,14 @@ class PackageController extends Controller
             }
         }
             
-        return Utilities::ok([
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Uploaded Multiple Package Media Files");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok([
             "successfulIds" => $successfulIds,
             "failedFiles" => $failedFiles
         ]);
@@ -246,6 +278,13 @@ class PackageController extends Controller
 
             $package = $this->packageService->package($package->id, ['project', 'media']);
             DB::commit();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new PackageResource($package));
         }catch(\Exception $e){
@@ -321,7 +360,14 @@ class PackageController extends Controller
                 case 'excel':
                     return $this->packageService->exportToExcel($packages);
                 case 'pdf':
-                    return $this->packageService->exportToPDF($packages, $project->name);
+                    
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Exported Packages list");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return $this->packageService->exportToPDF($packages, $project->name);
                 default:
                     return Utilities::error402("Invalid export type");
             }
@@ -340,6 +386,13 @@ class PackageController extends Controller
             if($package->sold_out) return Utilities::error402("Package is already sold out");
             $package = $this->packageService->markAsSoldOut($package);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Marked Package as Sold Out");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Package is marked out sold out", new PackageResource($package));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -355,6 +408,13 @@ class PackageController extends Controller
 
             if(!$package->sold_out) return Utilities::error402("Package is already not Sold Out");
             $package = $this->packageService->markAsBackInStock($package);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Marked Package as In Stock");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Package is marked as back in Stock", new PackageResource($package));
         }catch(\Exception $e){
@@ -372,6 +432,13 @@ class PackageController extends Controller
             if($package->active) return Utilities::error402("Package is already active");
             $package = $this->packageService->activate($package);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Activated Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Package Activated Successfully", new PackageResource($package));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -387,6 +454,13 @@ class PackageController extends Controller
 
             if(!$package->active) return Utilities::error402("Package is already inactive");
             $package = $this->packageService->deactivate($package);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deactivated Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Package Deactivated Successfully", new PackageResource($package));
         }catch(\Exception $e){
@@ -405,6 +479,13 @@ class PackageController extends Controller
             if($package->assets->count() > 0) return Utilities::error402("Cannot delete this Package");
             $this->packageService->delete($package);
 
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Package Deleted Successfully");
         } catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
@@ -424,6 +505,13 @@ class PackageController extends Controller
 
             $promoProduct = $this->promoService->savePromoProduct($product);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added Promo to Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Promo has been Added to the Package Successfully");
 
         }catch(\Exception $e){
@@ -442,6 +530,13 @@ class PackageController extends Controller
             if(!$promoProduct) return Utilities::error402("Promo Product not found");
 
             $this->promoService->removePromoProduct($promoProduct);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Removed Promo from Package");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Promo has been Removed to the Package Successfully");
 

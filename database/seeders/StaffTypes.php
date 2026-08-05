@@ -16,7 +16,7 @@ class StaffTypes extends Seeder
     public function run(): void
     {
         $staffTypes = array(
-            Type::FULL_STAFF->value, Type::HYBRID_STAFF->value, Type::VIRTUAL_STAFF->value
+            Type::PHYSICAL_STAFF->value, Type::HYBRID_STAFF->value, Type::VIRTUAL_STAFF->value
         );
         foreach($staffTypes as $type) {
             StaffType::firstOrCreate(['name' => $type]);

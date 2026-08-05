@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use Carbon\Carbon;
@@ -20,11 +22,14 @@ use app\Utilities;
 
 class SiteTourController extends Controller
 {
+    private $userActivityLogService;
+
     private $siteTourService;
     private $packageService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->siteTourService = new SiteTourService;
         $this->packageService = new PackageService;
     }
@@ -54,6 +59,13 @@ class SiteTourController extends Controller
 
             $siteTourSchedule = $this->siteTourService->save($data);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Created Site Tour Schedule");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new SiteTourScheduleResource($siteTourSchedule));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -80,6 +92,13 @@ class SiteTourController extends Controller
 
             $siteTourSchedule = $this->siteTourService->update($data, $schedule);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Site Tour Schedule");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new SiteTourScheduleResource($siteTourSchedule));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -95,7 +114,14 @@ class SiteTourController extends Controller
 
         $this->siteTourService->delete($schedule);
 
-        return Utilities::okay("Site Tour Schedule Deleted Successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Site Tour Schedule");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Site Tour Schedule Deleted Successfully");
     }
 
     public function schedules(Request $request)

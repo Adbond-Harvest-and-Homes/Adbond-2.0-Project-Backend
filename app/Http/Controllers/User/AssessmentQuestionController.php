@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use app\Http\Controllers\Controller;
 
@@ -18,11 +20,14 @@ use app\Utilities;
 
 class AssessmentQuestionController extends Controller
 {
+    private $userActivityLogService;
+
     private $assessmentQuestionService;
     private $questionOptionService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->assessmentQuestionService = new AssessmentQuestionService;
         $this->questionOptionService = new AssessmentQuestionOptionService;
     }
@@ -41,6 +46,13 @@ class AssessmentQuestionController extends Controller
             $question = $this->assessmentQuestionService->question($question->id);
             DB::commit();
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Saved Assessment Question");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new QuestionResource($question));
         }catch(\Exception $e){
             DB::rollBack();
@@ -58,6 +70,13 @@ class AssessmentQuestionController extends Controller
 
             $data = $request->validated();
             $question = $this->assessmentQuestionService->update($data, $question);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Assessment Question");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new QuestionResource($question));
         }catch(\Exception $e){
@@ -93,6 +112,13 @@ class AssessmentQuestionController extends Controller
 
         $this->assessmentQuestionService->delete($question);
 
-        return Utilities::okay("Question Deleted Successfully");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Assessment Question");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Question Deleted Successfully");
     }
 }

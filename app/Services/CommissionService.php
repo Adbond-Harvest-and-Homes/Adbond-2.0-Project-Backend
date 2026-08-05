@@ -25,11 +25,15 @@ use app\Enums\RedemptionStatus;
 
 use app\Helpers;
 use app\Utilities;
+
 /**
  * Commission service class
  */
 class CommissionService
 {
+
+    public string | null $type = null;
+    public int | null $installment = null;
 
     //Client Commissions Start Here
     public function setClientCommissionRate($rate)
@@ -43,25 +47,25 @@ class CommissionService
 
     public function saveClientEarning($client, $order)
     {
+        $order->refresh();
         $fee = DeductibleFee::where("name", "commission tax")->first();
         $commissionTax = $fee ? $fee->percentage : 0;
         $clientCommissionRate = ClientCommissionRate::first();
 
-        if($clientCommissionRate) {
+        if ($clientCommissionRate) {
             $clientCommission = new ClientCommissionEarning;
             $clientCommission->client_id = $client->id;
             $clientCommission->order_id = $order->id;
             $clientCommission->amount = $order->amount_payable;
             $clientCommission->commission = $clientCommissionRate->rate;
-            $clientCommission->commission_amount = round(($clientCommissionRate->rate/100) * $clientCommission->amount, 2);
+            $clientCommission->commission_amount = round(($clientCommissionRate->rate / 100) * $clientCommission->amount, 2);
             $clientCommission->tax = $commissionTax;
-            $taxAmount = round(($commissionTax/100) * $clientCommission->commission_amount, 2);
+            $taxAmount = round(($commissionTax / 100) * $clientCommission->commission_amount, 2);
             $clientCommission->amount_after_tax = $clientCommission->commission_amount - $taxAmount;
             $clientCommission->save();
 
             return $clientCommission;
         }
-
     }
 
     public function totalClientEarnings($clientId)
@@ -78,12 +82,12 @@ class CommissionService
         $installmentCommissionRate = CommissionRate::where('staff_type_id', $data['staff_type_id'])->where('installment', 1)->first();
         $fullpaymentCommissionRate = CommissionRate::where('staff_type_id', $data['staff_type_id'])->where('installment', 0)->first();
         $newCommissionRate = new CommissionRate;
-        if($installmentCommissionRate) {
+        if ($installmentCommissionRate) {
             // dd('here1');
-           $installmentCommissionRate->direct = $data['installment']['direct'];
-           $installmentCommissionRate->indirect = $data['installment']['indirect']; 
-           $installmentCommissionRate->update();
-        }else{
+            $installmentCommissionRate->direct = $data['installment']['direct'];
+            $installmentCommissionRate->indirect = $data['installment']['indirect'];
+            $installmentCommissionRate->update();
+        } else {
             // dd('here2');
             $newCommissionRate = new CommissionRate;
             $newCommissionRate->staff_type_id = $data['staff_type_id'];
@@ -92,12 +96,12 @@ class CommissionService
             $newCommissionRate->indirect = $data['installment']['indirect'];
             $newCommissionRate->save();
         }
-        if($fullpaymentCommissionRate) {
+        if ($fullpaymentCommissionRate) {
             // dd('here3');
             $fullpaymentCommissionRate->direct = $data['fullpayment']['direct'];
-            $fullpaymentCommissionRate->indirect = $data['fullpayment']['indirect']; 
+            $fullpaymentCommissionRate->indirect = $data['fullpayment']['indirect'];
             $fullpaymentCommissionRate->update();
-        }else{
+        } else {
             // dd('here4');
             $newCommissionRate = new CommissionRate;
             $newCommissionRate->staff_type_id = $data['staff_type_id'];
@@ -105,23 +109,27 @@ class CommissionService
             $newCommissionRate->direct = $data['fullpayment']['direct'];
             $newCommissionRate->indirect = $data['fullpayment']['indirect'];
             $newCommissionRate->save();
-         }
-         return CommissionRate::where('staff_type_id', $data['staff_type_id'])->get();
+        }
+        return CommissionRate::where('staff_type_id', $data['staff_type_id'])->get();
     }
 
-    public function save($user, $order)
+    public function save($user, $order, $isFirstPayment = false)
     {
-        if($user->staffType && $user->staffType->name=="e-staff") {
+        $order->refresh();
+        if ($user->staffType && $user->staffType->name == StaffTypes::VIRTUAL_STAFF->value) {
             $staff = $user->registerer;
         }
-        $commission = $this->addDirectCommission($user, $order);
-        if(isset($staff) && $staff != null) $this->addIndirectCommission($staff, $order);
+        $commission = $this->addDirectCommission($user, $order, $isFirstPayment);
+        if (isset($staff) && $staff != null) $this->addIndirectCommission($staff, $order, $isFirstPayment);
         return true;
     }
 
-    public function getStaffEarnings($userId)
+    public function getStaffEarnings(int $userId)
     {
-        return StaffCommissionEarning::where("user_id", $userId)->orderBy("created_at", "DESC")->get();
+        return StaffCommissionEarning::where("user_id", $userId)
+            ->when($this->type, fn($query) => $query->where("type", $this->type))
+            ->when($this->installment != null, fn($query) => $query->whereHas("order", fn($orderQuery) => $orderQuery->where("is_installment", $this->installment)))
+            ->orderBy("created_at", "DESC")->get();
     }
 
     public function getTotalStaffsEarnings()
@@ -135,6 +143,12 @@ class CommissionService
         return ($totalEarning) ? $totalEarning->total_earnings : 0;
     }
 
+    public function getTotalStaffIndirectEarnings($userId)
+    {
+        $totalEarning = StaffTotalEarningView::where("user_id", $userId)->first();
+        return ($totalEarning) ? $totalEarning->total_indirect_earnings : 0;
+    }
+
     public function getTotalStaffRedemptions($userId)
     {
         $totalRedemption = StaffTotalRedemptionView::where("user_id", $userId)->first();
@@ -146,16 +160,16 @@ class CommissionService
         return StaffCommissionRedemption::where("user_id", $userId)->where("status", RedemptionStatus::PENDING->value)->first();
     }
 
-    public function commissionRedemptions($with=[], $userId=null)
+    public function commissionRedemptions($with = [], $userId = null)
     {
-        $query = StaffCommissionRedemption::with($with); 
-        if($userId) $query = $query->where("user_id", $userId); 
+        $query = StaffCommissionRedemption::with($with);
+        if ($userId) $query = $query->where("user_id", $userId);
         return $query->orderBy("created_at", "DESC")->get();
     }
 
-    public function commissionRedemption($id, $with=[])
+    public function commissionRedemption($id, $with = [])
     {
-        return StaffCommissionRedemption::with($with)->where("id", $id)->first(); 
+        return StaffCommissionRedemption::with($with)->where("id", $id)->first();
     }
 
     public function redeemCommission($data)
@@ -248,11 +262,11 @@ class CommissionService
     //     return $total;
     // }
 
-    private function taxCommission($commissionPercentage, $amount) 
+    private function taxCommission($commissionPercentage, $amount)
     {
         $tax = DeductibleFee::commissionTax()->percentage;
-        $commissionBeforeTax = (float)($commissionPercentage/100) * (float)$amount;
-        $commissionTax = (float)$commissionBeforeTax * ((float)$tax/100);
+        $commissionBeforeTax = (float)($commissionPercentage / 100) * (float)$amount;
+        $commissionTax = (float)$commissionBeforeTax * ((float)$tax / 100);
         $commissionAmount = (float)$commissionBeforeTax - (float)$commissionTax;
         return [
             "beforeTax" => $commissionBeforeTax,
@@ -261,11 +275,11 @@ class CommissionService
         ];
     }
 
-    private function addDirectCommission($user, $order)
+    private function addDirectCommission($user, $order, $isFirstPayment = false)
     {
         $staffType = $user->staffType;
         $amount = $order->amount_payable;
-        $commissionPercentage = ($order->installment == 0) ? $this->getCommissionPercentage($staffType) : $this->getCommissionInstallmentPercentage($staffType);
+        $commissionPercentage = ($order->is_installment == 0) ? $this->getCommissionPercentage($staffType) : $this->getCommissionInstallmentPercentage($staffType);
         // $commissionBeforeTax = (float)($commissionPercentage/100) * (float)$amount;
         // $commissionTax = (float)$commissionBeforeTax * ((float)$tax/100);
         // $commissionAmount = (float)$commissionBeforeTax - (float)$commissionTax;
@@ -282,16 +296,19 @@ class CommissionService
         $commission->commission = $commissionPercentage;
         $commission->commission_after_tax = (float)$taxCommission['afterTax'];
         $commission->type = StaffCommissionType::DIRECT->value;
+        if ($order->is_installment == 1 && $isFirstPayment) {
+            $commission->balance = 0;
+        }
         $commission->save();
 
         return $commission;
     }
 
-    private function addIndirectCommission($user, $order)
+    private function addIndirectCommission($user, $order, $isFirstPayment = false)
     {
         $staffType = ($user->staffType) ? $user->staffType : null;
-        $amount = $order->amount;
-        $commissionPercentage = ($order->installment == 0) ? $this->getCommissionPercentage($staffType, 0) : $this->getCommissionInstallmentPercentage($staffType, 0);
+        $amount = $order->amount_payed;
+        $commissionPercentage = ($order->is_installment == 0) ? $this->getCommissionPercentage($staffType, 0) : $this->getCommissionInstallmentPercentage($staffType, 0);
 
         $taxCommission = $this->taxCommission($commissionPercentage, $amount);
 
@@ -304,20 +321,23 @@ class CommissionService
         $commission->commission_amount = $taxCommission['beforeTax'];
         $commission->commission = $commissionPercentage;
         $commission->commission_after_tax = (float)$taxCommission['afterTax'];
-        $commission->type = StaffCommissionType::DIRECT->value;
+        $commission->type = StaffCommissionType::INDIRECT->value;
+        if ($order->is_installment == 1 && $isFirstPayment) {
+            $commission->balance = 0;
+        }
         $commission->save();
 
         return $commission;
     }
 
-    private function getCommissionPercentage($staffType, $direct=1)
+    private function getCommissionPercentage($staffType, $direct = 1)
     {
         $commission = 0;
-        if($staffType) {
-            if($direct == 1) {
+        if ($staffType) {
+            if ($direct == 1) {
                 $commissionRate = CommissionRate::where('staff_type_id', $staffType->id)->where('installment', 0)->first();
                 $commission = $commissionRate->direct;
-            }else{
+            } else {
                 $commissionRate = CommissionRate::where('staff_type_id', $staffType->id)->where('installment', 0)->first();
                 $commission = $commissionRate->indirect;
             }
@@ -325,19 +345,18 @@ class CommissionService
         return $commission;
     }
 
-    private function getCommissionInstallmentPercentage($staffType, $direct=1)
+    private function getCommissionInstallmentPercentage($staffType, $direct = 1)
     {
         $commission = 0;
-        if($staffType) {
-            if($direct == 1) {
+        if ($staffType) {
+            if ($direct == 1) {
                 $commissionRate = CommissionRate::where('staff_type_id', $staffType->id)->where('installment', 1)->first();
                 $commission = $commissionRate->direct;
-            }else{
+            } else {
                 $commissionRate = CommissionRate::where('staff_type_id', $staffType->id)->where('installment', 1)->first();
                 $commission = $commissionRate->indirect;
             }
         }
-        return $commission/2;
+        return $commission / 2;
     }
-
 }

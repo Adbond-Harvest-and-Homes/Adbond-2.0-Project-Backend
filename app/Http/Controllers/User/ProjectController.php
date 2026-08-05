@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +34,8 @@ use app\Utilities;
 
 class ProjectController extends Controller
 {
+    private $userActivityLogService;
+
     private $projectService;
     private $projectTypeService;
     private $fileService;
@@ -40,6 +44,7 @@ class ProjectController extends Controller
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->projectService = new ProjectService;
         $this->projectTypeService = new ProjectTypeService;
         $this->fileService = new FileService;
@@ -59,6 +64,13 @@ class ProjectController extends Controller
             $this->metricService->addProjectMetric(MetricType::BOTH->value);
 
             DB::commit();
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Saved Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Project created Successfully", new ProjectResource($project));
         }catch(\Exception $e){
             DB::rollBack();
@@ -76,6 +88,13 @@ class ProjectController extends Controller
                 if($this->projectService->projectNameExists($data['name'], $project)) return Utilities::error402("Project name already exists for this project Type");
             }
             $project = $this->projectService->update($data, $project);
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Project Updated Successfully", new ProjectResource($project));
         }catch(\Exception $e){
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -96,6 +115,13 @@ class ProjectController extends Controller
 
             $promoProduct = $this->promoService->savePromoProduct($product);
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Added Promo to Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Promo has been Added to the Project Successfully");
 
         }catch(\Exception $e){
@@ -114,6 +140,13 @@ class ProjectController extends Controller
             if(!$promoProduct) return Utilities::error402("Promo Product not found");
 
             $this->promoService->removePromoProduct($promoProduct);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Removed Promo from Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Promo has been Removed to the Project Successfully");
 
@@ -251,6 +284,13 @@ class ProjectController extends Controller
 
             DB::commit();
 
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Activated Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::okay("Project Activated Successfully", new ProjectResource($project));
         }catch(\Exception $e){
             DB::rollBack();
@@ -275,6 +315,13 @@ class ProjectController extends Controller
             $this->metricService->addProjectMetric(MetricType::ACTIVE->value, true, false);
 
             DB::commit();
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deactivated Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Project Deactivated Successfully", new ProjectResource($project));
         }catch(\Exception $e){
@@ -302,6 +349,13 @@ class ProjectController extends Controller
 
             DB::commit();
 
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Project");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Project Deleted Successfully");
         } catch(\Exception $e){
             DB::rollBack();
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
@@ -391,7 +445,14 @@ class ProjectController extends Controller
                 case 'excel':
                     return $this->projectService->exportToExcel($projects, $headingConfig);
                 case 'pdf':
-                    return $this->projectService->exportToPDF($projects, $headingConfig);
+                    
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Exported Projects list");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return $this->projectService->exportToPDF($projects, $headingConfig);
                 default:
                     return Utilities::error402("Invalid export type");
             }

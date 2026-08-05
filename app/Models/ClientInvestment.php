@@ -50,4 +50,20 @@ class ClientInvestment extends Model
     {
         return $this->morphMany(WalletTransaction::class, 'source');
     }
+
+    public function markDocUploaded()
+    {
+        $this->docs_uploaded = 1;
+        $this->save();
+
+        return $this;
+    }
+
+    public function markMouSent()
+    {
+        $this->mou_sent = 1;
+        $this->save();
+
+        return $this;
+    }
 }

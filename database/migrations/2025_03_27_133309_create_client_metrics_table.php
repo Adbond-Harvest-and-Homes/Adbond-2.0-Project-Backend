@@ -22,6 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        var_dump(config('database.connections.mysql'));
         Artisan::call('db:seed', array('--class' => 'InitialClientMetrics'));
     }
 

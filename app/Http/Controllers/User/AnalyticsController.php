@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Services\PurchaseService;
@@ -14,11 +16,14 @@ use app\Utilities;
 
 class AnalyticsController extends Controller
 {
+    private $userActivityLogService;
+
     private $purchaseService;
     private $projectService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->purchaseService = new PurchaseService;
         $this->projectService = new ProjectService;
     }

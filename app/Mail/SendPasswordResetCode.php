@@ -31,7 +31,7 @@ class SendPasswordResetCode extends Mailable
     {
         return new Envelope(
             from: new Address(env('MAIL_FROM_ADDRESS'), 'Adbond Harvest And Homes'),
-            subject: 'Password Reset Link',
+            subject: 'Password Reset OTP',
         );
     }
 

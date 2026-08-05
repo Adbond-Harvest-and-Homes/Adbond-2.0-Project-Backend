@@ -4,7 +4,7 @@ namespace app\Enums;
 
 enum StaffTypes: string
     {
-        case FULL_STAFF = "full-staff";
+        case PHYSICAL_STAFF = "physical-staff";
         case HYBRID_STAFF = "hybrid-staff";
         case VIRTUAL_STAFF = "virtual-staff";
     }

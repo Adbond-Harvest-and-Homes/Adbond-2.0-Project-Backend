@@ -16,10 +16,16 @@ class Roles extends Seeder
     public function run(): void
     {
         $roles = array(
-            RoleEnum::SUPER_ADMIN->value, RoleEnum::ADMIN->value, RoleEnum::HUMAN_RESOURCE->value, RoleEnum::LOGISTICS->value, 
-            RoleEnum::OPERATION_ACCOUNTING->value, RoleEnum::CUSTOMER_RELATION->value, RoleEnum::CONTENT_MANAGEMENT->value
+            RoleEnum::SUPER_ADMIN->value,
+            RoleEnum::ADMIN->value,
+            RoleEnum::HUMAN_RESOURCE->value,
+            RoleEnum::LOGISTICS->value,
+            RoleEnum::OPERATION_ACCOUNTING->value,
+            RoleEnum::CUSTOMER_RELATION->value,
+            RoleEnum::CONTENT_MANAGEMENT->value,
+            RoleEnum::SALES->value
         );
-        foreach($roles as $role) {
+        foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role]);
         }
     }

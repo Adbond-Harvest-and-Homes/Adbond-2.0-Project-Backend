@@ -9,6 +9,10 @@ class Project extends Model
 {
     use HasFactory;
 
+    protected $attributes = [
+        'state' => 'Lagos',
+    ];
+
     public static $type = "app\Models\Project";
 
     // public function getCreatedAtAttribute($value)
@@ -38,6 +42,30 @@ class Project extends Model
     // {
     //     return $this->hasMany("app\Models\ProjectLocation");
     // }
+
+    public function states()
+    {
+        return $this->hasManyThrough(
+            State::class,
+            Package::class,
+            'project_id', // Foreign key on packages table
+            'name',       // Foreign key on states table (name column)
+            'id',         // Local key on projects table
+            'state'       // Local key on packages table (state column)
+        )->distinct();
+    }
+
+    public function countries()
+    {
+        return $this->hasManyThrough(
+            Country::class,
+            Package::class,
+            'project_id', // Foreign key on packages table
+            'id',         // Local key on states table
+            'id',         // Local key on projects table
+            'country_id'    // Foreign key on packages table pointing to states
+        )->distinct();
+    }
 
     public function packages($limit = null)
     {
@@ -79,6 +107,20 @@ class Project extends Model
                 }
             }
         
+        });
+
+        self::deleting(function (Project $project) {
+            if($project->packages->count() > 0) {
+                foreach($project->packages as $package) {
+                    $package->delete();
+                }
+            }
+
+            if($project->promoProducts->count() > 0) {
+                foreach($project->promoProducts as $promoProduct) {
+                    $promoProduct->delete();
+                }
+            }
         });
     }
 }

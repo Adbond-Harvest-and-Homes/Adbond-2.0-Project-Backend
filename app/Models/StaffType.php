@@ -11,9 +11,9 @@ class StaffType extends Model
 {
     use HasFactory;
 
-    public static function FullStaff()
+    public static function PhysicalStaff()
     {
-        return self::where('name', StaffTypes::FULL_STAFF->value)->first();
+        return self::where('name', StaffTypes::PHYSICAL_STAFF->value)->first();
     }
 
     public static function HybridStaff()

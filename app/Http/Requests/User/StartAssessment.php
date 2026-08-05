@@ -26,14 +26,15 @@ class StartAssessment extends BaseRequest
     public function rules(): array
     {
         return [
-            "assessmentId" => "integer",
+            "assessmentId" => "nullable|integer",
             "firstname" => "required|string",
-            "surname" => "required|string",
+            "lastname" => "required|string",
             "email" => "required|email|unique:assessment_attempts,email",
             "phoneNumber" => "required|unique:assessment_attempts,phone_number",
             "occupation" => "nullable|string",
             "address" => "nullable|string",
             "gender" => ["nullable", Rule::in(EnumClass::genders())],
+            "categoryId" => "required|exists:virtual_staff_categories,id",
             "referralCode" => "nullable|string"
         ];
     }

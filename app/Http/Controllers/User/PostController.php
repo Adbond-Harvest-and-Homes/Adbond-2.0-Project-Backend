@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
@@ -29,12 +30,15 @@ use app\Enums\ProjectFilter;
 
 class PostController extends Controller
 {
+    private $userActivityLogService;
+
     private $postService;
     private $fileService;
     private $reactionService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->postService = new PostService;
         $this->fileService = new FileService;
         $this->reactionService = new ReactionService;
@@ -57,6 +61,13 @@ class PostController extends Controller
 
             DB::commit();
             // dd($post);
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Created Post");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new PostResource($post));
         }catch(\Exception $e){
             DB::rollBack();
@@ -85,6 +96,13 @@ class PostController extends Controller
             if($oldFileId) $this->fileService->deleteFile($oldFileId);
             DB::commit();
             
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Post");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new PostResource($post));
         }catch(\Exception $e){
             DB::rollBack();
@@ -99,7 +117,14 @@ class PostController extends Controller
 
         $post = ($post->active==0) ? $this->postService->activate($post) : $this->postService->deactivate($post);
 
-        return Utilities::ok(new PostResource($post));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Toggled Post Activation State");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new PostResource($post));
     }
 
     public function posts(Request $request)
@@ -134,6 +159,8 @@ class PostController extends Controller
         $post = $this->postService->post($postId, ['comments']);
         if(!$post) return Utilities::error402("Post not found");
 
+        $post = $this->postService->increaseViews($post);
+
         return Utilities::ok(new PostResource($post));
     }
 
@@ -145,7 +172,14 @@ class PostController extends Controller
 
         $this->postService->delete($post);
 
-        return Utilities::okay("Post Deleted");
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Post");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Post Deleted");
     }
 
 
@@ -184,6 +218,13 @@ class PostController extends Controller
             $reaction = $this->reactionService->userReaction($data['userId'], $data['userType'], $data['entityId'], $data['entityType']);
 
             $reaction = $this->reactionService->save($data, $reaction);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Reacted to Post");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Successful");
 

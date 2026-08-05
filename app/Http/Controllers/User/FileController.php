@@ -3,12 +3,14 @@
 namespace app\Http\Controllers\User;
 
 use app\Http\Controllers\Controller;
+use app\Services\UserActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Http\Request;
 use app\Http\Requests\SavePhoto;
 use app\Http\Requests\User\SaveClientPackageDocument;
+use app\Http\Requests\User\DeleteFile;
 
 use app\Http\Resources\FileResource;
 use app\Http\Resources\AssetResource;
@@ -21,12 +23,15 @@ use app\Utilities;
 
 class FileController extends Controller
 {
+    private $userActivityLogService;
+
     private static $userType = "app\Models\User";
     private $fileService;
     private $clientPackageService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->fileService = new FileService;
         $this->clientPackageService = new ClientPackageService;
     }
@@ -38,6 +43,13 @@ class FileController extends Controller
             
             $res = $this->fileService->save($request->file('photo'), 'image', Auth::user()->id, $purpose, self::$userType, 'user-profile-photos');
             if($res['status'] != 200) return Utilities::error402('Sorry Photo could not be uploaded: '.$res['message']);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Uploaded Photo");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new FileResource($res['file']));
         }catch(\Exception $e){
@@ -84,6 +96,13 @@ class FileController extends Controller
                 return Utilities::error402("An Error Occurred, File could not be uploaded");
             }
             DB::commit();
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Uploaded Client Document");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
             return Utilities::ok(new AssetResource($clientPackage));
         // }catch(\Exception $e){
             DB::rollBack();
@@ -100,5 +119,26 @@ class FileController extends Controller
             case FilePurpose::DEED_OF_ASSIGNMENT->value : return "client-deed-of-assignments"; break;
         }
         return "client-documents";
+    }
+
+    public function deleteFile(DeleteFile $request)
+    {
+        try{
+            // $file = $this->fileService->getFile($request->validated("fileId"));
+            // if(!$file) return Utilities::error402("File not found");
+
+            $this->fileService->deleteFile($request->validated("fileId"));
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted File");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("File deleted successfully");
+        } catch(\Exception $e) {
+            return Utilities::error($e, "An Error Occurred while attempting to delete file");
+        }
     }
 }

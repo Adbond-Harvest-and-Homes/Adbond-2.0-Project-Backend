@@ -79,6 +79,24 @@ class InvestmentSeeder extends Seeder
         ];
 
         $clients = Client::all();
+        if ($clients->count() === 0) {
+            $client1 = new Client;
+            $client1->firstname = 'John';
+            $client1->lastname = 'Doe';
+            $client1->email = 'johndoe@example.com';
+            $client1->password = bcrypt('password');
+            $client1->save();
+
+            $client2 = new Client;
+            $client2->firstname = 'Jane';
+            $client2->lastname = 'Smith';
+            $client2->email = 'janesmith@example.com';
+            $client2->password = bcrypt('password');
+            $client2->save();
+
+            $clients = Client::all();
+        }
+
         $clientsIds = [];
         $selectedClientIds = [];
 
@@ -102,13 +120,26 @@ class InvestmentSeeder extends Seeder
 
         $packages = [];
 
+        $user = \app\Models\User::first();
+        $userId = $user ? $user->id : 1;
+
+        $country = \app\Models\Country::where('code', 'NG')->first() ?? \app\Models\Country::first();
+        $countryId = $country ? $country->id : 1;
+
+        $paymentPeriodNormal = \app\Models\PaymentPeriodStatus::first();
+        $paymentPeriodNormalId = $paymentPeriodNormal ? $paymentPeriodNormal->id : 1;
+
         foreach($projects as $project) {
             $projectObj = new Project;
             $projectObj->name = $project['name'];
             $projectObj->project_type_id = $project['project_type_id'];
+            $projectObj->state = 'Lagos';
             $projectObj->save();
 
             foreach($project['packages'] as $package) {
+                $stateObj = \app\Models\State::where('name', $package['state'])->first() ?? \app\Models\State::first();
+                $stateId = $stateObj ? $stateObj->id : 1;
+
                 $packageObj = new Package;
                 $packageObj->name = $package['name'];
                 $packageObj->state = $package['state'];
@@ -117,6 +148,12 @@ class InvestmentSeeder extends Seeder
                 $packageObj->amount = $package['amount'];
                 $packageObj->interest_return_duration = $package['interest_return_duration'];
                 $packageObj->interest_return_timeline = $package['interest_return_timeline'];
+                
+                $packageObj->user_id = $userId;
+                $packageObj->project_id = $projectObj->id;
+                $packageObj->country_id = $countryId;
+                $packageObj->state_id = $stateId;
+
                 if(isset($package['interest_return_amount'])) $packageObj->interest_return_amount = $package['interest_return_amount'];
                 if(isset($package['interest_return_percentage'])) $packageObj->interest_return_percentage = $package['interest_return_percentage'];
                 $packageObj->save();
@@ -124,15 +161,22 @@ class InvestmentSeeder extends Seeder
             }
         }
 
-        foreach($selectedClientIds as $clientId) {
-            $package = $packages[rand(0, count($packages))];
-            $order = new Order;
-            $order->client_id = $clientId;
-            $order->units = 2;
-            $order->amount_payed = $order->units * $package->amount;
-            $order->amount_payable = $order->units * $package->amount;
-            $order->balance = 0;
-            $order->payment_status_id = PaymentStatus::pending()->id;
+        if (count($packages) > 0) {
+            foreach($selectedClientIds as $clientId) {
+                $package = $packages[rand(0, count($packages) - 1)];
+                $order = new Order;
+                $order->client_id = $clientId;
+                $order->package_id = $package->id;
+                $order->units = 2;
+                $order->unit_price = $package->amount;
+                $order->amount_payed = $order->units * $package->amount;
+                $order->amount_payable = $order->units * $package->amount;
+                $order->balance = 0;
+                $order->payment_status_id = PaymentStatus::pending()->id;
+                $order->order_date = now();
+                $order->payment_period_status_id = $paymentPeriodNormalId;
+                $order->save();
+            }
         }
 
     }

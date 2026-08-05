@@ -26,7 +26,7 @@ return new class extends Migration
             $table->integer("installments_payed")->nullable();
             $table->double("balance");
             $table->foreignId("payment_status_id");
-            table->boolean("completed")->default(false);
+            $table->boolean("completed")->default(false);
             $table->date("order_date");
             $table->date("payment_due_date")->nullable();
             $table->date("grace_period_end_date")->nullable();

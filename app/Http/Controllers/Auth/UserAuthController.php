@@ -54,6 +54,15 @@ class UserAuthController extends Controller
                 'message' => 'Wrong Email or Password'
             ], 402);
         }
+
+        if (!Auth::user()->activated) {
+            Auth::logout();
+            return response()->json([
+                'statusCode' => 402,
+                'message' => 'Your account has been deactivated, please contact support'
+            ], 402);
+        }
+
         $user = new UserBriefResource(Auth::user());
         return response()->json([
             'statusCode' => 200,
@@ -88,6 +97,10 @@ class UserAuthController extends Controller
     {
         try{
             $data = $request->validated();
+
+            $user = $this->userService->getByEmail($data['email']);
+            if(!$user) return Utilities::error402("User not found");
+            
             $data['type'] = PasswordTypes::USER->value;
             $res = $this->passwordService->validateEmailToken($data);
             if($res['success']) return Utilities::okay('password verified successfully');
@@ -109,9 +122,9 @@ class UserAuthController extends Controller
             if(!$user) return Utilities::error402("no user exists for this email");
 
             $this->userProfileService->changePassword($data['password'], $user);
-            return Utilities::okay('password Reset Sucessful');
+            return Utilities::okay('password Reset Successful');
         }catch(\Exception $e){
-            return Utilities::error($e, 'An error occured while trying to send verification mail, Please try again later or contact support');
+            return Utilities::error($e, 'An error occurred while trying to send verification mail, Please try again later or contact support');
         }
     }
 }

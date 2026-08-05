@@ -25,7 +25,7 @@ class SaveMultipleMedia extends BaseRequest
     {
         return [
             "media" => "required|array",
-            "media.*" => ["required","file","mimes:jpg,jpeg,png,gif,webp,mp4,mpeg,mov,avi,wmv,webm,flv,3gp,m4v","max:50000", new VideoDuration(90)]
+            "media.*" => ["required","file","mimes:jpg,jpeg,png,gif,mp4,mpeg,mov,avi,wmv,webm,flv,3gp,m4v","max:50000", new VideoDuration(90)]
         ];
     }
 }

@@ -27,7 +27,8 @@ class CreatePromo extends BaseRequest
     {
         return [
             "title" => "required|string|unique:promos,title",
-            "discount" => "required|numeric",
+            "discount" => "required_without:discountAmount|numeric",
+            "discountAmount" => "required_without:discount|numeric",
             "start" => "nullable|date|date_format:Y-m-d",
             "end" => "nullable|date|date_format:Y-m-d",
             "description" => "nullable|string",

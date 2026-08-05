@@ -28,6 +28,7 @@ class PostResource extends JsonResource
             "preview" => $this->preview,
             "content" => $this->content,
             "active" => ($this->active == 1) ? true : false,
+            "views" => $this->views,
             "projectType" => new ProjectTypeResource($this->projectType),
             "created" => $this->created_at->format('F j, Y'),
             "liked" => $this->liked(),

@@ -11,12 +11,39 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('packages', function (Blueprint $table) {
-            $table->dropColumn("benefits");
-            $table->dropConstrainedForeignId("state_id");
-            $table->dropColumn("state_id");
-            $table->string("state")->after("name");
-        });
+        if (Schema::hasColumn('packages', 'benefits')) {
+            try {
+                Schema::table('packages', function (Blueprint $table) {
+                    $table->dropColumn("benefits");
+                });
+            } catch (\Exception $e) {
+                // Ignore drop error
+            }
+        }
+        if (Schema::hasColumn('packages', 'state_id')) {
+            try {
+                Schema::table('packages', function (Blueprint $table) {
+                    $table->dropConstrainedForeignId("state_id");
+                });
+            } catch (\Exception $e) {
+                try {
+                    Schema::table('packages', function (Blueprint $table) {
+                        $table->dropColumn("state_id");
+                    });
+                } catch (\Exception $ex) {
+                    // Ignore drop error
+                }
+            }
+        }
+        if (!Schema::hasColumn('packages', 'state')) {
+            try {
+                Schema::table('packages', function (Blueprint $table) {
+                    $table->string("state")->after("name");
+                });
+            } catch (\Exception $e) {
+                // Ignore error
+            }
+        }
     }
 
     /**

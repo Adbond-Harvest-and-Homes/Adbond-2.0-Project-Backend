@@ -32,6 +32,11 @@ class FileService
         return File::all();
     }
 
+    public function getSpecificFile($belongsType, $belongsId, $purpose)
+    {
+        return File::where("belongs_type", $belongsType)->where("belongs_id", $belongsId)->where("purpose", $purpose)->first();
+    }
+
     public function save($file, $fileType, $user_id, $purpose, $user_type = null, $folder=null)
     {
         $uploadedFile = ($fileType=='image' || $fileType=='video') ? 
@@ -73,10 +78,12 @@ class FileService
                 $fileObj->save();
                 return ['status'=>200, 'file'=>$fileObj];
             }else{
-                return ['status'=>$status['code'], 'message'=>$status['message'], 'file'=>$file->getClientOriginalName()];
+                $originalName = (is_string($file)) ? pathinfo($file, PATHINFO_FILENAME) : $file->getClientOriginalName();
+                return ['status'=>$status['code'], 'message'=>$status['message'], 'file'=>$originalName];
             }
         }else{
-            return ['status'=>402, 'message'=>'File upload failed', 'file'=>$file->getClientOriginalName()];
+            $originalName = (is_string($file)) ? pathinfo($file, PATHINFO_FILENAME) : $file->getClientOriginalName();
+            return ['status'=>402, 'message'=>'File upload failed', 'file'=>$originalName];
         }
         
     }
@@ -278,11 +285,16 @@ class FileService
 
     private function uploadDoc($file, $purpose, $folder=null)
     {
-        $uploaded = in_array($purpose, [FilePurpose::CONTRACT->value, FilePurpose::LETTER_OF_HAPPINESS->value, FilePurpose::PAYMENT_RECEIPT->value, FilePurpose::MEMORANDUM_OF_AGREEMENT->value]);
+        $uploaded = in_array($purpose, [FilePurpose::CONTRACT->value, FilePurpose::LETTER_OF_HAPPINESS->value, FilePurpose::PAYMENT_RECEIPT->value, FilePurpose::MEMORANDUM_OF_AGREEMENT->value, FilePurpose::BOND_MEMORANDUM_OF_AGREEMENT->value]);
         if(!$uploaded) {
-            $filename = time().$file->getClientOriginalName();
-            $upload = Storage::disk('local')->putFileAs('files', $file, $filename);
-            $upload = storage_path('app/' . $upload);
+            if(is_string($file)) {
+                // $file is already a path on disk — use it directly
+                $upload = $file;
+            } else {
+                $filename = time().$file->getClientOriginalName();
+                $upload = Storage::disk('local')->putFileAs('files', $file, $filename);
+                $upload = storage_path('app/' . $upload);
+            }
         }else{
             $upload = $file;
         }

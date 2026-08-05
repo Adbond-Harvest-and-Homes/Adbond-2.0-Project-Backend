@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string("origin");
             $table->foreignId("purchase_id");
             $table->date("purchase_completed_at")->nullable();
+            $table->boolean("docs_uploaded")->default(false);
             $table->string("purchase_type");
 
             $table->timestamps();

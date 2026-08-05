@@ -1,0 +1,12 @@
+
+EmploymentStatus: {'unemployed', 'employed', 'self-employed'}
+
+PackageType: { 'investment', 'non-investment', 'bond'}
+
+Measurement: { 'fixed',  'percentage' }
+
+BondOccurrenceMetric: { 'weekly', 'monthly', 'quarterly', 'yearly'}
+
+BondOwnershipType: { 'single ownership', 'co-ownership'}
+
+BondTimeMetric: { 'days', 'weeks', 'months', 'years' }

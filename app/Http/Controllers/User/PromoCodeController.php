@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\CreatePromoCode;
@@ -17,10 +19,13 @@ use app\Utilities;
 
 class PromoCodeController extends Controller
 {
+    private $userActivityLogService;
+
     private $promoCodeService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->promoCodeService = new PromoCodeService;
     }
 
@@ -29,7 +34,14 @@ class PromoCodeController extends Controller
         $data = $request->validated();
         $promoCode = $this->promoCodeService->save($data);
 
-        return Utilities::ok(new PromoCodeResource($promoCode));
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Created Promo Code");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new PromoCodeResource($promoCode));
     }
 
     public function update(UpdatePromoCode $request, $promoCodeId)
@@ -43,6 +55,13 @@ class PromoCodeController extends Controller
             $data = $request->validated();
 
             $promoCode = $this->promoCodeService->update($data, $promoCode);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Updated Promo Code");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::ok(new PromoCodeResource($promoCode));
         }catch(\Exception $e){
@@ -60,7 +79,14 @@ class PromoCodeController extends Controller
 
         $action = ($promoCode->active) ? "Activated" : "Deactivated";
 
-        return Utilities::okay("Promo Code has been ".$action);
+        
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Toggled Promo Code Activation State");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::okay("Promo Code has been ".$action);
     }
 
     public function promoCodes()
@@ -79,6 +105,13 @@ class PromoCodeController extends Controller
             if(!$promoCode) return Utilities::error402("Promo Code not found");
 
             $this->promoCodeService->delete($promoCode);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Deleted Promo Code");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Promo Code Deleted");
         }catch(\Exception $e){

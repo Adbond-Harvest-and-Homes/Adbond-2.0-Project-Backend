@@ -11,6 +11,7 @@ use app\Models\Offer;
 use app\Models\WalletWithdrawalRequest;
 use app\Models\User;
 use app\Models\Client;
+use app\Models\ClientBondRequest;
 
 use app\Enums\NotificationType;
 
@@ -28,37 +29,47 @@ class NotificationService
             NotificationType::ASSET_UPGRADE_REQ->value => [
                 "targetType" => DowngradeUpgradeRequest::$type,
                 "message" => trim($user->name)." has requested for an asset Upgrade",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
             ],
             NotificationType::ASSET_DOWNGRADE_REQ->value => [
                 "targetType" => DowngradeUpgradeRequest::$type,
                 "message" => trim($user->name)." has requested for an asset Downgrade",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
             ],
             NotificationType::NEW_OFFER_APPROVAL_REQ->value => [
                 "targetType" => Offer::$type,
                 "message" => trim($user->name)." Created a new offer",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
             ],
             NotificationType::OFFER_PAYMENT_CONF->value => [
                 "targetType" => Payment::$type,
                 "message" => trim($user->name)." has made payment for an offer awaiting approval",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
             ],
             NotificationType::ORDER_COMPLETION->value => [
                 "targetType" => clientPackage::$type,
                 "message" => trim($user->name)." has completed the purchase of an asset, please upload DOA",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
             ],
             NotificationType::ORDER_PAYMENT_CONFIRMATION_REQ->value => [
                 "targetType" => Payment::$type,
                 "message" => trim($user->name)." has made a payment awaiting Confirmation",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
             ],
             NotificationType::WALLET_WITHDRAWAL_REQ->value => [
                 "targetType" => WalletWithdrawalRequest::$type,
                 "message" => trim($user->name)." has triggered a Wallet Withdrawal Request awaiting approval",
-                "userType" => CLient::$userType
+                "userType" => Client::$userType
+            ],
+            NotificationType::BOND_LIQUIDATION_REQ->value => [
+                "targetType" => ClientBondRequest::$type,
+                "message" => trim($user->name)." has triggered a Bond Liquidation Request awaiting approval",
+                "userType" => Client::$userType
+            ],
+            NotificationType::BOND_RENEWAL_REQ->value => [
+                "targetType" => ClientBondRequest::$type,
+                "message" => trim($user->name)." has triggered a Bond Renewal Request awaiting approval",
+                "userType" => Client::$userType
             ]
         ];
 

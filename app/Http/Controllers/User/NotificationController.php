@@ -3,6 +3,8 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use app\Services\UserActivityLogService;
+use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\ReadNotification;
@@ -15,10 +17,13 @@ use app\Utilities;
 
 class NotificationController extends Controller
 {
+    private $userActivityLogService;
+
     protected $notificationService;
 
     public function __construct()
     {
+        $this->userActivityLogService = new UserActivityLogService;
         $this->notificationService = new NotificationService;
     }
 
@@ -37,6 +42,13 @@ class NotificationController extends Controller
             if(!$notification) return Utilities::error402("Notification not found");
             
             $this->notificationService->markAsRead($notification);
+
+            
+            try {
+                $this->userActivityLogService->log(Auth::user(), "Marked Notification as Read");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
 
             return Utilities::okay("Successful");
         }catch(\Exception $e){
