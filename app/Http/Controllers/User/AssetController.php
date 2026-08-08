@@ -17,6 +17,7 @@ use app\Services\FileService;
 
 use app\Models\ClientPackage;
 use app\Models\Client;
+use app\Models\Role;
 
 use app\Enums\FilePurpose;
 
@@ -86,5 +87,25 @@ class AssetController extends Controller
         $assetsCount = $this->assetService->assets();
 
         return Utilities::paginatedOkay(AssetResource::collection($assets), $page, $perPage, $assetsCount);
+    }
+
+    public function delete($assetId)
+    {
+        if (Auth::user()->role_id != Role::SuperAdmin()->id) return Utilities::error402("You are not Authorized to perform this operation");
+
+        if (!is_numeric($assetId) || !ctype_digit($assetId)) return Utilities::error402("Invalid parameter assetId");
+
+        $asset = $this->assetService->asset($assetId);
+        if (!$asset) return Utilities::error402("Asset not found");
+
+        $this->clientPackageService->delete($asset);
+
+        try {
+            $this->userActivityLogService->log(Auth::user(), "Deleted Asset Purchase (Asset ID: {$assetId})");
+        } catch (\Exception $e) {
+            Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+        }
+
+        return Utilities::okay("Asset purchase has been removed successfully");
     }
 }

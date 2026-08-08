@@ -5,6 +5,7 @@ namespace app\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use app\Enums\AssetSwitchType;
 
@@ -14,7 +15,7 @@ use app\Enums\FilePurpose;
 
 class ClientPackage extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     public static $type = "app\Models\ClientPackage";
 

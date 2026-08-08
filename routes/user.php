@@ -158,6 +158,10 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::post('/reject_switch_request', [UserAssetSwitchController::class, 'reject']);
     });
 
+    Route::group(['middleware' => 'superAdminAuth', 'prefix' => '/assets'], function () {
+        Route::delete('/{assetId}', [UserAssetController::class, "delete"]);
+    });
+
     //Offers Routes
     Route::group(['prefix' => '/offers'], function () {
         Route::get('', [UserOfferController::class, "offers"]);
