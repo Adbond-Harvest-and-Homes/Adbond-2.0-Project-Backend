@@ -3,6 +3,7 @@
 namespace app\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use app\Http\Requests\BaseRequest;
 
 class UpdateInstallment extends BaseRequest
@@ -23,7 +24,7 @@ class UpdateInstallment extends BaseRequest
     public function rules(): array
     {
         return [
-            "assetId" => "required|integer|exists:client_packages,id",
+            "assetId" => ["required", "integer", Rule::exists('client_packages', 'id')->whereNull('deleted_at')],
             "count" => "required|integer"
         ];
     }

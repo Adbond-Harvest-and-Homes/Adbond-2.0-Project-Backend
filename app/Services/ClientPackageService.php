@@ -340,4 +340,11 @@ class ClientPackageService
         return $asset;
     }
 
+    // Soft delete a client package (asset purchase). The underlying Order/Offer/
+    // ClientInvestment/ClientBond and its payments are left intact for financial audit trail.
+    public function delete($clientPackage)
+    {
+        return $clientPackage->delete();
+    }
+
 }
