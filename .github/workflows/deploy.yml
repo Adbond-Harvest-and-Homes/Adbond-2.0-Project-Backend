@@ -24,6 +24,7 @@ jobs:
     - name: Pull latest changes from GitHub
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@66.29.130.146 << 'EOF'
+        set -e
         cd /home/adbond/web/api.adbondharvestandhomes.com/public_html
         git pull https://${{ secrets.GH_ACCESS_TOKEN }}@github.com/Adbond-Harvest-and-Homes/Adbond-2.0-Project-Backend.git master
         EOF
@@ -31,6 +32,7 @@ jobs:
     - name: Run post-deployment scripts
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@66.29.130.146 << 'EOF'
+        set -e
         cd /home/adbond/web/api.adbondharvestandhomes.com/public_html
 
         # Run migrations for the main database
