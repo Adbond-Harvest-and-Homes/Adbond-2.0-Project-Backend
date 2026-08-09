@@ -101,13 +101,15 @@ class OrderService
             $discountedAmount = $appliedDiscount['amount'];
         }
 
-        if ($promoCodeDiscount) {
-            $discountArr = Utilities::getDiscount($discountedAmount, $promoCodeDiscount);
+        if ($promoCodeDiscount && ($promoCodeDiscount['discount'] || $promoCodeDiscount['discountAmount'])) {
+            $isPercentage = $promoCodeDiscount['discount'] ? true : false;
+            $discount = $promoCodeDiscount['discount'] ?: $promoCodeDiscount['discountAmount'];
+            $discountArr = Utilities::getDiscount($discountedAmount, $discount, $isPercentage);
             $discountedAmount = $discountArr['amount'];
             $appliedDiscounts[] = [
                 "name" => "Promo Code Discount",
                 "type" => OrderDiscountType::PROMO->value,
-                "discount" => $promoCodeDiscount,
+                "discount" => $discount,
                 "amount" => $discountArr['amount'],
                 "discountedAmount" => $discountArr['discountedAmount']
             ];

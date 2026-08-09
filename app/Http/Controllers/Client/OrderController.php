@@ -57,7 +57,7 @@ class OrderController extends Controller
             if (isset($data['promoCode'])) {
                 $res = $this->promoCodeService->validatePromoCode($data['promoCode'], $package);
                 if (!$res['valid']) return Utilities::error402("This Promo code is not valid");
-                $promoCodeDiscount = $res['discount'];
+                $promoCodeDiscount = ["discount" => $res['discount'] ?? null, "discountAmount" => $res['discountAmount'] ?? null];
             }
 
             // $promoCodeDiscount = (isset($data['promoCode'])) ? $this->promoCodeService->validatePromoCode($data['promoCode'], $package)['discount'] : null;

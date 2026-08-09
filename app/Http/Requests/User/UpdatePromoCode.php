@@ -25,7 +25,8 @@ class UpdatePromoCode extends BaseRequest
         return [
             "code" => "nullable|string|unique:promo_codes,code",
             "expiry" => "nullable|date|date_format:Y-m-d",
-            "maxUsage" => "nullable|integer"
+            "maxUsage" => "nullable|integer",
+            "packageLimited" => "nullable|boolean"
         ];
     }
 }

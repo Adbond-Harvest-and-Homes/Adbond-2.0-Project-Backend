@@ -82,6 +82,7 @@ class SaveOrderStage implements PaymentStage
         if (isset($context->processedData['promoCode'])) {
             $promoCode = $this->promoCodeService->promoCode($context->processedData['promoCode']);
             $data['promoCodeId'] = $promoCode->id;
+            $this->promoCodeService->incrementUsage($promoCode);
         }
         
         return $data;
