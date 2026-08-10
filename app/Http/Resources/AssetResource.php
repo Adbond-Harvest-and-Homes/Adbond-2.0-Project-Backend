@@ -55,7 +55,7 @@ class AssetResource extends JsonResource
             "sold" => $this->sold > 0,
             "onOffer" => $this->onOffer(),
             "doaUploaded" => ($this->doa()) ? true : false,
-            "files" => FileResource::collection($this->files),
+            "files" => FileResource::collection($this->documentFiles()),
             "bond" => $this->when($this->origin == ClientPackageOrigin::BOND->value, function () {
                 return ($this?->purchase) ? new ClientBondResource($this->purchase) : null;
             }),
@@ -69,6 +69,15 @@ class AssetResource extends JsonResource
     //         $package = $this->purchase->order
     //     }
     // }
+
+    private function documentFiles()
+    {
+        $files = $this->files;
+        if ($this->origin == ClientPackageOrigin::BOND->value && $this->purchase?->mou) {
+            $files = $files->push($this->purchase->mou);
+        }
+        return $files;
+    }
 
     private function appreciation()
     {
