@@ -12,6 +12,8 @@ use app\Domain\Payments\Events\InvestmentActivated;
 use app\Services\ContractService;
 use app\Services\ClientInvestmentService;
 
+use app\Enums\KYCStatus;
+
 class GenerateMOUListener
 {
     /**

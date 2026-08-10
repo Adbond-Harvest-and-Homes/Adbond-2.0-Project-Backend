@@ -74,7 +74,7 @@
                 </td>
 
                 <td style="width:30%; text-align:right; border:none;">
-                    <img src="{{ asset('images/'.$image) }}" width="150" height="80" 
+                    <img src="https://api.adbondharvestandhomes.com/images/newLogo.png" width="150" height="80" 
                         style="margin:0; display:block;" />
                 </td>
             </tr>
@@ -132,7 +132,8 @@
             <tr>
                 <td>{{ $size }}</td>
                 <td>
-                    {{ $size }}Sqm land at Adbond Agro and Homes
+                    {{ $project }} 
+                  <!--  {{ $size }}Sqm land at Adbond Agro and Homes -->
                 </td>
                 <td>{{ number_format($price, 2) }}</td>
                 <td>{{ $discount }}%</td>

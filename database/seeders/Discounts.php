@@ -17,7 +17,9 @@ class Discounts extends Seeder
     {
         $discounts = [
             ["type" => DiscountType::FULL_PAYMENT->value, "discount" => 5],
-            ["type" => DiscountType::LOYALTY->value, "discount" => 5]
+            ["type" => DiscountType::LOYALTY->value, "discount" => 5],
+            ["type" => DiscountType::BOND->value, "discount" => 5],
+            ["type" => DiscountType::BOND_INSTALLMENT->value, "discount" => 3]
         ];
 
         foreach($discounts as $discount) {

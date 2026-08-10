@@ -9,11 +9,15 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
+use Illuminate\Support\Facades\Mail;
+
 use app\Mail\BondMOU;
 
 use app\Services\FileService;
 
 use app\Models\Order;
+
+use app\Utilities;
 
 class SendBondMemorandumMail implements ShouldQueue
 {

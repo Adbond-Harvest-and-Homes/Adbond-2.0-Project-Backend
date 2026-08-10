@@ -20,7 +20,7 @@
         
         <div style="margin-bottom:20px">
             <div style="float:right; height:80px; width:30%;">
-                <img src="{{asset('images/'.$image)}}" width="150" height="80" style="margin:0px" />
+                <img src="https://api.adbondharvestandhomes.com/images/newLogo.png" width="150" height="80" style="margin:0px" />
             </div>
             <div>
                 <h1 style="margin-bottom:0px">Sales e-receipt</h1>
