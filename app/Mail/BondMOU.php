@@ -35,7 +35,7 @@ class BondMOU extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bond Memorandum Of Understanding',
+            subject: 'Participation Agreement of Subscription',
         );
     }
 
