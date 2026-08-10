@@ -23,10 +23,10 @@ class Discounts extends Seeder
         ];
 
         foreach($discounts as $discount) {
-            $discountObj = new Discount;
-            $discountObj->type = $discount['type'];
-            $discountObj->discount = $discount['discount'];
-            $discountObj->save();
+            Discount::firstOrCreate(
+                ["type" => $discount['type']],
+                ["discount" => $discount['discount']]
+            );
         }
     }
 }

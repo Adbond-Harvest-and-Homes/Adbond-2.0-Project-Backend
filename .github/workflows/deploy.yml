@@ -39,7 +39,7 @@ jobs:
         php artisan migrate --force
 
         # Seed The data
-        php artisan db:seed --class=DatabaseSeeder
+        php artisan db:seed --class=DatabaseSeeder --force
 
         # Install Composer dependencies
         composer install --no-dev --optimize-autoloader
