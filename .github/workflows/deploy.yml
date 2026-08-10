@@ -50,6 +50,9 @@ jobs:
         php artisan cache:clear
         php artisan view:clear
 
+        # Restart queue workers so they pick up the newly deployed code
+        php artisan queue:restart
+
         # Create Request Docs
         php artisan laravel-request-docs:export
 
