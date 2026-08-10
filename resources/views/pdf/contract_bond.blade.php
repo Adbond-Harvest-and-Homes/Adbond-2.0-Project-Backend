@@ -359,11 +359,11 @@
     <table>
         <tr>
             <td style="height:80px; width:50%; vertical-align:bottom;" class="no-border">
-                ________________________________<br>
+                <img src="{{ public_path('images/director-signature.jpg') }}" style="height:60px;"><br>
                 DIRECTOR
             </td>
             <td style="height:80px; vertical-align:bottom;" class="no-border">
-                ________________________________<br>
+                <img src="{{ public_path('images/director-secretary-signature.jpg') }}" style="height:60px;"><br>
                 DIRECTOR/SECRETARY
             </td>
         </tr>

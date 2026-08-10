@@ -61,12 +61,12 @@ class BondMOU extends Mailable
     {
         if (str_starts_with($this->filePath, 'http')) {
             return [
-                Attachment::fromData(fn () => file_get_contents($this->filePath), "bond_memorandum_agreement.pdf")
+                Attachment::fromData(fn () => file_get_contents($this->filePath), "Participation_Agreement_of_Subscription.pdf")
             ];
         }
         
         return [
-            Attachment::fromPath(public_path($this->filePath))->as("bond_memorandum_agreement.pdf")
+            Attachment::fromPath(public_path($this->filePath))->as("Participation_Agreement_of_Subscription.pdf")
         ];
     }
 }
