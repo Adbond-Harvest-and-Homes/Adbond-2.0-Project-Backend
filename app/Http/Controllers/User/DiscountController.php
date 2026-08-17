@@ -69,7 +69,9 @@ class DiscountController extends Controller
     public function updateBond(UpdateDiscount $request)
     {
         $data = $request->validated();
-        $data['type'] = (isset($data['installment'])) ? DiscountType::BOND_INSTALLMENT->value : DiscountType::BOND->value;
+        // "installment" is a nullable boolean — isset() treats an explicit `false` as "set",
+        // so it was routing every update to BOND_INSTALLMENT unless the key was omitted entirely.
+        $data['type'] = (!empty($data['installment'])) ? DiscountType::BOND_INSTALLMENT->value : DiscountType::BOND->value;
         $discountObj = $this->discountService->updateDiscount($data);
 
         try {
