@@ -36,10 +36,16 @@ class DiscountService
         $attributes = ["discount" => $data['discount']];
         if (isset($data['measurement'])) $attributes["discount_measurement"] = $data['measurement'];
 
-        return Discount::updateOrCreate(
-            ["type" => $data['type']],
-            $attributes
-        );
+        // Match the same row the read paths (Discount::bond(), fullPayment(), etc.) resolve to,
+        // since "type" isn't unique and updateOrCreate() would otherwise match an arbitrary row.
+        $discount = Discount::where("type", $data['type'])->latest("id")->first();
+
+        if ($discount) {
+            $discount->update($attributes);
+            return $discount;
+        }
+
+        return Discount::create(array_merge(["type" => $data['type']], $attributes));
     }
 
     public function updateInstallmentDiscounts($installments)

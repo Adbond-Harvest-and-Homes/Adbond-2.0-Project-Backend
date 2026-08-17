@@ -14,7 +14,7 @@
     <div style="margin-left:10%; margin-right:10%;width: 80%; margin:0px">
         
         <div style="margin-left:70%; margin-bottom:20px; height:80px; width:30%;">
-            <img src="{{asset('images/'.$image)}}" width="150" height="50" style="margin:0px" />
+            <img src="https://api.adbondharvestandhomes.com/images/newLogo.png" width="150" height="50" style="margin:0px" />
         </div>
         
         <div style="margin-bottom:20px">
