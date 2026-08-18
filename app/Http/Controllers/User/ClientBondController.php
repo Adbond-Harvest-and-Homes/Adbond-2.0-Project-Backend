@@ -109,7 +109,7 @@ class ClientBondController extends Controller
         try{
             $this->requestService->approve($request);
 
-            if($request->type = ClientBondRequestType::LIQUIDATION->value) {
+            if($request->type == ClientBondRequestType::LIQUIDATION->value) {
                 $this->bondService->redeem($bond);
 
                 $this->bondService->updateStatus($bond, ClientBondStatus::LIQUIDATED->value);
