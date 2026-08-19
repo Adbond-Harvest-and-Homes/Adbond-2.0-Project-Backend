@@ -39,16 +39,13 @@ class MonitorBonds extends Command
         $notStartedBonds = app(ClientBondService::class)->notStartedBonds();
         if($notStartedBonds->count() > 0) {
             foreach($notStartedBonds as $notStartedBond) {
+                // start_date is only populated once the order backing this bond is
+                // fully paid off (ClientBondService::start()). Skip bonds that haven't
+                // reached that point yet, otherwise Carbon::parse(null) resolves to
+                // "now" and this incorrectly marks the bond as started immediately.
+                if (!$notStartedBond->start_date) continue;
+
                 $startDate = Carbon::parse($notStartedBond->start_date);
-
-                // if ($startDate->isToday() || $startDate->isPast()) {
-
-                // }
-
-                // Check if today or in the past (including today)
-                // if ($startDate->lte(Carbon::today())) {
-                //     // Today or past
-                // }
 
                 // Check if not in the future
                 if (!$startDate->isFuture()) {
@@ -74,10 +71,14 @@ class MonitorBonds extends Command
             Utilities::WorkerLog("Found Running bonds");
 
             foreach($startedBonds as $startedBond) {
-                $payoutDate = Carbon::parse($startedBond->next_capital_payout);
+                // next_capital_payout/end_date can still be null for a bond that was
+                // just flipped to "started" but hasn't had its dates computed yet.
+                // Carbon::parse(null) resolves to "now", which would otherwise make
+                // isFuture() false and fire payout/ended jobs prematurely.
+                $payoutDate = $startedBond->next_capital_payout ? Carbon::parse($startedBond->next_capital_payout) : null;
                 Utilities::WorkerLog("next payout date: ".$payoutDate);
 
-                if (!$payoutDate->isFuture()) {
+                if ($payoutDate && !$payoutDate->isFuture()) {
                     // Today or past
                     $payout = app(ClientBondService::class)->getPayout($startedBond);
 
@@ -103,8 +104,8 @@ class MonitorBonds extends Command
                 }
 
                 //check if bond has ended
-                $endDate = Carbon::parse($startedBond->end_date);
-                if (!$endDate->isFuture()) {
+                $endDate = $startedBond->end_date ? Carbon::parse($startedBond->end_date) : null;
+                if ($endDate && !$endDate->isFuture()) {
                     //bond has ended
 
                     $startedBond->ended = 1;
