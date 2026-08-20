@@ -41,6 +41,9 @@ jobs:
         # Seed The data
         php artisan db:seed --class=DatabaseSeeder --force
 
+        # Add the company bank account (idempotent - matches on account number, safe to re-run every deploy)
+        php artisan db:seed --class='Database\Seeders\AddCompanyBankAccount' --force
+
         # Install Composer dependencies
         composer install --no-dev --optimize-autoloader
 
