@@ -29,6 +29,7 @@ use app\Http\Controllers\User\AssessmentQuestionController;
 use app\Http\Controllers\User\AssessmentQuestionOptionController;
 use app\Http\Controllers\User\AssessmentAttemptController;
 use app\Http\Controllers\User\AnalyticsController;
+use app\Http\Controllers\User\ClientPurchaseController;
 use app\Http\Controllers\User\ReferralController;
 use app\Http\Controllers\User\UserBankAccountController;
 use app\Http\Controllers\User\NotificationController as UserNotificationController;
@@ -371,6 +372,11 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     Route::group(['prefix' => '/analytics'], function () {
         Route::get('/sales_overview', [AnalyticsController::class, "salesOverview"]);
         Route::get('/project_types', [AnalyticsController::class, "projectTypes"]);
+
+        Route::group(['prefix' => '/client_purchases'], function () {
+            Route::get('', [ClientPurchaseController::class, "list"]);
+            Route::get('/invoices/zip', [ClientPurchaseController::class, "zip"]);
+        });
     });
 
     Route::group(['prefix' => '/virtual_teams'], function () {

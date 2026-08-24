@@ -49,6 +49,18 @@ class Order extends Model
     }
 
     /**
+     * Most recent payment for this order that has a generated receipt,
+     * used as the "invoice" for the purchase.
+     */
+    public function latestPaymentWithReceipt()
+    {
+        return $this->hasOne(Payment::class, 'purchase_id', 'id')
+            ->where('purchase_type', self::$type)
+            ->whereNotNull('receipt_file_id')
+            ->latestOfMany();
+    }
+
+    /**
      * Get all client packages for this order
      */
     public function clientPackages(): MorphMany
