@@ -13,7 +13,10 @@ class ClientPurchaseService
     public function purchases($with = [], $offset = 0, $perPage = null)
     {
         $filter = $this->filters;
-        $query = Order::with($with)->where("type", "purchase");
+        $query = Order::with($with)->where("type", "purchase")
+            ->whereHas('payments', function ($q) {
+                $q->where("confirmed", 1);
+            });
 
         if ($this->user !== null) {
             $query->whereHas('client', function ($q) {
