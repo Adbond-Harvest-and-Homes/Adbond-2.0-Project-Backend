@@ -3,6 +3,7 @@
 namespace app\Http\Controllers\User;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use ZipArchive;
@@ -84,20 +85,32 @@ class ClientPurchaseController extends Controller
         if (!is_dir($zipDir)) mkdir($zipDir, 0755, true);
         $zipPath = $zipDir . '/client_purchase_invoices_' . time() . '_batch' . $batch . '.zip';
 
+        $receipts = [];
+        foreach ($purchases as $purchase) {
+            $receipt = $purchase->paymentReceipt;
+            if ($receipt && $receipt->url) $receipts[$purchase->id] = $receipt;
+        }
+
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         $added = 0;
-        foreach ($purchases as $purchase) {
-            $receipt = $purchase->paymentReceipt;
-            if (!$receipt || !$receipt->url) continue;
+        $concurrency = env('CLIENT_PURCHASES_ZIP_CONCURRENCY', 20);
+        foreach (array_chunk($receipts, $concurrency, true) as $chunk) {
+            $responses = Http::pool(function (Pool $pool) use ($chunk) {
+                foreach ($chunk as $id => $receipt) {
+                    $pool->as($id)->timeout(20)->get($receipt->url);
+                }
+            });
 
-            $response = Http::get($receipt->url);
-            if (!$response->successful()) continue;
+            foreach ($chunk as $id => $receipt) {
+                $response = $responses[$id] ?? null;
+                if (!$response || $response instanceof \Throwable || !$response->successful()) continue;
 
-            $filename = $receipt->filename ?: ('invoice-' . $purchase->id . '.pdf');
-            $zip->addFromString($filename, $response->body());
-            $added++;
+                $filename = $receipt->filename ?: ('invoice-' . $id . '.pdf');
+                $zip->addFromString($filename, $response->body());
+                $added++;
+            }
         }
         $zip->close();
 
