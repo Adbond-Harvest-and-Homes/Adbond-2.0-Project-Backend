@@ -16,7 +16,7 @@ class ClientPurchaseService
         $filter = $this->filters;
         $query = Payment::with($with)
             ->where("purchase_type", Order::$type)
-            ->where("confirmed", 1)
+            ->where("confirmed", true)
             ->whereHas('purchase', function ($q) {
                 $q->where("type", "purchase");
             });
