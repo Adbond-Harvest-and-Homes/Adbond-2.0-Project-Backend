@@ -2,6 +2,7 @@
 
 namespace app\Services;
 
+use app\Models\Payment;
 use app\Models\Order;
 
 class ClientPurchaseService
@@ -13,9 +14,11 @@ class ClientPurchaseService
     public function purchases($with = [], $offset = 0, $perPage = null)
     {
         $filter = $this->filters;
-        $query = Order::with($with)->where("type", "purchase")
-            ->whereHas('payments', function ($q) {
-                $q->where("confirmed", 1);
+        $query = Payment::with($with)
+            ->where("purchase_type", Order::$type)
+            ->where("confirmed", 1)
+            ->whereHas('purchase', function ($q) {
+                $q->where("type", "purchase");
             });
 
         if ($this->user !== null) {
@@ -24,15 +27,19 @@ class ClientPurchaseService
             });
         }
 
-        if (isset($filter['start'])) $query->whereDate("order_date", ">=", $filter['start']);
-        if (isset($filter['end'])) $query->whereDate("order_date", "<=", $filter['end']);
+        if (isset($filter['start'])) $query->whereDate("payment_date", ">=", $filter['start']);
+        if (isset($filter['end'])) $query->whereDate("payment_date", "<=", $filter['end']);
 
-        if (isset($filter['status'])) $query->where("payment_status_id", $filter['status']);
+        if (isset($filter['status'])) $query->whereHas('purchase', function ($q) use ($filter) {
+            $q->where("payment_status_id", $filter['status']);
+        });
 
-        if (isset($filter['projectType'])) $query->whereHas('package', function ($q) use ($filter) {
-            $q->whereHas('project', function ($q2) use ($filter) {
-                $q2->whereHas('projectType', function ($q3) use ($filter) {
-                    $q3->where("name", $filter['projectType']);
+        if (isset($filter['projectType'])) $query->whereHas('purchase', function ($q) use ($filter) {
+            $q->whereHas('package', function ($q2) use ($filter) {
+                $q2->whereHas('project', function ($q3) use ($filter) {
+                    $q3->whereHas('projectType', function ($q4) use ($filter) {
+                        $q4->where("name", $filter['projectType']);
+                    });
                 });
             });
         });
@@ -42,17 +49,19 @@ class ClientPurchaseService
                 $q2->where("firstname", "LIKE", "%" . $filter['text'] . "%")
                     ->orWhere("lastname", "LIKE", "%" . $filter['text'] . "%")
                     ->orWhere("email", "LIKE", "%" . $filter['text'] . "%");
-            })->orWhereHas('package', function ($q2) use ($filter) {
-                $q2->where("name", "LIKE", "%" . $filter['text'] . "%")
-                    ->orWhereHas('project', function ($q3) use ($filter) {
-                        $q3->where("name", "LIKE", "%" . $filter['text'] . "%");
-                    });
+            })->orWhereHas('purchase', function ($q2) use ($filter) {
+                $q2->whereHas('package', function ($q3) use ($filter) {
+                    $q3->where("name", "LIKE", "%" . $filter['text'] . "%")
+                        ->orWhereHas('project', function ($q4) use ($filter) {
+                            $q4->where("name", "LIKE", "%" . $filter['text'] . "%");
+                        });
+                });
             });
         });
 
         if ($this->count) return $query->count();
 
         if ($perPage == null) $perPage = config('pagination.PER_PAGE');
-        return $query->offset($offset)->limit($perPage)->orderBy("order_date", "DESC")->get();
+        return $query->offset($offset)->limit($perPage)->orderBy("payment_date", "DESC")->get();
     }
 }

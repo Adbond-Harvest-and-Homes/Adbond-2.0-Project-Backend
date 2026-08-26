@@ -44,7 +44,7 @@ class ClientPurchaseController extends Controller
         if (!is_int((int) $perPage) || $perPage == null) $perPage = env('TRANSACTION_PAGINATION_PER_PAGE', 50);
         $offset = $perPage * ($page - 1);
 
-        $with = ['client', 'package.project.projectType', 'paymentStatus', 'latestPaymentWithReceipt.paymentReceipt'];
+        $with = ['client', 'purchase.package.project.projectType', 'purchase.paymentStatus', 'paymentReceipt'];
         $purchases = $this->clientPurchaseService->purchases($with, $offset, $perPage);
 
         $this->clientPurchaseService->count = true;
@@ -71,7 +71,7 @@ class ClientPurchaseController extends Controller
         if ($total > $cap) return Utilities::error402("This date range has {$total} matching purchases, which exceeds the limit of {$cap} for a single download. Please narrow your filters.");
 
         $this->clientPurchaseService->count = null;
-        $purchases = $this->clientPurchaseService->purchases(['client', 'latestPaymentWithReceipt.paymentReceipt'], 0, $cap);
+        $purchases = $this->clientPurchaseService->purchases(['client', 'paymentReceipt'], 0, $cap);
 
         $zipDir = storage_path('app/exports');
         if (!is_dir($zipDir)) mkdir($zipDir, 0755, true);
@@ -82,7 +82,7 @@ class ClientPurchaseController extends Controller
 
         $added = 0;
         foreach ($purchases as $purchase) {
-            $receipt = $purchase->latestPaymentWithReceipt?->paymentReceipt;
+            $receipt = $purchase->paymentReceipt;
             if (!$receipt || !$receipt->url) continue;
 
             $response = Http::get($receipt->url);
