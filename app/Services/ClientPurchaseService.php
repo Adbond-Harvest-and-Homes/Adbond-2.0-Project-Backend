@@ -3,7 +3,6 @@
 namespace app\Services;
 
 use app\Models\Payment;
-use app\Models\Order;
 
 class ClientPurchaseService
 {
@@ -14,12 +13,7 @@ class ClientPurchaseService
     public function purchases($with = [], $offset = 0, $perPage = null)
     {
         $filter = $this->filters;
-        $query = Payment::with($with)
-            ->where("purchase_type", Order::$type)
-            ->where("confirmed", true)
-            ->whereHas('purchase', function ($q) {
-                $q->where("type", "purchase");
-            });
+        $query = Payment::with($with)->where("confirmed", true);
 
         if ($this->user !== null) {
             $query->whereHas('client', function ($q) {
