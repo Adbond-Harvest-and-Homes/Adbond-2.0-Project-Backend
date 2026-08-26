@@ -121,12 +121,13 @@ class ClientPurchaseController extends Controller
 
         return response()->download(
             $zipPath,
-            "client-purchase-invoices-" . now()->format('Y-m-d') . "-batch-{$batch}-of-{$totalBatches}.zip"
-        )->deleteFileAfterSend(true)->withHeaders([
-            'X-Total-Records' => $total,
-            'X-Total-Batches' => $totalBatches,
-            'X-Current-Batch' => $batch,
-        ]);
+            "client-purchase-invoices-" . now()->format('Y-m-d') . "-batch-{$batch}-of-{$totalBatches}.zip",
+            [
+                'X-Total-Records' => $total,
+                'X-Total-Batches' => $totalBatches,
+                'X-Current-Batch' => $batch,
+            ]
+        )->deleteFileAfterSend(true);
     }
 
     private function buildFilters(Request $request)
