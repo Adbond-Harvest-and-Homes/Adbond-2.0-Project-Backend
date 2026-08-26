@@ -63,19 +63,26 @@ class ClientPurchaseController extends Controller
         if (!$filter['valid']) return Utilities::error402($filter['message']);
         $this->clientPurchaseService->filters = $filter['filter'];
 
+        $cap = env('CLIENT_PURCHASES_ZIP_CAP', 200);
+
+        $batch = (int) ($request->query('batch') ?? 1);
+        if ($batch <= 0) $batch = 1;
+
         $this->clientPurchaseService->count = true;
         $total = $this->clientPurchaseService->purchases();
 
-        $cap = env('CLIENT_PURCHASES_ZIP_CAP', 200);
         if ($total == 0) return Utilities::error402("No purchases found for the selected filters");
-        if ($total > $cap) return Utilities::error402("This date range has {$total} matching purchases, which exceeds the limit of {$cap} for a single download. Please narrow your filters.");
+
+        $totalBatches = (int) ceil($total / $cap);
+        if ($batch > $totalBatches) return Utilities::error402("Batch {$batch} does not exist. There are {$totalBatches} batch(es) of up to {$cap} invoices each for the selected filters.");
 
         $this->clientPurchaseService->count = null;
-        $purchases = $this->clientPurchaseService->purchases(['client', 'paymentReceipt'], 0, $cap);
+        $offset = ($batch - 1) * $cap;
+        $purchases = $this->clientPurchaseService->purchases(['client', 'paymentReceipt'], $offset, $cap);
 
         $zipDir = storage_path('app/exports');
         if (!is_dir($zipDir)) mkdir($zipDir, 0755, true);
-        $zipPath = $zipDir . '/client_purchase_invoices_' . time() . '.zip';
+        $zipPath = $zipDir . '/client_purchase_invoices_' . time() . '_batch' . $batch . '.zip';
 
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
@@ -96,10 +103,17 @@ class ClientPurchaseController extends Controller
 
         if ($added == 0) {
             @unlink($zipPath);
-            return Utilities::error402("None of the matching purchases have a generated invoice yet");
+            return Utilities::error402("None of the matching purchases in this batch have a generated invoice yet");
         }
 
-        return response()->download($zipPath, 'client-purchase-invoices-' . now()->format('Y-m-d') . '.zip')->deleteFileAfterSend(true);
+        return response()->download(
+            $zipPath,
+            "client-purchase-invoices-" . now()->format('Y-m-d') . "-batch-{$batch}-of-{$totalBatches}.zip"
+        )->deleteFileAfterSend(true)->withHeaders([
+            'X-Total-Records' => $total,
+            'X-Total-Batches' => $totalBatches,
+            'X-Current-Batch' => $batch,
+        ]);
     }
 
     private function buildFilters(Request $request)
