@@ -27,6 +27,21 @@ class UpdatePackage extends BaseRequest
     }
 
     /**
+     * Normalize multipart form values before validation.
+     * multipart/form-data (required for brochureFile) sends booleans as
+     * the literal strings "true"/"false", which Laravel's boolean rule
+     * rejects (it only accepts 1, 0, "1", "0", true, false).
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('installmentOption')) {
+            $this->merge([
+                'installmentOption' => filter_var($this->installmentOption, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -49,7 +64,7 @@ class UpdatePackage extends BaseRequest
             "benefits" => "nullable|array",
             "benefits.*" => "integer|exists:benefits,id",
             // "brochureFileId" => ["nullable", "integer", new ValidPackageBrochureFile()],
-            "brochureFile" => "nullable|file|max:10000|mimes:jpeg,png,jpg,pdf,doc,docx",
+            "brochureFile" => "nullable|file|max:153600|mimes:jpeg,png,jpg,pdf,doc,docx",
             "installmentOption" => "nullable|boolean",
             "vrUrl" => "nullable|string",
             "packageMediaIds" => "nullable|array",
