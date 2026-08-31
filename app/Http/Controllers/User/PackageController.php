@@ -551,7 +551,7 @@ class PackageController extends Controller
         $purpose = FilePurpose::PACKAGE_BROCHURE->value;
         $message = null;
         if($package) {
-            if($package && $package->brochure_file_id) $oldFileId = $package->brochure_file_id;
+            if($package && $package->package_brochure_file_id) $oldFileId = $package->package_brochure_file_id;
             $this->fileService->belongsId = $package->id;
             $this->fileService->belongsType = "app\Models\Package";
         }

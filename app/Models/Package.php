@@ -54,7 +54,7 @@ class Package extends Model
 
     public function brochure()
     {
-        return $this->belongsTo(File::class);
+        return $this->belongsTo(File::class, "package_brochure_file_id");
     }
 
     public function redemptionPackage()

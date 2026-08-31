@@ -71,7 +71,7 @@ class PackageService
 
             if(isset($data['description'])) $package->description = $data['description'];
             // if(isset($data['benefits'])) $package->benefits = $data['benefits'];
-            if(isset($data['brochureFileId'])) $package->brochure_file_id = $data['brochureFileId'];
+            if(isset($data['brochureFileId'])) $package->package_brochure_file_id = $data['brochureFileId'];
             if(isset($data['installmentOption'])) $package->installment_option = $data['installmentOption'];
             if(isset($data['vrUrl'])) $package->vr_url = $data['vrUrl'];
 
@@ -177,7 +177,7 @@ class PackageService
         if(isset( $data['infrastructureFee'])) $package->infrastructure_fee = $data['infrastructureFee'];
 
         if(isset($data['description'])) $package->description = $data['description'];
-        if(isset($data['brochureFileId'])) $package->brochure_file_id = $data['brochureFileId'];
+        if(isset($data['brochureFileId'])) $package->package_brochure_file_id = $data['brochureFileId'];
         if(isset($data['installmentOption'])) $package->installment_option = $data['installmentOption'];
         if(isset($data['vrUrl'])) $package->vr_url = $data['vrUrl'];  
 
@@ -296,7 +296,7 @@ class PackageService
 
     public function packages($with=[], $offset=0, $perPage=null)
     {
-        $query = Package::with($with);
+        $query = Package::with(array_unique(array_merge($with, ['brochure'])));
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if($this->active != null) $query->where("active", $this->active);
         if($this->countryId) $query->where("country_id", $this->countryId);
@@ -330,7 +330,7 @@ class PackageService
 
     public function package($id, $with=[])
     {
-        return Package::with($with)->where("id", $id)->first();
+        return Package::with(array_unique(array_merge($with, ['brochure'])))->where("id", $id)->first();
     }
 
     public function getByName($name, $with=[])
@@ -348,7 +348,7 @@ class PackageService
 
     public function filter($filter, $with=[], $offset=0, $perPage=null)
     {
-        $query = Package::with($with);
+        $query = Package::with(array_unique(array_merge($with, ['brochure'])));
         if($this->projectId) $query = $query->where("project_id", $this->projectId);
         if(isset($filter['text'])) $query->where("name", "LIKE", "%".$filter['text']."%");
         if(isset($filter['date'])) $query = $query->whereDate("created_at", $filter['date']);
