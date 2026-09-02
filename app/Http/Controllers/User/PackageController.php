@@ -555,8 +555,8 @@ class PackageController extends Controller
             $this->fileService->belongsId = $package->id;
             $this->fileService->belongsType = "app\Models\Package";
         }
-        $mimeType = $file->getMimeType();
-        $fileType = explode('/', $mimeType)[0]; 
+        $extension = strtolower($file->getClientOriginalExtension());
+        $fileType = in_array($extension, ['jpeg', 'jpg', 'png']) ? 'image' : $extension;
         
         $res = $this->fileService->save($file, $fileType, Auth::user()->id, $purpose, User::$userType, 'package-brochures');
         if($res['status'] != 200) $message = $res['message'];
