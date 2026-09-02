@@ -23,6 +23,32 @@ class ProjectService
     public $status = null;
     public $all = null;
 
+    /**
+     * Whenever "packages" (or a "packages.*" relation) is being eager-loaded,
+     * also load "packages.brochure" so PackageResource can output it -
+     * callers shouldn't have to remember this every time.
+     */
+    private function withPackageBrochure($with)
+    {
+        $hasPackages = false;
+        foreach ($with as $key => $value) {
+            // covers plain entries ('packages', 'packages.media') and
+            // constrained eager loads (['packages' => function ($q) {...}])
+            $relation = is_string($key) ? $key : $value;
+            if (!is_string($relation)) continue;
+            if ($relation === 'packages' || str_starts_with($relation, 'packages.')) {
+                $hasPackages = true;
+                break;
+            }
+        }
+
+        if ($hasPackages && !in_array('packages.brochure', $with, true)) {
+            $with[] = 'packages.brochure';
+        }
+
+        return $with;
+    }
+
     public function save($data)
     {
         try{
@@ -93,7 +119,7 @@ class ProjectService
 
     public function projects($with=[], $offset=0, $perPage=null)
     {
-        $query = Project::with($with);
+        $query = Project::with($this->withPackageBrochure($with));
         if($this->typeId) $query = $query->where("project_type_id", $this->typeId);
         if($this->status && $this->status == ProjectFilter::ACTIVE->value) $query = $query->where("active", true);
         if($this->status && $this->status == ProjectFilter::INACTIVE->value) $query = $query->where("active", false);
@@ -122,7 +148,7 @@ class ProjectService
 
     public function activeProjects($with=[], $offset=0, $perPage=null)
     {
-        $query = Project::with($with)->where("active", true);
+        $query = Project::with($this->withPackageBrochure($with))->where("active", true);
         if($this->typeId) $query = $query->where("project_type_id", $this->typeId);
         if($this->status && $this->status == ProjectFilter::ACTIVE->value) $query = $query->where("active", true);
         if($this->status && $this->status == ProjectFilter::INACTIVE->value) $query = $query->where("active", false);
@@ -136,7 +162,7 @@ class ProjectService
 
     public function inActiveProjects($with=[], $offset=0, $perPage=null)
     {
-        $query = Project::with($with)->where("active", false);
+        $query = Project::with($this->withPackageBrochure($with))->where("active", false);
         if($this->typeId) $query = $query->where("project_type_id", $this->typeId);
         if($this->count) return $query->count();
         if($perPage==null) $perPage=env('PAGINATION_PER_PAGE', 15);
@@ -146,7 +172,7 @@ class ProjectService
 
     public function project($id, $with=[])
     {
-        return Project::with($with)->where("id", $id)->first();
+        return Project::with($this->withPackageBrochure($with))->where("id", $id)->first();
     }
 
     public function getProjectByName($name, $projectTypeId)
@@ -156,7 +182,7 @@ class ProjectService
 
     public function filter($filter, $with=[], $offset=0, $perPage=null)
     {
-        $query = Project::with($with);
+        $query = Project::with($this->withPackageBrochure($with));
         if($this->typeId) $query = $query->where("project_type_id", $this->typeId);
 
         if(isset($filter['text'])) {
@@ -209,7 +235,7 @@ class ProjectService
 
     public function projectByName($name, $projectTypeId, $with=[])
     {
-        return Project::with($with)->where("project_type_id", $projectTypeId)->where("name", $name)->first();
+        return Project::with($this->withPackageBrochure($with))->where("project_type_id", $projectTypeId)->where("name", $name)->first();
     }
 
     public function projectLocation($id, $with=[])
