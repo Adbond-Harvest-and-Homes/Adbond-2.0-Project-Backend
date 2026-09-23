@@ -34,6 +34,7 @@ use app\Http\Controllers\User\ReferralController;
 use app\Http\Controllers\User\UserBankAccountController;
 use app\Http\Controllers\User\NotificationController as UserNotificationController;
 use app\Http\Controllers\User\DiscountController;
+use app\Http\Controllers\User\PackageRequestController;
 use app\Http\Controllers\VirtualTeamApplicationController;
 use app\Http\Controllers\UtilityController;
 use app\Http\Controllers\User\ClientBondController;
@@ -382,6 +383,12 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
     Route::group(['prefix' => '/virtual_teams'], function () {
         Route::get('/applications', [VirtualTeamApplicationController::class, "applications"]);
         Route::get('/application/{applicationId}', [VirtualTeamApplicationController::class, "application"]);
+    });
+
+    Route::group(['prefix' => '/package_requests'], function () {
+        Route::get('', [PackageRequestController::class, "list"]);
+        Route::get('/{requestId}', [PackageRequestController::class, "request"]);
+        Route::patch('/{requestId}/status', [PackageRequestController::class, "updateStatus"]);
     });
 
 

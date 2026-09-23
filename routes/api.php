@@ -29,6 +29,7 @@ use app\Http\Controllers\PackageController;
 use app\Http\Controllers\SiteTourController as PublicSiteTourController;
 use app\Http\Controllers\UtilityController;
 use app\Http\Controllers\VirtualTeamApplicationController;
+use app\Http\Controllers\PackageRequestController;
 use app\Http\Controllers\JobAdvertController;
 
 use app\Http\Controllers\TestController;
@@ -116,6 +117,10 @@ Route::group(['prefix' => '/v2',], function () {
 
     Route::group(['prefix' => '/virtual_teams'], function () {
         Route::post('/apply', [VirtualTeamApplicationController::class, "apply"]);
+    });
+
+    Route::group(['prefix' => '/package_requests'], function () {
+        Route::post('', [PackageRequestController::class, "store"]);
     });
 
     Route::group(['prefix' => '/job_adverts'], function () {

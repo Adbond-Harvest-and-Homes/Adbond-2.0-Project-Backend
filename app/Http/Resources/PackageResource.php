@@ -46,6 +46,7 @@ class PackageResource extends JsonResource
             "active" => ($this->active) ? true : false,
             "status" => ($this->units==0 || $this->sold_out) ? "Sold Out" : (($this->active) ? "Active" : "Inactive"),
             "soldOut" => ($this->units==0 || $this->sold_out) ? true : false,
+            "request" => ($this->units==0 || $this->sold_out) ? 1 : 0,
             "country" => $this->country?->name,
             "state" => $this?->stateModel?->name,
             "address" => $this->address,
