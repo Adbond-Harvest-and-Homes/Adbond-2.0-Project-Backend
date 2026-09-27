@@ -377,6 +377,8 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::group(['prefix' => '/client_purchases'], function () {
             Route::get('', [ClientPurchaseController::class, "list"]);
             Route::get('/invoices/zip', [ClientPurchaseController::class, "zip"]);
+            Route::post('/invoices/send', [ClientPurchaseController::class, "sendInvoices"]);
+            Route::post('/{id}/invoice/send', [ClientPurchaseController::class, "sendInvoice"]);
         });
     });
 
