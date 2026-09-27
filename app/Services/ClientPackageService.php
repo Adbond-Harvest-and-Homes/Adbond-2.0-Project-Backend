@@ -14,6 +14,7 @@ use app\Models\ClientInvestment;
 use app\Models\ClientAssetsView;
 use app\Models\ProjectType;
 use app\Models\ClientBond;
+use app\Models\FamilyMember;
 
 use app\Mail\LetterOfHappiness;
 use app\Mail\Contract;
@@ -56,6 +57,10 @@ class ClientPackageService
             }
         }
         $clientPackage->client_id = $data['clientId'];
+        if (isset($data['ownerId'])) {
+            $clientPackage->owner_id = $data['ownerId'];
+            $clientPackage->owner_type = $data['ownerType'];
+        }
         $clientPackage->package_id = $data['packageId'];
         if(isset($data['contractFileId'])) $clientPackage->contract_file_id = $data['contractFileId'];
         if(isset($data['happinessLetterFileId'])) $clientPackage->happiness_letter_file_id = $data['happinessLetterFileId'];
@@ -102,6 +107,10 @@ class ClientPackageService
 
     public function saveClientPackageOrder($order, $files=[], $clientPackage=null) {
         $data['clientId'] = $order->client->id;
+        if ($order->owner_id) {
+            $data['ownerId'] = $order->owner_id;
+            $data['ownerType'] = $order->owner_type;
+        }
         $data['packageId'] = $order->package_id;
         $data['origin'] = ClientPackageOrigin::ORDER->value;
         $data['purchaseId'] = $order->id;
@@ -197,6 +206,27 @@ class ClientPackageService
     {
         $clientPackage->sold = true;
         $clientPackage->update();
+    }
+
+    /**
+     * Assign a property in a client's portfolio to a family member (spouse/child),
+     * or pass a null $familyMember to hand it back to the client themselves.
+     */
+    public function assignOwner($clientPackage, $familyMember = null)
+    {
+        $clientPackage->owner_id = $familyMember?->id;
+        $clientPackage->owner_type = $familyMember ? FamilyMember::$type : null;
+        $clientPackage->update();
+
+        // keep the underlying order's owner attribution in sync, where applicable
+        if ($clientPackage->purchase_type == Order::$type && $clientPackage->purchase) {
+            $order = $clientPackage->purchase;
+            $order->owner_id = $familyMember?->id;
+            $order->owner_type = $familyMember ? FamilyMember::$type : null;
+            $order->update();
+        }
+
+        return $clientPackage;
     }
 
     public function uploadLetterOfHappiness($payment, $asset)

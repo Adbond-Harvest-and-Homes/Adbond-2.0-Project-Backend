@@ -9,6 +9,7 @@ use app\Http\Resources\PackageResource;
 use app\Http\Resources\FileResource;
 use app\Http\Resources\ClientBriefResource;
 use app\Http\Resources\ClientBondResource;
+use app\Http\Resources\FamilyMemberResource;
 
 use app\Enums\ClientPackageOrigin;
 
@@ -27,6 +28,7 @@ class AssetResource extends JsonResource
             "id" => $this->id,
             "type" => $this->origin,
             "client" => new ClientBriefResource($this->whenLoaded("client")),
+            "owner" => $this->owner_type ? new FamilyMemberResource($this->owner) : null,
             "package" => $this->package->name,
             "media" => FileResource::collection($this->package->media),
             "project_identifier" => $this->identifier,

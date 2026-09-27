@@ -49,6 +49,15 @@ class ClientPackage extends Model
     }
 
     /**
+     * Who this property is held for - the client themselves when null,
+     * or a FamilyMember when bought/assigned to a spouse/child.
+     */
+    public function owner(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
      * Relationship to Package
      */
     public function package()

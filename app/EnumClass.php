@@ -25,6 +25,7 @@ use app\Enums\PromoProductType;
 use app\Enums\NotificationType;
 use app\Enums\ClientBondStatus;
 use app\Enums\ClientBondRequestType;
+use app\Enums\FamilyRelationship;
 
 //bonds
 use app\Enums\Measurement;
@@ -69,6 +70,11 @@ class EnumClass
             Genders::FEMALE->value,
             Genders::MALE->value
         ];
+    }
+
+    public static function familyRelationships()
+    {
+        return array_column(FamilyRelationship::cases(), 'value');
     }
 
     public static function fileTypes()

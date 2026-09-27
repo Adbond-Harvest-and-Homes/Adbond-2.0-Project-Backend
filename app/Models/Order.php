@@ -5,6 +5,7 @@ namespace app\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Event;
 
 use app\Domain\Orders\Events\OrderCompleted;
@@ -23,6 +24,15 @@ class Order extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Who this order was bought for - the client themselves when null,
+     * or a FamilyMember when bought on behalf of a spouse/child.
+     */
+    public function owner(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     public function package()

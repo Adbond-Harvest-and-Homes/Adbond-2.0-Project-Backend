@@ -16,6 +16,7 @@ use app\Http\Controllers\Client\AssetSwitchController;
 use app\Http\Controllers\Client\OfferController;
 use app\Http\Controllers\Client\OfferBidController;
 use app\Http\Controllers\Client\ClientController;
+use app\Http\Controllers\Client\FamilyMemberController;
 use app\Http\Controllers\Client\SiteTourController;
 use app\Http\Controllers\Client\OfferPaymentController;
 use app\Http\Controllers\Client\CommentController;
@@ -39,6 +40,14 @@ Route::group(['middleware' => 'clientAuth', 'prefix' => '/client', 'namespace' =
         Route::get('/generate_referer_code', [ClientController::class, 'generateRefererCode']);
         Route::get('/referral_earnings', [ClientController::class, 'referralEarnings']);
     });
+    // Family Members (spouse/children) Routes
+    Route::group(['prefix' => '/family_members'], function () {
+        Route::get('', [FamilyMemberController::class, 'index']);
+        Route::post('', [FamilyMemberController::class, 'store']);
+        Route::post('/{id}/update', [FamilyMemberController::class, 'update']);
+        Route::post('/{id}/delete', [FamilyMemberController::class, 'destroy']);
+    });
+
     Route::group(['prefix' => '/file',], function () {
         Route::post('/upload_profile_photo', 'FileController@saveProfilePhoto');
         Route::post('/upload_payment_evidence', 'FileController@savePaymentEvidence');
@@ -86,6 +95,8 @@ Route::group(['middleware' => 'clientAuth', 'prefix' => '/client', 'namespace' =
         Route::get('/downgrade_packages/{assetId}', [AssetSwitchController::class, 'downgradePackages']);
         Route::get('/upgrade_packages/{assetId}', [AssetSwitchController::class, 'upgradePackages']);
         Route::post('/request_asset_switch', [AssetSwitchController::class, 'requestSwitch']);
+
+        Route::post('/{assetId}/assign_owner', [AssetController::class, 'assignOwner']);
 
         Route::get('/{assetId}', [AssetController::class, 'asset']);
     });

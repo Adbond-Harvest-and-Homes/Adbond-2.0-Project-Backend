@@ -140,6 +140,10 @@ class OrderService
     {
         $order = new Order;
         $order->client_id = $data['clientId'];
+        if (isset($data['ownerId'])) {
+            $order->owner_id = $data['ownerId'];
+            $order->owner_type = $data['ownerType'];
+        }
         $order->package_id = $data['packageId'];
         $order->units = $data['units'];
         if (isset($data['balance']) && isset($data['balance'])) {

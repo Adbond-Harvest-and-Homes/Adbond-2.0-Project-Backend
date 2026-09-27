@@ -34,6 +34,7 @@ class PrepareOrder extends BaseRequest
             "units" => "required|integer",
             "promoCode" => "nullable|string|exists:promo_codes,code",
             "processingId" => "nullable",
+            "familyMemberId" => "nullable|integer|exists:family_members,id",
             "redemptionOption" => ['nullable', 'string', Rule::in(EnumClass::investmentRedemptionOptions())],
             // "redemptionPackageId" => "nullable|integer|exists:packages,id"
         ];

@@ -18,6 +18,7 @@ use app\Services\PackageService;
 use app\Services\PromoCodeService;
 
 use app\Models\PaymentStatus;
+use app\Models\FamilyMember;
 
 use app\Utilities;
 
@@ -84,7 +85,12 @@ class SaveOrderStage implements PaymentStage
             $data['promoCodeId'] = $promoCode->id;
             $this->promoCodeService->incrementUsage($promoCode);
         }
-        
+
+        if (isset($context->processedData['familyMemberId'])) {
+            $data['ownerId'] = $context->processedData['familyMemberId'];
+            $data['ownerType'] = FamilyMember::$type;
+        }
+
         return $data;
     }
 }

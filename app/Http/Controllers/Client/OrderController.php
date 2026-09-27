@@ -14,6 +14,9 @@ use app\Services\OrderService;
 use app\Services\PromoCodeService;
 use app\Services\PromoService;
 use app\Services\PackageService;
+use app\Services\FamilyMemberService;
+
+use app\Http\Resources\FamilyMemberResource;
 
 use app\Enums\PackageType;
 use app\Enums\InvestmentRedemptionOption;
@@ -26,6 +29,7 @@ class OrderController extends Controller
     private $promoCodeService;
     private $promoService;
     private $packageService;
+    private $familyMemberService;
 
     public function __construct()
     {
@@ -33,6 +37,7 @@ class OrderController extends Controller
         $this->packageService = new PackageService;
         $this->promoCodeService = new PromoCodeService;
         $this->promoService = new PromoService;
+        $this->familyMemberService = new FamilyMemberService;
     }
 
     public function prepareOrder(PrepareOrder $request)
@@ -42,6 +47,12 @@ class OrderController extends Controller
 
             $package = $this->packageService->package($data['packageId']);
             if (!$package) return Utilities::error402("Package was not found");
+
+            $familyMember = null;
+            if (isset($data['familyMemberId'])) {
+                $familyMember = $this->familyMemberService->find($data['familyMemberId'], Auth::guard('client')->user()->id);
+                if (!$familyMember) return Utilities::error402("Family member not found");
+            }
 
             if ($package->type == PackageType::INVESTMENT->value) {
                 if (!isset($data['redemptionOption'])) return Utilities::error402("You must select a redemption option");
@@ -92,7 +103,8 @@ class OrderController extends Controller
                 "amountPerUnit" => $package->amount,
                 "totalAmount" => $package->amount * $data['units'],
                 "amountPayable" => $data['amountPayable'],
-                "appliedDiscounts" => $amountDetail
+                "appliedDiscounts" => $amountDetail,
+                "buyingFor" => $familyMember ? new FamilyMemberResource($familyMember) : "self"
             ]);
         } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred while trying to perform this operation, Please try again later or contact support');

@@ -241,14 +241,23 @@ class Client extends Authenticatable implements JWTSubject
         return $this->hasMany(ClientCommissionEarning::class);
     }
 
+    public function familyMembers()
+    {
+        return $this->hasMany(FamilyMember::class);
+    }
+
     protected static function boot()
     {
         parent::boot();
-        
+
         static::deleting(function (Client $client) {
             if($client->wallet) $client->wallet->delete();
 
             if($client->nextOfKins) $client->nextOfKins->delete();
+
+            if($client->familyMembers->count() > 0) {
+                foreach($client->familyMembers as $familyMember) $familyMember->delete();
+            }
 
             if($client->clientIdentification) $client->clientIdentification->delete();
 
