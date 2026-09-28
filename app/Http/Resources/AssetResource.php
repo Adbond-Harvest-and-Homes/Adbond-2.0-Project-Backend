@@ -98,7 +98,7 @@ class AssetResource extends JsonResource
     private function amountPaid()
     {
         // if($this->purchase_complete==0) {
-        if ($this->origin == ClientPackageOrigin::INVESTMENT->value) return $this->purchase->order->amount_payed;
+        if ($this->origin == ClientPackageOrigin::INVESTMENT->value || $this->origin == ClientPackageOrigin::BOND->value) return $this->purchase->order->amount_payed;
         return $this->purchase?->amount_payed;
         // }
         // return $this->amount;
@@ -109,7 +109,7 @@ class AssetResource extends JsonResource
         if ($this->origin == ClientPackageOrigin::ORDER->value) {
             return $this->purchase?->balance;
         }
-        if ($this->origin == ClientPackageOrigin::INVESTMENT->value) {
+        if ($this->origin == ClientPackageOrigin::INVESTMENT->value || $this->origin == ClientPackageOrigin::BOND->value) {
             return $this->purchase?->order?->balance;
         }
         return 0;
@@ -117,7 +117,7 @@ class AssetResource extends JsonResource
 
     private function installmentCount()
     {
-        if ($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value) {
+        if ($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value || $this->origin == ClientPackageOrigin::BOND->value) {
             $order = ($this->origin == ClientPackageOrigin::ORDER->value) ? $this?->purchase : $this->purchase->order;
             return ($order?->is_installment == 1) ? $order->installment_count : null;
         }
@@ -126,7 +126,7 @@ class AssetResource extends JsonResource
 
     private function installmentAmount()
     {
-        if ($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value) {
+        if ($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value || $this->origin == ClientPackageOrigin::BOND->value) {
             $order = ($this->origin == ClientPackageOrigin::ORDER->value) ? $this?->purchase : $this->purchase->order;
             return ($order?->is_installment == 1) ? $order->amount_per_installment : null;
         }
@@ -136,7 +136,7 @@ class AssetResource extends JsonResource
     private function paymentPlan()
     {
 
-        if ($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value) {
+        if ($this->origin == ClientPackageOrigin::ORDER->value || $this->origin == ClientPackageOrigin::INVESTMENT->value || $this->origin == ClientPackageOrigin::BOND->value) {
             $order = ($this->origin == ClientPackageOrigin::ORDER->value) ? $this?->purchase : $this->purchase->order;
             return ($order?->is_installment == 1) ? "installment" : "one-off";
         }

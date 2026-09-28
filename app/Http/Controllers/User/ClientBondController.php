@@ -67,7 +67,7 @@ class ClientBondController extends Controller
         $this->bondService->page = (int) $request->query('page', 1);
         $this->bondService->limit = (int) $request->query('perPage', env('PAGINATION_PER_PAGE', 10));
 
-        $bonds = $this->bondService->getBonds(['client', 'package.media']);
+        $bonds = $this->bondService->getBonds(['client', 'package.media', 'order']);
 
         $meta = [
             'page' => $bonds->currentPage(),
