@@ -162,6 +162,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
 
     Route::group(['middleware' => 'superAdminAuth', 'prefix' => '/assets'], function () {
         Route::delete('/{assetId}', [UserAssetController::class, "delete"]);
+        Route::patch('/{assetId}/payment_type', [UserAssetController::class, "updatePaymentType"]);
     });
 
     //Offers Routes

@@ -179,6 +179,20 @@ class OrderService
         return $order;
     }
 
+    public function updatePaymentType($order, $isInstallment, $installmentCount = null)
+    {
+        $order->is_installment = $isInstallment ? 1 : 0;
+        if ($isInstallment) {
+            $order->installment_count = $installmentCount;
+            $order->amount_per_installment = round($order->balance / $installmentCount);
+        } else {
+            $order->installment_count = null;
+            $order->amount_per_installment = null;
+        }
+        $order->update();
+        return $order;
+    }
+
     public function update($data, $order, $payment = null)
     {
         // dd($data);

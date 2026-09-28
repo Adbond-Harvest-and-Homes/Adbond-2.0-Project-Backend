@@ -8,18 +8,21 @@ use Illuminate\Support\Facades\Auth;
 use app\Http\Controllers\Controller;
 
 use app\Http\Requests\User\UploadDoa;
+use app\Http\Requests\User\UpdateAssetPaymentType;
 
 use app\Http\Resources\AssetResource;
 
 use app\Services\ClientPackageService;
 use app\Services\AssetService;
 use app\Services\FileService;
+use app\Services\OrderService;
 
 use app\Models\ClientPackage;
 use app\Models\Client;
 use app\Models\Role;
 
 use app\Enums\FilePurpose;
+use app\Enums\ClientPackageOrigin;
 
 use app\Utilities;
 
@@ -30,13 +33,15 @@ class AssetController extends Controller
     private $assetService;
     private $clientPackageService;
     private $fileService;
+    private $orderService;
 
     public function __construct()
     {
         $this->userActivityLogService = new UserActivityLogService;
-        $this->assetService = new AssetService;   
+        $this->assetService = new AssetService;
         $this->clientPackageService = new ClientPackageService;
         $this->fileService = new FileService;
+        $this->orderService = new OrderService;
     }
 
     public function saveDoa(UploadDoa $request)
@@ -107,5 +112,41 @@ class AssetController extends Controller
         }
 
         return Utilities::okay("Asset purchase has been removed successfully");
+    }
+
+    public function updatePaymentType(UpdateAssetPaymentType $request, $assetId)
+    {
+        try {
+            $data = $request->validated();
+
+            $asset = $this->assetService->asset($assetId);
+            if (!$asset) return Utilities::error402("Asset not found");
+
+            if ($asset->origin != ClientPackageOrigin::ORDER->value && $asset->origin != ClientPackageOrigin::INVESTMENT->value) return Utilities::error402("Asset is not an Order");
+
+            if ($asset->purchase_complete == 1) return Utilities::error402("This asset order cannot be modified because the purchase is complete");
+
+            $order = ($asset->origin == ClientPackageOrigin::ORDER->value) ? $asset->purchase : $asset->purchase->order;
+            if (!$order) return Utilities::error402("Order not found for this asset");
+
+            if ($order->is_installment == $data['isInstallment']) {
+                $currentType = $data['isInstallment'] ? "installment" : "one-off";
+                return Utilities::error402("This purchase's payment type is already set to {$currentType}");
+            }
+
+            $this->orderService->updatePaymentType($order, $data['isInstallment'], $data['installmentCount'] ?? null);
+            $asset = $this->assetService->asset($asset->id);
+
+            try {
+                $newType = $data['isInstallment'] ? "installment" : "one-off";
+                $this->userActivityLogService->log(Auth::user(), "Changed payment type for Asset ID {$assetId} to {$newType}");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new AssetResource($asset));
+        } catch (\Exception $e) {
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
     }
 }
