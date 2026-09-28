@@ -122,7 +122,8 @@ class AssetController extends Controller
             $asset = $this->assetService->asset($assetId);
             if (!$asset) return Utilities::error402("Asset not found");
 
-            if ($asset->origin != ClientPackageOrigin::ORDER->value && $asset->origin != ClientPackageOrigin::INVESTMENT->value) return Utilities::error402("Asset is not an Order");
+            $orderBackedOrigins = [ClientPackageOrigin::ORDER->value, ClientPackageOrigin::INVESTMENT->value, ClientPackageOrigin::BOND->value];
+            if (!in_array($asset->origin, $orderBackedOrigins)) return Utilities::error402("Asset is not an Order");
 
             if ($asset->purchase_complete == 1) return Utilities::error402("This asset order cannot be modified because the purchase is complete");
 
