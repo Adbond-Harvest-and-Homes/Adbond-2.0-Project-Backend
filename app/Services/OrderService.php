@@ -59,8 +59,11 @@ class OrderService
     {
         $appliedDiscounts = [];
         $discountedAmount = $data['amount'];
+        // A promo code can be configured (via its combineWithFullPaymentDiscount flag) to replace
+        // the default one-off/full-payment discount instead of stacking on top of it.
+        $applyFullPaymentDiscount = !($promoCodeDiscount && array_key_exists('combineWithFullPaymentDiscount', $promoCodeDiscount) && $promoCodeDiscount['combineWithFullPaymentDiscount'] === false);
         if ($data['packageType'] == PackageType::NON_INVESTMENT->value && !$data['isInstallment']) {
-            $fullPaymentDiscountObj =  Discount::fullPayment();
+            $fullPaymentDiscountObj =  $applyFullPaymentDiscount ? Discount::fullPayment() : null;
             if ($fullPaymentDiscountObj) {
                 $appliedDiscount = $this->getAppliedDiscountFromDiscountObj($fullPaymentDiscountObj, $discountedAmount);
                 $appliedDiscounts[] = $appliedDiscount;

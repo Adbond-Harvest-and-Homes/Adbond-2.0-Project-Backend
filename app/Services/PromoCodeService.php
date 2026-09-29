@@ -21,6 +21,7 @@ class PromoCodeService
         if(isset($data['expiry'])) $promoCode->expiry = $data['expiry'];
         if(isset($data['maxUsage'])) $promoCode->max_usage = $data['maxUsage'];
         if(isset($data['packageLimited'])) $promoCode->package_limited = $data['packageLimited'];
+        $promoCode->combine_with_full_payment_discount = $data['combineWithFullPaymentDiscount'] ?? true;
 
         $promoCode->save();
 
@@ -33,6 +34,7 @@ class PromoCodeService
         if(isset($data['expiry'])) $promoCode->expiry = $data['expiry'];
         if(isset($data['maxUsage'])) $promoCode->max_usage = $data['maxUsage'];
         if(isset($data['packageLimited'])) $promoCode->package_limited = $data['packageLimited'];
+        if(isset($data['combineWithFullPaymentDiscount'])) $promoCode->combine_with_full_payment_discount = $data['combineWithFullPaymentDiscount'];
 
         $promoCode->update();
 
@@ -61,7 +63,12 @@ class PromoCodeService
         }else{
             return ["valid" => false, "message" => "Cannot find this Promo"];
         }
-        return ["valid" => true, "discount" => $promoCode->promo->discount, "discountAmount" => $promoCode->promo->discount_amount];
+        return [
+            "valid" => true,
+            "discount" => $promoCode->promo->discount,
+            "discountAmount" => $promoCode->promo->discount_amount,
+            "combineWithFullPaymentDiscount" => $promoCode->combine_with_full_payment_discount
+        ];
     }
 
     public function checkExpiry($promoCode)

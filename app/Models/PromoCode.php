@@ -9,6 +9,10 @@ class PromoCode extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'combine_with_full_payment_discount' => 'boolean',
+    ];
+
     public function promo()
     {
         return $this->belongsTo(Promo::class);

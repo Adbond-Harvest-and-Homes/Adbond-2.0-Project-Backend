@@ -27,7 +27,8 @@ class CreatePromoCode extends BaseRequest
             "code" => "required|string|unique:promo_codes,code",
             "expiry" => "nullable|date|date_format:Y-m-d",
             "maxUsage" => "nullable|integer",
-            "packageLimited" => "nullable|boolean"
+            "packageLimited" => "nullable|boolean",
+            "combineWithFullPaymentDiscount" => "nullable|boolean"
         ];
     }
 }
