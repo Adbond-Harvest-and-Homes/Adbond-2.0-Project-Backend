@@ -41,7 +41,8 @@ class CreatePromo extends BaseRequest
             "promoCode.*.code" => "string|unique:promo_codes,code",
             "promoCode.*.expiry" => "nullable|date|date_format:Y-m-d",
             "promoCode.*.maxUsage" => "nullable|integer",
-            "promoCode.*.packageLimited" => "nullable|boolean"
+            "promoCode.*.packageLimited" => "nullable|boolean",
+            "promoCode.*.combineWithFullPaymentDiscount" => "nullable|boolean"
         ];
     }
 }

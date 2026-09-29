@@ -130,7 +130,21 @@ class PromoController extends Controller
 
             $promo = $this->promoService->update($data, $promo);
 
-            
+            if(isset($data['promoCode'])) {
+                foreach($data['promoCode'] as $promoCodeData) {
+                    if(!empty($promoCodeData['id'])) {
+                        $existingPromoCode = $this->promoCodeService->promoCodeById($promoCodeData['id']);
+                        if($existingPromoCode && $existingPromoCode->promo_id == $promo->id) {
+                            $this->promoCodeService->update($promoCodeData, $existingPromoCode);
+                        }
+                    } else if(!empty($promoCodeData['code'])) {
+                        $promoCodeData['promoId'] = $promo->id;
+                        $this->promoCodeService->save($promoCodeData);
+                    }
+                }
+            }
+
+
             try {
                 $this->userActivityLogService->log(Auth::user(), "Updated Promo");
             } catch (\Exception $e) {

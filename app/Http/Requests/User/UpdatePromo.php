@@ -35,6 +35,14 @@ class UpdatePromo extends BaseRequest
             "start" => "nullable|date|date_format:Y-m-d",
             "end" => "nullable|date|date_format:Y-m-d",
             "description" => "nullable|string",
+            "promoCode" => "nullable|array",
+            "promoCode.*" => "nullable|array",
+            "promoCode.*.id" => "nullable|integer|exists:promo_codes,id",
+            "promoCode.*.code" => "nullable|string",
+            "promoCode.*.expiry" => "nullable|date|date_format:Y-m-d",
+            "promoCode.*.maxUsage" => "nullable|integer",
+            "promoCode.*.packageLimited" => "nullable|boolean",
+            "promoCode.*.combineWithFullPaymentDiscount" => "nullable|boolean"
         ];
     }
 }
