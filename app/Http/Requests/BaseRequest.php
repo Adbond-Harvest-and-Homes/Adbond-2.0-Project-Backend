@@ -20,6 +20,7 @@ class BaseRequest extends FormRequest
         throw new HttpResponseException(
         response()->json([
                 'statusCode' => 422,
+                'message' => $validator->errors()->all()[0],
                 'error' => $validator->errors()->all()[0],
                 'errors' => $validator->errors()
             ], 422)
