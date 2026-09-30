@@ -60,10 +60,11 @@ class OrderService
         $appliedDiscounts = [];
         $discountedAmount = $data['amount'];
         // A promo code can be configured (via its combineWithFullPaymentDiscount flag) to replace
-        // the default one-off/full-payment discount instead of stacking on top of it.
-        $applyFullPaymentDiscount = !($promoCodeDiscount && array_key_exists('combineWithFullPaymentDiscount', $promoCodeDiscount) && $promoCodeDiscount['combineWithFullPaymentDiscount'] === false);
+        // the default payment-type discount (full-payment discount for one-off, installment
+        // duration discount for installment) instead of stacking on top of it.
+        $applyDefaultPaymentDiscount = !($promoCodeDiscount && array_key_exists('combineWithFullPaymentDiscount', $promoCodeDiscount) && $promoCodeDiscount['combineWithFullPaymentDiscount'] === false);
         if ($data['packageType'] == PackageType::NON_INVESTMENT->value && !$data['isInstallment']) {
-            $fullPaymentDiscountObj =  $applyFullPaymentDiscount ? Discount::fullPayment() : null;
+            $fullPaymentDiscountObj =  $applyDefaultPaymentDiscount ? Discount::fullPayment() : null;
             if ($fullPaymentDiscountObj) {
                 $appliedDiscount = $this->getAppliedDiscountFromDiscountObj($fullPaymentDiscountObj, $discountedAmount);
                 $appliedDiscounts[] = $appliedDiscount;
@@ -82,7 +83,7 @@ class OrderService
             //     "discountedAmount" => $discountArr['discountedAmount']
             // ];
         }
-        if ($data['packageType'] == PackageType::NON_INVESTMENT->value && $data['isInstallment']) {
+        if ($data['packageType'] == PackageType::NON_INVESTMENT->value && $data['isInstallment'] && $applyDefaultPaymentDiscount) {
             $discountService = new DiscountService;
             $installment = $discountService->getInstallmentDuration($data['duration']);
             if ($installment) {
