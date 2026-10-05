@@ -191,10 +191,27 @@ class PaymentController extends Controller
 
     public function save(SavePayment $request)
     {
+        $validated = $request->validated();
+
+        // If this reference was already processed (e.g. the Opay webhook ran first
+        // because the client took a while to return from the hosted checkout page),
+        // treat this as an idempotent success instead of a hard failure.
+        if (!empty($validated['reference'])) {
+            $existingPayment = $this->paymentService->getPaymentByReference($validated['reference']);
+            if ($existingPayment) {
+                $existingPayment->load(['purchase.package', 'purchase.discounts', 'purchase.paymentStatus']);
+                return Utilities::ok([
+                    "paymentSummary" => new PaymentResource($existingPayment),
+                    "order" => new OrderResource($existingPayment->purchase),
+                    "alreadyProcessed" => true,
+                ]);
+            }
+        }
+
         DB::beginTransaction();
-        
+
         try {
-            $context = PaymentContext::fromPaymentRequest($request->validated());
+            $context = PaymentContext::fromPaymentRequest($validated);
             $context->client = Auth::user();
             $context->isFirstPayment = true;
             // $context = new PaymentContext(requestData: $request->validated(), processedData: []);
