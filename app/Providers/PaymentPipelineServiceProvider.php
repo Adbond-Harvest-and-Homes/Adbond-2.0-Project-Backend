@@ -12,6 +12,7 @@ use app\Domain\Payments\Pipelines\Stages\{
     PostPaymentActionsStage
 };
 use app\Services\PaymentService;
+use app\Services\OpayService;
 use app\Services\FileService;
 use app\Services\OrderService;
 use app\Services\PackageService;
@@ -32,6 +33,7 @@ class PaymentPipelineServiceProvider extends ServiceProvider
         $this->app->bind(ProcessPaymentStage::class, function ($app) {
             return new ProcessPaymentStage(
                 $app->make(PaymentService::class),
+                $app->make(OpayService::class),
                 $app->make(FileService::class)
             );
         });
