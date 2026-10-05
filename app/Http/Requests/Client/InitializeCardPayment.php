@@ -23,7 +23,8 @@ class InitializeCardPayment extends BaseRequest
     public function rules(): array
     {
         return [
-            "processingId" => "required|integer"
+            "processingId" => "required|integer",
+            "gateway" => "nullable|string|in:paystack,opay",
         ];
     }
 }

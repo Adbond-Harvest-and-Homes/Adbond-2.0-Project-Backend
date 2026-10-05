@@ -36,6 +36,7 @@ use app\Services\PackageService;
 use app\Services\PromoCodeService;
 use app\Services\OrderService;
 use app\Services\PaymentService;
+use app\Services\OpayService;
 use app\Services\FileService;
 use app\Services\CommissionService;
 use app\Services\ClientPackageService;
@@ -67,6 +68,7 @@ use app\Services\NotificationService;
 class PaymentController extends Controller
 {
     private $paymentService;
+    private $opayService;
     private $packageService;
     private $promoCodeService;
     private $orderService;
@@ -111,6 +113,7 @@ class PaymentController extends Controller
         ]);
 
         $this->paymentService = new PaymentService;
+        $this->opayService = new OpayService;
         $this->packageService = new PackageService;
         $this->promoCodeService = new PromoCodeService;
         $this->orderService = new OrderService;
@@ -125,13 +128,20 @@ class PaymentController extends Controller
     {
         try{
             $processingId = $request->validated("processingId");
+            $gateway = $request->validated("gateway") ?? 'paystack';
             $processedData = Cache::get('order_processing_' . $processingId);
             if(!$processedData) return Utilities::error402("processing Id has expired.. Go back and prepare the order again");
-            $res = $this->paymentService->paystackInit(Auth::guard('client')->user(), $processedData['amountPayable']*100);
+
+            if($gateway === 'opay') {
+                $merchantReference = 'opay_'.$processingId.'_'.time();
+                $res = $this->opayService->initializeCashier(Auth::guard('client')->user(), $processedData['amountPayable']*100, $merchantReference);
+            }else{
+                $res = $this->paymentService->paystackInit(Auth::guard('client')->user(), $processedData['amountPayable']*100);
+            }
             // dd($res);
             if($res['success']==true) {
                 $processedData['reference'] = $res['data']['reference'];
-                if(isset($data['processingId'])) Cache::forget('order_processing_' . $processingId);
+                Cache::forget('order_processing_' . $processingId);
                 Cache::put('order_processing_' . $processingId, $processedData, now()->addHours(12));
                 return Utilities::ok($res['data']);
             }else{

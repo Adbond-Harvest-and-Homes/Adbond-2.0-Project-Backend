@@ -14,6 +14,7 @@ use app\Services\OrderService;
 use app\Services\NotificationService;
 
 use app\Models\PaymentMode;
+use app\Models\PaymentGateway;
 use app\Models\PaymentStatus;
 
 use app\Enums\PaymentPurpose;
@@ -65,9 +66,9 @@ class SavePaymentStage implements PaymentStage
                 Auth::guard('client')->user()->id, 
                 $context->requestData['processingId']
             ),
-            'paymentGatewayId' => $context->isCardPayment() 
-                ? PaymentMode::cardPayment()->id 
-                : PaymentMode::bankTransfer()->id,
+            'paymentGatewayId' => $context->isCardPayment()
+                ? ($context->isOpayPayment() ? PaymentGateway::opay()->id : PaymentGateway::paystack()->id)
+                : null,
             // 'docsUploaded' => Helpers::kycCompleted(Auth::guard('client')->user()),
         ];
         if($context->additional) {

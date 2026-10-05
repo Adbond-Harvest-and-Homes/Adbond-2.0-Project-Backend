@@ -15,4 +15,9 @@ class PaymentGateway extends Model
     {
         return self::where("name", Gateway::PAYSTACK->value)->first();
     }
+
+    public static function opay()
+    {
+        return self::where("name", Gateway::OPAY->value)->first();
+    }
 }

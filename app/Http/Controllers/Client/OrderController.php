@@ -93,6 +93,10 @@ class OrderController extends Controller
             // }
 
             $data['amountPayable'] = ($data['isInstallment']) ? $data['amount'] : $amountDetail['amount'];
+            // Stash the client id so a server-initiated flow (e.g. the Opay webhook,
+            // which has no authenticated request) can re-authenticate as this client
+            // before running the payment pipeline.
+            $data['clientId'] = Auth::guard('client')->user()->id;
             // Cache this data to be used to complete the order processing
             if (isset($data['processingId'])) Cache::forget('order_processing_' . $processingId);
             Cache::put('order_processing_' . $processingId, $data, now()->addHours(12));

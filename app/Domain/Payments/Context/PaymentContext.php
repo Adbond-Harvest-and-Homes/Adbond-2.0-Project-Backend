@@ -59,6 +59,16 @@ class PaymentContext
         return $this->requestData['cardPayment'] ?? false;
     }
 
+    public function gatewayCode(): string
+    {
+        return $this->requestData['gateway'] ?? 'paystack';
+    }
+
+    public function isOpayPayment(): bool
+    {
+        return $this->isCardPayment() && $this->gatewayCode() === 'opay';
+    }
+
     public function isInvestmentPackage(): bool
     {
         return $this->package && $this->package->type === \App\Enums\PackageType::INVESTMENT->value;

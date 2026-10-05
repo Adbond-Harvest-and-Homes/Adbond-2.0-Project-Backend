@@ -44,6 +44,11 @@ class PaymentService
         return Payment::where("purchase_id", $purchaseId)->where("purchase_type", $purchaseType)->first();
     }
 
+    public function getPaymentByReference($reference)
+    {
+        return Payment::where("reference", $reference)->first();
+    }
+
     public function getPayments()
     {
         return Payment::all();
@@ -205,7 +210,7 @@ class PaymentService
         $url = 'https://api.paystack.co/transaction/initialize';
         $headers = [
             "accept" => "application/json",
-            "Authorization" => "Bearer ".env('PAYSTACK_SECRET_KEY'),
+            "Authorization" => "Bearer ".config('services.paystack.secret_key'),
             "Cache-Control" => "no-cache"
         ];
         $post = ["email" => $client->email, "amount" => ceil($amount), "callback_url"=> "https://yourdomain.com/payment/callback"];
@@ -232,7 +237,7 @@ class PaymentService
         $url = 'https://api.paystack.co/transaction/verify/'.$reference;
         $headers = [
             "accept" => "application/json",
-            "Authorization" => "Bearer ".env('PAYSTACK_SECRET_KEY'),
+            "Authorization" => "Bearer ".config('services.paystack.secret_key'),
             "Cache-Control" => "no-cache"
         ];
         $message = "";

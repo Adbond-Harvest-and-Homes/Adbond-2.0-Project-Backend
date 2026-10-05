@@ -8,6 +8,7 @@ use Closure;
 use app\Domain\Payments\Context\PaymentContext;
 
 use app\Services\PaymentService;
+use app\Services\OpayService;
 use app\Services\FileService;
 
 use app\Enums\FilePurpose;
@@ -19,31 +20,49 @@ class ProcessPaymentStage implements PaymentStage
 {
     public function __construct(
         private PaymentService $paymentService,
+        private OpayService $opayService,
         private FileService $fileService
     ) {}
 
     public function handle(PaymentContext $context, Closure $next): PaymentContext
     {
         if ($context->isCardPayment()) {
-            $context->gatewayResponse = $this->processCardPayment($context);
+            $context->gatewayResponse = $context->isOpayPayment()
+                ? $this->processOpayPayment($context)
+                : $this->processCardPayment($context);
         } else {
             $context->uploadedReceipt = $this->processBankPayment($context);
         }
-        
+
         return $next($context);
     }
 
     private function processCardPayment(PaymentContext $context): array
     {
         $response = $this->paymentService->paystackVerify(
-            $context->requestData['reference'], 
+            $context->requestData['reference'],
             $context->processedData['amountPayable']
         );
 
+        return $this->applyPaymentStatus($context, $response);
+    }
+
+    private function processOpayPayment(PaymentContext $context): array
+    {
+        $response = $this->opayService->verifyTransaction(
+            $context->requestData['reference'],
+            $context->processedData['amountPayable']
+        );
+
+        return $this->applyPaymentStatus($context, $response);
+    }
+
+    private function applyPaymentStatus(PaymentContext $context, array $response): array
+    {
         if ($response['success'] && !$response['paymentError']) {
             $isInstallment = ($context->order?->is_installment ?? $context->processedData['isInstallment'] ?? 0) == 1;
-            $context->requestData['paymentStatusId'] = $isInstallment 
-                ? PaymentStatus::deposit()->id 
+            $context->requestData['paymentStatusId'] = $isInstallment
+                ? PaymentStatus::deposit()->id
                 : PaymentStatus::complete()->id;
         } else {
             $context->requestData['paymentStatusId'] = PaymentStatus::pending()->id;

@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'paystack' => [
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+    ],
+
+    'opay' => [
+        'public_key' => env('OPAY_PUBLIC_KEY'),
+        'secret_key' => env('OPAY_SECRET_KEY'),
+        'merchant_id' => env('OPAY_MERCHANT_ID'),
+        'base_url' => env('OPAY_BASE_URL', 'https://testapi.opaycheckout.com'),
+        'return_url' => env('OPAY_RETURN_URL'),
+        'callback_url' => env('OPAY_CALLBACK_URL'),
+    ],
+
 ];

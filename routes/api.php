@@ -39,6 +39,7 @@ use app\Http\Controllers\MigrationController;
 use app\Http\Controllers\Migration2Controller;
 use app\Http\Controllers\MigrationClientController;
 use app\Http\Controllers\MigrationOrderPaymentsController;
+use app\Http\Controllers\OpayWebhookController;
 
 
 // Route::get('/user', function (Request $request) {
@@ -54,6 +55,9 @@ Route::group(['prefix' => '/v2',], function () {
     // Route::get('/migrate/clients', [MigrationController::class, "clients"]);
     Route::get('/migrate/order_payments', [MigrationOrderPaymentsController::class, "synchronizeOrderPayments"]);
     Route::get('/migrate/synchronize_payment_receipts', [MigrationOrderPaymentsController::class, "synchronizePaymentReceipts"]);
+
+    // Opay server-to-server callback - unauthenticated, verified via HMAC signature inside the controller.
+    Route::post('/webhooks/opay', [OpayWebhookController::class, 'handle']);
 
     //Auth URLS
     Route::group(['prefix' => '/auth', 'namespace' => 'Auth',], function () {

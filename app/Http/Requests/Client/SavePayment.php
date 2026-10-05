@@ -29,6 +29,7 @@ class SavePayment extends BaseRequest
         return [
             "processingId" => "required|integer",
             "cardPayment" => "required|boolean",
+            "gateway" => "nullable|string|in:paystack,opay",
             "reference" => "required_if:cardPayment,true",
             "paymentDate" => "required_if:cardPayment,false",
             "bankId" => "required_if:cardPayment,false|integer|exists:bank_accounts,id",

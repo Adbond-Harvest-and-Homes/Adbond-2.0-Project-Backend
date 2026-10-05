@@ -16,7 +16,7 @@ class PaymentGateways extends Seeder
      */
     public function run(): void
     {
-        $gateways = [PaymentGatewayEnum::PAYSTACK->value];
+        $gateways = [PaymentGatewayEnum::PAYSTACK->value, PaymentGatewayEnum::OPAY->value];
 
         foreach($gateways as $gateway) {
             PaymentGateway::firstOrCreate(["name" => $gateway]);
