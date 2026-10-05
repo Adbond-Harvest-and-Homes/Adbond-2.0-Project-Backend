@@ -64,6 +64,8 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
 
     Route::group(['prefix' => '/transactions'], function () {
         Route::get('', [UserTransactionController::class, "transactions"]);
+        Route::post('/invoices/send', [UserTransactionController::class, "sendInvoices"]);
+        Route::post('/{id}/invoice/send', [UserTransactionController::class, "sendInvoice"]);
     });
 
     Route::group(['prefix' => '/profile'], function () {
