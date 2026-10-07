@@ -51,6 +51,7 @@ class UpdatePackage extends BaseRequest
         return [
             "projectId" => "nullable|integer|exists:projects,id",
             "name" => ["nullable","string", new PackageNameUnique()],
+            "type" => ["nullable", "string", Rule::in(EnumClass::packageTypes())],
             "stateId" => "nullable|integer|exists:states,id",
             "address" => "nullable|string",
             "size" => "nullable|numeric",
@@ -85,18 +86,18 @@ class UpdatePackage extends BaseRequest
                                             ],
 
             "bondSlots" => "nullable|integer",
-            "bondOwnershipType" => ["string", "required_if:type,".PackageType::BOND->value, Rule::in(EnumClass::bondOwnershipTypes())],
-            "bondCountDown" => "integer|required_if:type,".PackageType::BOND->value,
-            "bondCountDownMetric" => ["string", "required_with:bondCountDown", Rule::in(EnumClass::bondTimeMetrics())],
-            "bondInvestmentDuration" => "integer|required_if:type,".PackageType::BOND->value,
-            "bondInvestmentDurationMetric" => ["string", "required_with:bondInvestmentDuration", Rule::in(EnumClass::bondTimeMetrics())],
-            "bondNetRentalIncome" => "integer|required_if:type,".PackageType::BOND->value,
-            "bondNetRentalIncomeMeasurement" => ["string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::Measurements())],
-            "bondNetRentalIncomeTimeline" => ["string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::bondOccurrenceMetrics())],
-            "bondAssetAppreciation" => "numeric|required_if:type,".PackageType::BOND->value,
-            "bondAssetAppreciationMeasurement" => ["string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::Measurements())],
-            "bondAssetAppreciationTimeline" => ["string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::bondOccurrenceMetrics())],
-        
+            "bondOwnershipType" => ["nullable", "string", "required_if:type,".PackageType::BOND->value, Rule::in(EnumClass::bondOwnershipTypes())],
+            "bondCountDown" => "nullable|integer|required_if:type,".PackageType::BOND->value,
+            "bondCountDownMetric" => ["nullable", "string", "required_with:bondCountDown", Rule::in(EnumClass::bondTimeMetrics())],
+            "bondInvestmentDuration" => "nullable|integer|required_if:type,".PackageType::BOND->value,
+            "bondInvestmentDurationMetric" => ["nullable", "string", "required_with:bondInvestmentDuration", Rule::in(EnumClass::bondTimeMetrics())],
+            "bondNetRentalIncome" => "nullable|integer|required_if:type,".PackageType::BOND->value,
+            "bondNetRentalIncomeMeasurement" => ["nullable", "string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::Measurements())],
+            "bondNetRentalIncomeTimeline" => ["nullable", "string", "required_with:bondNetRentalIncome", Rule::in(EnumClass::bondOccurrenceMetrics())],
+            "bondAssetAppreciation" => "nullable|numeric|required_if:type,".PackageType::BOND->value,
+            "bondAssetAppreciationMeasurement" => ["nullable", "string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::Measurements())],
+            "bondAssetAppreciationTimeline" => ["nullable", "string", "required_with:bondAssetAppreciation", Rule::in(EnumClass::bondOccurrenceMetrics())],
+
         ];
     }
 }
