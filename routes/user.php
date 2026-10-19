@@ -30,6 +30,7 @@ use app\Http\Controllers\User\AssessmentQuestionOptionController;
 use app\Http\Controllers\User\AssessmentAttemptController;
 use app\Http\Controllers\User\AnalyticsController;
 use app\Http\Controllers\User\ClientPurchaseController;
+use app\Http\Controllers\User\SmsCampaignController;
 use app\Http\Controllers\User\ReferralController;
 use app\Http\Controllers\User\UserBankAccountController;
 use app\Http\Controllers\User\NotificationController as UserNotificationController;
@@ -66,6 +67,13 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::get('', [UserTransactionController::class, "transactions"]);
         Route::post('/invoices/send', [UserTransactionController::class, "sendInvoices"]);
         Route::post('/{id}/invoice/send', [UserTransactionController::class, "sendInvoice"]);
+    });
+
+    Route::group(['prefix' => '/sms_campaigns'], function () {
+        Route::get('', [SmsCampaignController::class, "index"]);
+        Route::post('', [SmsCampaignController::class, "store"]);
+        Route::get('/{id}', [SmsCampaignController::class, "show"]);
+        Route::post('/{id}/send', [SmsCampaignController::class, "send"]);
     });
 
     Route::group(['prefix' => '/profile'], function () {
