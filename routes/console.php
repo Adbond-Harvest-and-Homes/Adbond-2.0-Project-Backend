@@ -25,3 +25,7 @@ Schedule::job(new CheckInvestmentReturns)->hourly();
 Schedule::command('app:monitor-bonds')
     ->everyMinute()
     ->appendOutputTo(storage_path('logs/monitor-bonds.log'));
+
+Schedule::command('app:send-villa-repayment-reminders')
+    ->dailyAt('09:00')
+    ->appendOutputTo(storage_path('logs/villa-repayment-reminders.log'));

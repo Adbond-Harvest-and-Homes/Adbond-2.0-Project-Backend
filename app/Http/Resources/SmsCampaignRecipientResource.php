@@ -21,6 +21,13 @@ class SmsCampaignRecipientResource extends JsonResource
                 "name" => trim(ucfirst($this->client?->firstname) . " " . ucfirst($this->client?->lastname)),
             ],
             "phoneNumber" => $this->phone_number,
+            "message" => $this->message,
+            "order" => $this->order ? [
+                "id" => $this->order->id,
+                "package" => $this->order->package?->name,
+                "balance" => $this->order->balance,
+                "paymentDueDate" => $this->order->payment_due_date,
+            ] : null,
             "status" => $this->status,
             "errorMessage" => $this->error_message,
             "sentAt" => $this->sent_at,

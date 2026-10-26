@@ -44,7 +44,8 @@ class SendSmsCampaign implements ShouldQueue
         $failed = 0;
 
         foreach ($recipients as $recipient) {
-            $result = $termii->send($recipient->phone_number, $this->campaign->message, $this->campaign->sender_id);
+            $message = $recipient->message ?: $this->campaign->message;
+            $result = $termii->send($recipient->phone_number, $message, $this->campaign->sender_id);
 
             if ($result['success']) {
                 $recipient->update([

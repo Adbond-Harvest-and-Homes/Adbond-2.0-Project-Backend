@@ -15,6 +15,7 @@ class SmsCampaign extends Model
         'created_by',
         'sender_id',
         'message',
+        'source',
         'status',
         'total_recipients',
         'sent_count',

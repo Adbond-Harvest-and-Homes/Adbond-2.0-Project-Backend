@@ -18,6 +18,7 @@ class SmsCampaignResource extends JsonResource
             "id" => $this->id,
             "message" => $this->message,
             "senderId" => $this->sender_id,
+            "source" => $this->source,
             "status" => $this->status,
             "totalRecipients" => $this->total_recipients,
             "sentCount" => $this->sent_count,

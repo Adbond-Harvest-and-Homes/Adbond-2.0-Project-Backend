@@ -14,7 +14,9 @@ class SmsCampaignRecipient extends Model
     protected $fillable = [
         'sms_campaign_id',
         'client_id',
+        'order_id',
         'phone_number',
+        'message',
         'status',
         'provider_message_id',
         'error_message',
@@ -33,5 +35,10 @@ class SmsCampaignRecipient extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 }
