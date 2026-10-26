@@ -26,6 +26,14 @@ class Benefits extends Seeder
             ["name" => "Deed of Assignment", "icon" => env('APP_URL') . Storage::url('public/benefits/Survey Plan.svg')],
             ["name" => "Security", "icon" => env('APP_URL') . Storage::url('public/benefits/Survey Plan.svg')],
             ["name" => "Layout", "icon" => env('APP_URL') . Storage::url('public/benefits/Survey Plan.svg')],
+
+            // Legacy Green Homestead (LGH) leasehold apartment benefits
+            ["name" => "20-Year Leasehold", "icon" => env('APP_URL') . Storage::url('public/benefits/20-Year Leasehold.svg')],
+            ["name" => "Prime Lagos Location", "icon" => env('APP_URL') . Storage::url('public/benefits/Prime Lagos Location.svg')],
+            ["name" => "1-Bedroom and Studio Options", "icon" => env('APP_URL') . Storage::url('public/benefits/1-Bedroom and Studio Options.svg')],
+            ["name" => "12-Month Payment Plan", "icon" => env('APP_URL') . Storage::url('public/benefits/12-Month Payment Plan.svg')],
+            ["name" => "Rental Income Potential", "icon" => env('APP_URL') . Storage::url('public/benefits/Rental Income Potential.svg')],
+            ["name" => "Free Plot of Land", "icon" => env('APP_URL') . Storage::url('public/benefits/Free Plot of Land.svg')],
         ];
 
         foreach($benefits as $benefit) {
