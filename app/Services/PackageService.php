@@ -92,7 +92,7 @@ class PackageService
 
                 if(!isset($data['bondSlots']) && $data['bondOwnershipType'] == BondOwnershipType::CO_OWNERSHIP->value) throw new AppException(402, "Bond Slots is required for co-ownership");
 
-                if(isset($data['bondSlots'])) {
+                if(!empty($data['bondSlots'])) {
                     $package->bond_slots = $data['bondSlots'];
                     $package->bond_available_slots = $data['bondSlots'] * $data['units'];
 
@@ -199,8 +199,8 @@ class PackageService
             if($package?->project?->projectType?->name != ProjectType::HOMES->value) throw new AppException(402, "bonds only apply to Homes");
             if( $ownershipType == BondOwnershipType::CO_OWNERSHIP->value && !$bondSlots) throw new AppException(402, "Bond Slots is required for co-ownership");
 
-            if($package->assets->count() == 0) {
-                if($bondSlots) $package->bond_slots = $bondSlots;
+            if($package->assets->count() == 0 && $bondSlots) {
+                $package->bond_slots = $bondSlots;
                 $package->bond_available_slots = $bondSlots * $units;
                 $package->bond_slots_amount = round($package->amount/$bondSlots, 2);
             }
