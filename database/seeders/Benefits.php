@@ -35,16 +35,14 @@ class Benefits extends Seeder
 
         foreach($benefits as $benefit) {
             $benefitObj = Benefit::where("name", $benefit['name'])->first();
-            if(!$benefitObj) {
-                $benefitObj = new Benefit;
-                $benefitObj->name = $benefit['name'];
-                $benefitObj->icon = $benefit['icon'];
-                $benefitObj->save();
-            }
-            // Benefit::firstOrCreate([
-            //     "name" => $benefit['name'],
-            //     "icon" => $benefit['icon']
-            // ]);
+            if(!$benefitObj) $benefitObj = new Benefit;
+
+            // Keep the icon in sync even for rows that already exist, so a
+            // stale APP_URL (or any other icon correction) self-heals on the
+            // next deploy instead of silently sticking forever.
+            $benefitObj->name = $benefit['name'];
+            $benefitObj->icon = $benefit['icon'];
+            $benefitObj->save();
         }
     }
 }
