@@ -86,6 +86,8 @@ class PackageController extends Controller
             $validStatus = ["active" => ProjectFilter::ACTIVE->value, "inactive" => ProjectFilter::INACTIVE->value];
             if(!in_array($request->query('status'), $validStatus)) return Utilities::error402("Valid Status are: ".$validStatus['active']." and ".$validStatus['inactive']);
             $filter["status"] = $request->query('status');
+        } elseif($request->has('all')) {
+            $filter["status"] = ProjectFilter::ACTIVE->value;
         }
 
         // $packages = $this->packageService->packages(['media'], $offset, $perPage);
