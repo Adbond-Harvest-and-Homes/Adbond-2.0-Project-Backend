@@ -201,7 +201,6 @@ class ProjectController extends Controller
 
     public function allProjects()
     {
-        $this->projectService->status = ProjectFilter::ACTIVE->value;
         $this->projectService->all = true;
         $projects = $this->projectService->projects();
 
