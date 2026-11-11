@@ -69,7 +69,7 @@ class PackageController extends Controller
         if (!is_numeric($projectId) || !ctype_digit($projectId)) return Utilities::error402("Invalid parameter projectID");
         $this->packageService->projectId = $projectId;
 
-        if($request->has('all')) $this->projectService->all - true;
+        if($request->has('all')) $this->packageService->all = true;
 
         $page = ($request->query('page')) ?? 1;
         $perPage = ($request->query('perPage'));

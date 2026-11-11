@@ -215,7 +215,7 @@ class ProjectController extends Controller
 
         $this->projectService->typeId = $projectTypeId;
 
-        if($request->has('all')) $this->projectService->all - true;
+        if($request->has('all')) $this->projectService->all = true;
 
         $page = ($request->query('page')) ?? 1;
         $perPage = ($request->query('perPage'));
