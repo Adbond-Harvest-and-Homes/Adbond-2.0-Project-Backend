@@ -331,6 +331,7 @@ Route::group(['middleware' => 'userAuth', 'prefix' => '/user', 'namespace' => 'U
         Route::get('/export', [UserClientController::class, "export"]);
         Route::get('/{clientId}', [UserClientController::class, "show"]);
         Route::post('/{clientId}', [UserClientController::class, "update"]);
+        Route::patch('/{clientId}/email', [UserClientController::class, "updateEmail"]);
         Route::delete('/{clientId}', [UserClientController::class, "delete"]);
         Route::post('/re_upload_document/{assetId}', [UserFileController::class, "saveClientDocument"]);
 

@@ -12,6 +12,7 @@ use app\Http\Resources\ClientResource;
 use app\Http\Resources\ClientSummaryResource;
 
 use app\Http\Requests\User\UpdateClient;
+use app\Http\Requests\User\UpdateClientEmail;
 use app\Http\Requests\User\AddClient;
 
 use app\Services\ClientService;
@@ -151,6 +152,32 @@ class ClientController extends Controller
             return Utilities::ok(new ClientResource($client));
         } catch (\Exception $e) {
             DB::rollBack();
+            return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
+        }
+    }
+
+    public function updateEmail(UpdateClientEmail $request, $clientId)
+    {
+        try {
+            if (!is_numeric($clientId) || !ctype_digit($clientId)) return Utilities::error402("Invalid parameter clientID");
+
+            $this->applyClientRestrictions();
+            $client = $this->clientService->getClient($clientId);
+            if (!$client) return Utilities::error402("Client not found");
+
+            $oldEmail = $client->email;
+            $newEmail = $request->validated('email');
+
+            $client = $this->clientService->updateEmail($client, $newEmail);
+
+            try {
+                $this->activityLogService->log(Auth::user(), "Changed Client Email from {$oldEmail} to {$newEmail}");
+            } catch (\Exception $e) {
+                Utilities::logStuff("An error occurred while trying to log user activity: " . $e->getMessage());
+            }
+
+            return Utilities::ok(new ClientResource($client));
+        } catch (\Exception $e) {
             return Utilities::error($e, 'An error occurred while trying to process the request, Please try again later or contact support');
         }
     }

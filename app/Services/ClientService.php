@@ -229,6 +229,14 @@ class ClientService
         $client->update();
     }
 
+    public function updateEmail($client, $email)
+    {
+        $client->email = $email;
+        $client->email_verified_at = null;
+        $client->update();
+        return $client;
+    }
+
     public function uploadDocs($client)
     {
         $paymentService = new PaymentService;
